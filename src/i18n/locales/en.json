@@ -1,0 +1,29 @@
+{
+  "auth": {
+    "welcome": "Welcome!",
+    "signInToContinue": "Sign in to your account to continue",
+    "continueWithGithub": "Continue with Github",
+    "continueWithGoogle": "Continue with Google",
+    "loggingIn": "Logging in...",
+    "error": {
+      "title": "Authentication Error",
+      "description": "There was an error processing your sign in. Please try again.",
+      "backToLogin": "Back to Login"
+    }
+  },
+  "protected": {
+    "hello": "Hello",
+    "logout": "Logout"
+  },
+  "shop": {
+    "title": "Products Gallery",
+    "viewDetails": "View Details",
+    "noProducts": "No products available",
+    "filters": {
+      "all": "All",
+      "category": "Category",
+      "software": "Software",
+      "type": "Type"
+    }
+  }
+} 
