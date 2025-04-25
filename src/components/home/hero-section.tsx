@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
+import { useTranslations } from '@/hooks/use-translations';
 
 export function HeroSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const { t } = useTranslations();
 
   useEffect(() => {
     if (videoRef.current) {
@@ -16,6 +18,8 @@ export function HeroSection() {
       });
     }
   }, []);
+
+  if (!t) return null;
 
   return (
     <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
@@ -46,15 +50,15 @@ export function HeroSection() {
           className="max-w-3xl mx-auto space-y-8"
         >
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
-            A revolução criativa começou.
+            {t.home.hero.title}
           </h1>
           <p className="text-xl text-muted-foreground">
-            De criativo 👉 para criativo.
+            {t.home.hero.subtitle}
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link href="/shop">
               <Button size="lg" className="gap-2">
-                Explore agora <ArrowRight className="h-4 w-4" />
+                {t.navigation.shop} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>

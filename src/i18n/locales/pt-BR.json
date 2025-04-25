@@ -7,8 +7,8 @@
     "loggingIn": "Entrando...",
     "error": {
       "title": "Erro de Autenticação",
-      "description": "Houve um erro ao processar seu login. Por favor, tente novamente.",
-      "backToLogin": "Voltar ao Login"
+      "description": "Ocorreu um erro ao processar seu login. Por favor, tente novamente.",
+      "backToLogin": "Voltar para o Login"
     }
   },
   "protected": {
@@ -20,7 +20,7 @@
     "viewDetails": "Abrir a caixa",
     "noProducts": "Nenhum produto disponível",
     "search": {
-      "placeholder": "Pesquisar produtos...",
+      "placeholder": "Buscar produtos...",
       "noResults": "Nenhum produto encontrado"
     },
     "filters": {
@@ -29,5 +29,120 @@
       "software": "Software",
       "type": "Tipo"
     }
+  },
+  "navigation": {
+    "about": "Sobre",
+    "shop": "Loja",
+    "labs": "Laboratórios",
+    "pricing": "Preços",
+    "switchToEnglish": "Mudar para Inglês",
+    "switchToPortuguese": "Mudar para Português",
+    "toggleTheme": "Alternar tema",
+    "myAccount": "Minha Conta",
+    "signOut": "Sair",
+    "signIn": "Entrar",
+    "getStarted": "Começar"
+  },
+  "home": {
+    "hero": {
+      "title": "A revolução criativa começou.",
+      "subtitle": "De criativo 👉 para criativo."
+    },
+    "features": {
+      "title": "Feito para Você",
+      "subtitle": "Descubra todas as ferramentas e recursos que preparamos especialmente para você.",
+      "items": {
+        "premium": {
+          "title": "Qualidade Premium",
+          "description": "Recursos e ferramentas de alta qualidade para impulsionar sua criatividade."
+        },
+        "exclusive": {
+          "title": "Recursos Exclusivos",
+          "description": "Acesso a conteúdo exclusivo e ferramentas especializadas."
+        },
+        "community": {
+          "title": "Comunidade Ativa",
+          "description": "Conecte-se com outros criativos e compartilhe experiências."
+        }
+      }
+    },
+    "latestProducts": {
+      "title": "Últimos Lançamentos",
+      "viewAll": "Ver todos"
+    },
+    "categories": {
+      "title": "Categorias",
+      "subtitle": "Explore nossa seleção de recursos organizados por categoria",
+      "discover": "Descubra recursos exclusivos para {category}"
+    },
+    "about": {
+      "title": "Sobre a BOXY",
+      "description": "Somos uma plataforma dedicada a conectar criativos com as melhores ferramentas e recursos. Nossa missão é impulsionar a criatividade e facilitar o processo criativo.",
+      "teamMember": "Membro da equipe"
+    },
+    "faq": {
+      "title": "Perguntas Frequentes",
+      "items": {
+        "howItWorks": {
+          "question": "Como o BOXY funciona?",
+          "answer": "O BOXY é uma plataforma que conecta criativos com recursos e ferramentas de alta qualidade. Você pode explorar, baixar e usar os recursos disponíveis em sua jornada criativa."
+        },
+        "paymentMethods": {
+          "question": "Quais são os métodos de pagamento?",
+          "answer": "Aceitamos diversos métodos de pagamento, incluindo cartões de crédito, débito e PIX."
+        },
+        "subscription": {
+          "question": "Posso cancelar minha assinatura?",
+          "answer": "Sim, você pode cancelar sua assinatura a qualquer momento, sem taxas adicionais."
+        }
+      }
+    },
+    "roadmap": {
+      "title": "O que esperar do BOXY?",
+      "items": {
+        "q1": {
+          "quarter": "Q1",
+          "title": "Lançamento da Plataforma",
+          "description": "Início das operações e primeiros recursos"
+        },
+        "q2": {
+          "quarter": "Q2",
+          "title": "Expansão de Recursos",
+          "description": "Novas categorias e ferramentas"
+        },
+        "q3": {
+          "quarter": "Q3",
+          "title": "Comunidade e Colaboração",
+          "description": "Recursos de interação entre usuários"
+        }
+      }
+    },
+    "community": {
+      "title": "Junte-se à nossa comunidade",
+      "description": "Conecte-se com outros criativos, compartilhe experiências e fique atualizado com as últimas novidades.",
+      "joinDiscord": "Entrar no Discord"
+    }
+  },
+  "footer": {
+    "brand": {
+      "title": "BOXY",
+      "description": "Transformando a forma como os criativos trabalham."
+    },
+    "products": {
+      "title": "Produtos",
+      "explore": "Explorar",
+      "pricing": "Preços"
+    },
+    "resources": {
+      "title": "Recursos",
+      "blog": "Blog",
+      "community": "Comunidade"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacidade",
+      "terms": "Termos"
+    },
+    "copyright": "© {year} BOXY. Todos os direitos reservados."
   }
 } 

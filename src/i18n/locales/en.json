@@ -29,5 +29,120 @@
       "software": "Software",
       "type": "Type"
     }
+  },
+  "navigation": {
+    "about": "About",
+    "shop": "Shop",
+    "labs": "Labs",
+    "pricing": "Pricing",
+    "switchToEnglish": "Switch to English",
+    "switchToPortuguese": "Switch to Portuguese",
+    "toggleTheme": "Toggle theme",
+    "myAccount": "My Account",
+    "signOut": "Sign Out",
+    "signIn": "Sign In",
+    "getStarted": "Get Started"
+  },
+  "home": {
+    "hero": {
+      "title": "The creative revolution has begun.",
+      "subtitle": "From creative 👉 to creative."
+    },
+    "features": {
+      "title": "Made for You",
+      "subtitle": "Discover all the tools and resources we've prepared especially for you.",
+      "items": {
+        "premium": {
+          "title": "Premium Quality",
+          "description": "High-quality resources and tools to boost your creativity."
+        },
+        "exclusive": {
+          "title": "Exclusive Resources",
+          "description": "Access to exclusive content and specialized tools."
+        },
+        "community": {
+          "title": "Active Community",
+          "description": "Connect with other creatives and share experiences."
+        }
+      }
+    },
+    "latestProducts": {
+      "title": "Latest Releases",
+      "viewAll": "View all"
+    },
+    "categories": {
+      "title": "Categories",
+      "subtitle": "Explore our selection of resources organized by category",
+      "discover": "Discover exclusive resources for {category}"
+    },
+    "about": {
+      "title": "About BOXY",
+      "description": "We are a platform dedicated to connecting creatives with the best tools and resources. Our mission is to boost creativity and facilitate the creative process.",
+      "teamMember": "Team member"
+    },
+    "faq": {
+      "title": "FAQ",
+      "items": {
+        "howItWorks": {
+          "question": "How does BOXY work?",
+          "answer": "BOXY is a platform that connects creatives with high-quality resources and tools. You can explore, download, and use the available resources in your creative journey."
+        },
+        "paymentMethods": {
+          "question": "What are the payment methods?",
+          "answer": "We accept various payment methods, including credit cards, debit cards, and PIX."
+        },
+        "subscription": {
+          "question": "Can I cancel my subscription?",
+          "answer": "Yes, you can cancel your subscription at any time, without additional fees."
+        }
+      }
+    },
+    "roadmap": {
+      "title": "What to expect from BOXY?",
+      "items": {
+        "q1": {
+          "quarter": "Q1",
+          "title": "Platform Launch",
+          "description": "Start of operations and first resources"
+        },
+        "q2": {
+          "quarter": "Q2",
+          "title": "Resource Expansion",
+          "description": "New categories and tools"
+        },
+        "q3": {
+          "quarter": "Q3",
+          "title": "Community and Collaboration",
+          "description": "User interaction features"
+        }
+      }
+    },
+    "community": {
+      "title": "Join our community",
+      "description": "Connect with other creatives, share experiences, and stay updated with the latest news.",
+      "joinDiscord": "Join Discord"
+    }
+  },
+  "footer": {
+    "brand": {
+      "title": "BOXY",
+      "description": "Transforming the way creatives work."
+    },
+    "products": {
+      "title": "Products",
+      "explore": "Explore",
+      "pricing": "Pricing"
+    },
+    "resources": {
+      "title": "Resources",
+      "blog": "Blog",
+      "community": "Community"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    },
+    "copyright": "© {year} BOXY. All rights reserved."
   }
 } 

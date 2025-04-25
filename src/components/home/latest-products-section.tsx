@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '@/components/shop/product-card';
+import { useTranslations } from '@/hooks/use-translations';
 
 interface Product {
   id: string;
@@ -24,6 +25,10 @@ interface LatestProductsSectionProps {
 }
 
 export function LatestProductsSection({ products }: LatestProductsSectionProps) {
+  const { t } = useTranslations();
+
+  if (!t) return null;
+
   return (
     <section className="py-20 w-[90%] mx-auto">
       <div className="container mx-auto px-4">
@@ -33,7 +38,7 @@ export function LatestProductsSection({ products }: LatestProductsSectionProps) 
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-3xl font-bold">Últimos Lançamentos</h2>
+            <h2 className="text-3xl font-bold">{t.home.latestProducts.title}</h2>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -42,7 +47,7 @@ export function LatestProductsSection({ products }: LatestProductsSectionProps) 
           >
             <Link href="/shop">
               <Button variant="outline" className="gap-2">
-                Ver todos <ArrowRight className="h-4 w-4" />
+                {t.home.latestProducts.viewAll} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </motion.div>
@@ -58,7 +63,7 @@ export function LatestProductsSection({ products }: LatestProductsSectionProps) 
               <ProductCard 
                 product={product}
                 showFooterLink={true}
-                viewDetailsText="Ver detalhes"
+                viewDetailsText={t.shop.viewDetails}
               />
             </motion.div>
           ))}

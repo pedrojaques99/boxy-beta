@@ -3,23 +3,28 @@
 import { Card } from "@/components/ui/card";
 import { Sparkles, Box, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from '@/hooks/use-translations';
 
 export function FeaturesSection() {
+  const { t } = useTranslations();
+
+  if (!t) return null;
+
   const features = [
     {
       icon: Sparkles,
-      title: "Qualidade Premium",
-      description: "Recursos e ferramentas de alta qualidade para impulsionar sua criatividade."
+      title: t.home.features.items.premium.title,
+      description: t.home.features.items.premium.description
     },
     {
       icon: Box,
-      title: "Recursos Exclusivos",
-      description: "Acesso a conteúdo exclusivo e ferramentas especializadas."
+      title: t.home.features.items.exclusive.title,
+      description: t.home.features.items.exclusive.description
     },
     {
       icon: Users,
-      title: "Comunidade Ativa",
-      description: "Conecte-se com outros criativos e compartilhe experiências."
+      title: t.home.features.items.community.title,
+      description: t.home.features.items.community.description
     }
   ];
 
@@ -32,9 +37,9 @@ export function FeaturesSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl font-bold mb-4">Feito para Você</h2>
+          <h2 className="text-3xl font-bold mb-4">{t.home.features.title}</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Descubra todas as ferramentas e recursos que preparamos especialmente para você.
+            {t.home.features.subtitle}
           </p>
         </motion.div>
 

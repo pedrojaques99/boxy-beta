@@ -13,6 +13,7 @@ import { PricingSection } from '@/components/home/pricing-section';
 import { ProductCard } from '@/components/shop/product-card';
 import { CategoriesSection } from '@/components/home/categories-section';
 import { LatestProductsSection } from '@/components/home/latest-products-section';
+import { useTranslations } from '@/hooks/use-translations';
 
 interface Product {
   id: string;
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const { t } = useTranslations();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +60,8 @@ export default function HomePage() {
     fetchData();
   }, []);
 
+  if (!t) return null;
+
   return (
     <div className="flex flex-col min-h-screen">
       <HeroSection />
@@ -81,26 +85,25 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-3xl font-bold mb-6">A BOXY</h2>
+            <h2 className="text-3xl font-bold mb-6">{t.home.about.title}</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Somos uma plataforma dedicada a conectar criativos com as melhores ferramentas e recursos.
-              Nossa missão é impulsionar a criatividade e facilitar o processo criativo.
+              {t.home.about.description}
             </p>
             <div className="flex justify-center gap-4">
               <div className="flex items-center gap-4">
                 <img
                   src="/images/jacao.webp"
-                  alt="Team member"
+                  alt={t.home.about.teamMember}
                   className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 />
                 <img
                   src="/images/davi.webp"
-                  alt="Team member"
+                  alt={t.home.about.teamMember}
                   className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 />
                 <img
                   src="/images/pedro.webp"
-                  alt="Team member"
+                  alt={t.home.about.teamMember}
                   className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 />
               </div>
@@ -120,25 +123,24 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="max-w-3xl mx-auto"
           >
-            <h2 className="text-3xl font-bold mb-12 text-center">FAQ</h2>
+            <h2 className="text-3xl font-bold mb-12 text-center">{t.home.faq.title}</h2>
             <div className="space-y-6">
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Como funciona a BOXY?</h3>
+                <h3 className="text-lg font-semibold mb-2">{t.home.faq.items.howItWorks.question}</h3>
                 <p className="text-muted-foreground">
-                  A BOXY é uma plataforma que conecta criativos com recursos e ferramentas de alta qualidade.
-                  Você pode explorar, baixar e utilizar os recursos disponíveis em sua jornada criativa.
+                  {t.home.faq.items.howItWorks.answer}
                 </p>
               </Card>
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Quais são os métodos de pagamento?</h3>
+                <h3 className="text-lg font-semibold mb-2">{t.home.faq.items.paymentMethods.question}</h3>
                 <p className="text-muted-foreground">
-                  Aceitamos diversos métodos de pagamento, incluindo cartões de crédito, débito e PIX.
+                  {t.home.faq.items.paymentMethods.answer}
                 </p>
               </Card>
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">Posso cancelar minha assinatura?</h3>
+                <h3 className="text-lg font-semibold mb-2">{t.home.faq.items.subscription.question}</h3>
                 <p className="text-muted-foreground">
-                  Sim, você pode cancelar sua assinatura a qualquer momento, sem taxas adicionais.
+                  {t.home.faq.items.subscription.answer}
                 </p>
               </Card>
             </div>
@@ -155,27 +157,11 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="max-w-3xl mx-auto"
           >
-            <h2 className="text-3xl font-bold mb-12 text-center">O que esperar da BOXY?</h2>
+            <h2 className="text-3xl font-bold mb-12 text-center">{t.home.roadmap.title}</h2>
             <div className="space-y-6">
-              {[
-                {
-                  quarter: "Q1",
-                  title: "Lançamento da Plataforma",
-                  description: "Início das operações e primeiros recursos"
-                },
-                {
-                  quarter: "Q2",
-                  title: "Expansão de Recursos",
-                  description: "Novas categorias e ferramentas"
-                },
-                {
-                  quarter: "Q3",
-                  title: "Comunidade e Colaboração",
-                  description: "Recursos de interação entre usuários"
-                }
-              ].map((item, index) => (
+              {Object.entries(t.home.roadmap.items).map(([key, item], index) => (
                 <motion.div
-                  key={item.quarter}
+                  key={key}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -207,13 +193,13 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-3xl font-bold mb-6">Junte-se à nossa comunidade</h2>
+            <h2 className="text-3xl font-bold mb-6">{t.home.community.title}</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Conecte-se com outros criativos, compartilhe experiências e fique por dentro das novidades.
+              {t.home.community.description}
             </p>
             <Button size="lg" className="gap-2">
               <MessageCircle className="h-5 w-5" />
-              Entrar no Discord
+              {t.home.community.joinDiscord}
             </Button>
           </motion.div>
         </div>
@@ -224,59 +210,59 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-bold text-lg mb-4">BOXY</h3>
+              <h3 className="font-bold text-lg mb-4">{t.footer.brand.title}</h3>
               <p className="text-sm text-muted-foreground">
-                Transformando a maneira como os criativos trabalham.
+                {t.footer.brand.description}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Produtos</h4>
+              <h4 className="font-semibold mb-4">{t.footer.products.title}</h4>
               <ul className="space-y-2">
                 <li>
                   <Link href="/shop" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Explorar
+                    {t.footer.products.explore}
                   </Link>
                 </li>
                 <li>
                   <Link href="/pricing" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Preços
+                    {t.footer.products.pricing}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Recursos</h4>
+              <h4 className="font-semibold mb-4">{t.footer.resources.title}</h4>
               <ul className="space-y-2">
                 <li>
                   <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Blog
+                    {t.footer.resources.blog}
                   </Link>
                 </li>
                 <li>
                   <Link href="/discord" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Comunidade
+                    {t.footer.resources.community}
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
+              <h4 className="font-semibold mb-4">{t.footer.legal.title}</h4>
               <ul className="space-y-2">
                 <li>
                   <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Privacidade
+                    {t.footer.legal.privacy}
                   </Link>
                 </li>
                 <li>
                   <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                    Termos
+                    {t.footer.legal.terms}
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} BOXY. Todos os direitos reservados.</p>
+            <p>{t.footer.copyright.replace('{year}', new Date().getFullYear().toString())}</p>
           </div>
         </div>
       </footer>

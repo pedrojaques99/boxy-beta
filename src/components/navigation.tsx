@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme-context';
 import { createClient } from '@/lib/supabase/client';
-import { LogOut, User, Globe, Sun, Moon } from 'lucide-react';
+import { LogOut, User, Sun, Moon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,17 +11,15 @@ import { usePathname, useRouter } from "next/navigation"
 import { motion } from "framer-motion";
 import { useTranslations } from '@/hooks/use-translations';
 import { i18n } from '@/i18n/settings';
-
-type Locale = typeof i18n.locales[number];
+import Image from 'next/image';
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
-  const [currentLocale, setCurrentLocale] = useState<Locale>(i18n.defaultLocale);
   const supabase = createClient();
   const pathname = usePathname();
   const router = useRouter();
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
 
   useEffect(() => {
     const getUser = async () => {
@@ -44,17 +42,18 @@ export function Navigation() {
   };
 
   const toggleLanguage = () => {
-    const newLocale: Locale = currentLocale === 'pt-BR' ? 'en' : 'pt-BR';
-    setCurrentLocale(newLocale);
-    const newPath = pathname.startsWith('/en') || pathname.startsWith('/pt-BR')
-      ? pathname.replace(/^\/[^\/]+/, `/${newLocale}`)
-      : `/${newLocale}${pathname}`;
-    router.push(newPath);
+    const currentIndex = i18n.locales.indexOf(locale);
+    const nextIndex = (currentIndex + 1) % i18n.locales.length;
+    const newLocale = i18n.locales[nextIndex];
+    localStorage.setItem('locale', newLocale);
+    window.location.reload();
   };
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
+
+  if (!t) return null;
 
   return (
     <nav className={cn(
@@ -85,7 +84,7 @@ export function Navigation() {
                 pathname === "/about" && "text-foreground dark:text-foreground font-medium"
               )}
             >
-              About
+              {t.navigation?.about}
             </Link>
             <Link
               href="/shop"
@@ -96,7 +95,7 @@ export function Navigation() {
                 pathname === "/shop" && "text-foreground dark:text-foreground font-medium"
               )}
             >
-              Shop
+              {t.navigation?.shop}
             </Link>
             <Link
               href="/labs"
@@ -107,7 +106,7 @@ export function Navigation() {
                 pathname === "/labs" && "text-foreground dark:text-foreground font-medium"
               )}
             >
-              Labs
+              {t.navigation?.labs}
             </Link>
             <Link
               href="/price"
@@ -118,7 +117,7 @@ export function Navigation() {
                 pathname === "/price" && "text-foreground dark:text-foreground font-medium"
               )}
             >
-              Pricing
+              {t.navigation?.pricing}
             </Link>
           </nav>
         </div>
@@ -131,12 +130,17 @@ export function Navigation() {
               onClick={toggleLanguage}
               className="h-8 w-8 text-muted-foreground hover:text-foreground relative group"
             >
-              <Globe className="h-4 w-4" />
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-60 group-hover:opacity-100">
-                {currentLocale === 'pt-BR' ? 'PT' : 'EN'}
-              </span>
+              <Image
+                src={locale === 'pt-BR' 
+                  ? "/icons/emojione-v1_flag-for-brazil.svg" 
+                  : "/icons/emojione-v1_flag-for-united-states.svg"}
+                alt={locale === 'pt-BR' ? 'Brazil Flag' : 'US Flag'}
+                width={20}
+                height={20}
+                className="rounded-sm"
+              />
               <span className="sr-only">
-                {currentLocale === 'pt-BR' ? 'Switch to English' : 'Mudar para Português'}
+                {locale === 'pt-BR' ? t.navigation?.switchToEnglish : t.navigation?.switchToPortuguese}
               </span>
             </Button>
             <Button
@@ -150,7 +154,7 @@ export function Navigation() {
               ) : (
                 <Moon className="h-4 w-4" />
               )}
-              <span className="sr-only">Toggle theme</span>
+              <span className="sr-only">{t.navigation?.toggleTheme}</span>
             </Button>
           </div>
 
@@ -169,7 +173,7 @@ export function Navigation() {
                     )}
                   >
                     <User className="h-4 w-4 mr-2" />
-                    My Account
+                    {t.navigation?.myAccount}
                   </Button>
                 </Link>
                 <Button 
@@ -183,7 +187,7 @@ export function Navigation() {
                   )}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  {t.navigation?.signOut}
                 </Button>
               </>
             ) : (
@@ -198,7 +202,7 @@ export function Navigation() {
                       "dark:text-muted-foreground dark:hover:text-foreground"
                     )}
                   >
-                    Sign In
+                    {t.navigation?.signIn}
                   </Button>
                 </Link>
                 <Link href="/auth/sign-up">
@@ -211,7 +215,7 @@ export function Navigation() {
                       "dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
                     )}
                   >
-                    Get Started
+                    {t.navigation?.getStarted}
                   </Button>
                 </Link>
               </>

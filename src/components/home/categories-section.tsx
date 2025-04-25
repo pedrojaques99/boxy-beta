@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
+import { useTranslations } from '@/hooks/use-translations';
 
 interface CategoriesSectionProps {
   categories: string[];
@@ -19,7 +20,30 @@ const categoryImages = {
   'default': '/images/categories/default.jpg'
 };
 
+const getCategoryTranslation = (category: string, t: any) => {
+  switch (category) {
+    case '3D':
+      return t.shop.filters.category;
+    case 'Texturas':
+      return t.shop.filters.textures;
+    case 'Modelos':
+      return t.shop.filters.models;
+    case 'Materiais':
+      return t.shop.filters.materials;
+    case 'HDRIs':
+      return t.shop.filters.hdris;
+    case 'Plugins':
+      return t.shop.filters.plugins;
+    default:
+      return category;
+  }
+};
+
 export function CategoriesSection({ categories }: CategoriesSectionProps) {
+  const { t } = useTranslations();
+
+  if (!t) return null;
+
   return (
     <section className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -29,15 +53,17 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4">Categorias</h2>
+          <h2 className="text-3xl font-bold mb-4">{t.home.categories.title}</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Explore nossa seleção de recursos organizados por categoria
+            {t.home.categories.subtitle}
           </p>
         </motion.div>
 
         <div className="w-[80%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {categories.map((category, index) => {
             const imageUrl = categoryImages[category as keyof typeof categoryImages] || categoryImages.default;
+            const translatedCategory = getCategoryTranslation(category, t);
+            const categoryForUrl = encodeURIComponent(category);
             
             return (
               <motion.div
@@ -47,7 +73,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <Link href={`/shop?category=${category}`}>
+                <Link href={`/shop?category=${categoryForUrl}`}>
                   <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
                     <div className="relative h-48 overflow-hidden">
                       <div 
@@ -63,12 +89,12 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                     <CardContent className="p-6 relative">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
-                          {category}
+                          {translatedCategory}
                         </h3>
                         <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
-                        Descubra recursos exclusivos para {category.toLowerCase()}
+                        {t.home.categories.discover.replace('{category}', (translatedCategory || category).toLowerCase())}
                       </p>
                     </CardContent>
                   </Card>
