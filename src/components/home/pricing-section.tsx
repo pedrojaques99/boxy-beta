@@ -35,6 +35,7 @@ export function PricingSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
+            className="pt-4"
           >
             <Card className="h-full border-2 border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-lg">
               <CardContent className="p-8">
@@ -64,9 +65,10 @@ export function PricingSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className="pt-4"
           >
             <Card className="h-full border-2 border-primary relative overflow-hidden">
-              <div className="absolute -top-3 right-6 bg-primary text-primary-foreground text-sm px-3 py-1 rounded-full">
+              <div className="absolute -top-4 right-6 bg-primary text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium shadow-lg">
                 +12% OFF
               </div>
               <CardContent className="p-8">
@@ -99,6 +101,7 @@ export function PricingSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className="pt-4"
           >
             <Card className="h-full border-2 border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-lg">
               <CardContent className="p-8">

@@ -70,7 +70,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
       if (error) throw error
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(error instanceof Error ? error.message : 'Authentication failed. Please try again.')
       setIsLoading(false)
     }
   }
@@ -98,10 +98,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
+      <Card className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <CardHeader>
-          <CardTitle className="text-2xl">{t.auth.welcome}</CardTitle>
-          <CardDescription>{t.auth.signInToContinue}</CardDescription>
+          <CardTitle className="text-2xl font-bold text-foreground">{t.auth.welcome}</CardTitle>
+          <CardDescription className="text-muted-foreground">{t.auth.signInToContinue}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
@@ -112,13 +112,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-foreground">Email</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="name@example.com" 
                           type="email" 
                           {...field} 
                           disabled={isEmailLoading}
+                          className="bg-background text-foreground border-input"
                         />
                       </FormControl>
                       <FormMessage />
@@ -130,29 +131,34 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-foreground">Password</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="••••••••" 
                           type="password" 
                           {...field} 
                           disabled={isEmailLoading}
+                          className="bg-background text-foreground border-input"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                {error && <p className="text-sm text-destructive">{error}</p>}
+                {error && (
+                  <div className="rounded-md bg-destructive/10 p-3">
+                    <p className="text-sm text-destructive">{error}</p>
+                  </div>
+                )}
                 <Button 
                   type="submit" 
-                  className="w-full" 
+                  className="w-full bg-primary hover:bg-primary/90" 
                   disabled={isEmailLoading}
                 >
                   {isEmailLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Signing in...
+                      <span>Signing in...</span>
                     </div>
                   ) : (
                     'Sign in with Email'
@@ -175,7 +181,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             <div className="grid grid-cols-2 gap-4">
               <Button 
                 onClick={() => handleSocialLogin('github')} 
-                className="relative" 
+                className="relative bg-background hover:bg-accent" 
                 disabled={isLoading || isEmailLoading}
                 variant="outline"
               >
@@ -193,7 +199,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               </Button>
               <Button 
                 onClick={() => handleSocialLogin('google')} 
-                className="relative" 
+                className="relative bg-background hover:bg-accent" 
                 variant="outline"
                 disabled={isLoading || isEmailLoading}
               >
