@@ -15,7 +15,7 @@ export function AboutSection() {
   ];
 
   return (
-    <section className="py-20">
+    <section className="py-20 w-[90%] mx-auto">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

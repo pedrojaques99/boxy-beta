@@ -121,6 +121,47 @@
       "title": "Join our community",
       "description": "Connect with other creatives, share experiences, and stay updated with the latest news.",
       "joinDiscord": "Join Discord"
+    },
+    "pricing": {
+      "title": "Choose Your Plan",
+      "subtitle": "Select the plan that best fits your needs",
+      "plans": {
+        "free": {
+          "name": "Free",
+          "price": "R$ 00",
+          "features": [
+            "Access to free products",
+            "Community access (coming soon)",
+            "Basic features"
+          ],
+          "button": "View Freebies"
+        },
+        "annual": {
+          "name": "Annual Boxer",
+          "price": "R$ 397,92",
+          "monthly": "equivalent to 33,16/month",
+          "features": [
+            "Full store access",
+            "Unlimited downloads",
+            "Community (coming soon)",
+            "New products every month",
+            "Save R$ 57 annually"
+          ],
+          "button": "Become a Boxer"
+        },
+        "monthly": {
+          "name": "Monthly Boxer",
+          "price": "R$ 37,90",
+          "monthly": "Charged monthly",
+          "features": [
+            "30-day access",
+            "10x downloads per day",
+            "Community (coming soon)",
+            "New products every month"
+          ],
+          "button": "Become a Boxer"
+        }
+      }
     }
   },
   "footer": {

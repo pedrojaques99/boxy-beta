@@ -127,44 +127,24 @@ export type Dictionary = {
       subtitle: string
       plans: {
         free: {
-          title: string
-          description: string
+          name: string
           price: string
-          period: string
-          features: {
-            freebies: string
-            unlimitedFreebies: string
-          }
-          cta: string
+          features: string[]
+          button: string
         }
         annual: {
-          title: string
-          description: string
+          name: string
           price: string
-          period: string
-          monthlyEquivalent: string
-          discount: string
-          features: {
-            fullAccess: string
-            unlimitedDownloads: string
-            community: string
-            newProducts: string
-            savings: string
-          }
-          cta: string
+          monthly: string
+          features: string[]
+          button: string
         }
         monthly: {
-          title: string
-          description: string
+          name: string
           price: string
-          period: string
-          features: {
-            thirtyDayAccess: string
-            downloadsPerDay: string
-            community: string
-            newProducts: string
-          }
-          cta: string
+          monthly: string
+          features: string[]
+          button: string
         }
       }
     }
