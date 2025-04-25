@@ -4,11 +4,40 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 
 export function HeroSection() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(error => {
+        console.error('Error playing video:', error);
+      });
+    }
+  }, []);
+
   return (
-    <section className="relative h-[90vh] flex items-center justify-center bg-gradient-to-b from-background to-accent/5">
-      <div className="absolute inset-0 bg-grid-white/10 bg-grid-small" />
+    <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
+      {/* Video Background */}
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center">
+        <div className="w-[80%] h-[80%] relative">
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            onError={(e) => console.error('Video error:', e)}
+          >
+            <source src="/images/boxy_mp4.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+          <div className="absolute inset-0 bg-black/90" />
+        </div>
+      </div>
+
       <div className="container relative z-10 mx-auto px-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

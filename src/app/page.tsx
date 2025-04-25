@@ -12,6 +12,7 @@ import { FeaturesSection } from '@/components/home/features-section';
 import { PricingSection } from '@/components/home/pricing-section';
 import { ProductCard } from '@/components/shop/product-card';
 import { CategoriesSection } from '@/components/home/categories-section';
+import { LatestProductsSection } from '@/components/home/latest-products-section';
 
 interface Product {
   id: string;
@@ -69,47 +70,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Latest Products Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-12 w-[90%] mx-auto">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-3xl font-bold">Últimos Lançamentos</h2>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Link href="/shop">
-                <Button variant="outline" className="gap-2">
-                  Ver todos <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </motion.div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-[90%] mx-auto">
-            {latestProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <ProductCard 
-                  product={product}
-                  showFooterLink={true}
-                  viewDetailsText="Ver detalhes"
-                />
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LatestProductsSection products={latestProducts} />
 
       {/* Who We Are Section */}
       <section className="py-20">
@@ -126,21 +87,21 @@ export default function HomePage() {
               Nossa missão é impulsionar a criatividade e facilitar o processo criativo.
             </p>
             <div className="flex justify-center gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <img
-                  src="/avatar1.jpg"
+                  src="/images/jacao.webp"
                   alt="Team member"
-                  className="w-10 h-10 rounded-full"
+                  className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 />
                 <img
-                  src="/avatar2.jpg"
+                  src="/images/davi.webp"
                   alt="Team member"
-                  className="w-10 h-10 rounded-full"
+                  className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 />
                 <img
-                  src="/avatar3.jpg"
+                  src="/images/pedro.webp"
                   alt="Team member"
-                  className="w-10 h-10 rounded-full"
+                  className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 />
               </div>
             </div>

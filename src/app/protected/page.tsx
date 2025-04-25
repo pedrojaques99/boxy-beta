@@ -9,5 +9,5 @@ export default async function ProtectedPage() {
     redirect('/auth/login')
   }
 
-  redirect('/home')
+  redirect('/shop')
 }
