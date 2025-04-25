@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useSubscription } from '@/hooks/use-subscription'
 
 interface ProductClientProps {
   product: Product
@@ -31,6 +32,7 @@ export function ProductClient({ product, t }: ProductClientProps) {
   const { theme } = useTheme()
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const supabase = createClient()
+  const { subscriptionType } = useSubscription()
 
   useEffect(() => {
     const fetchRelatedProducts = async () => {
@@ -128,7 +130,7 @@ export function ProductClient({ product, t }: ProductClientProps) {
             </div>
           )}
 
-          {product.file_url && (
+          {product.file_url && subscriptionType === 'premium' && (
             <div className="pt-6">
               <Button
                 asChild
@@ -139,6 +141,21 @@ export function ProductClient({ product, t }: ProductClientProps) {
                   <Download className="h-4 w-4" />
                   Download
                 </a>
+              </Button>
+            </div>
+          )}
+
+          {product.file_url && subscriptionType === 'free' && (
+            <div className="pt-6">
+              <Button
+                asChild
+                className="w-full gap-2 transition-transform hover:scale-[1.02] bg-primary hover:bg-primary/90 text-primary-foreground"
+                size="lg"
+              >
+                <Link href="/price">
+                  <Download className="h-4 w-4" />
+                  Upgrade to Download
+                </Link>
               </Button>
             </div>
           )}
