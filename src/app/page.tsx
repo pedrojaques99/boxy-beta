@@ -14,6 +14,8 @@ import { ProductCard } from '@/components/shop/product-card';
 import { CategoriesSection } from '@/components/home/categories-section';
 import { LatestProductsSection } from '@/components/home/latest-products-section';
 import { useTranslations } from '@/hooks/use-translations';
+import { AboutSection } from '@/components/home/about-section';
+import { FaqSection } from '@/components/home/faq-section';
 
 interface Product {
   id: string;
@@ -77,76 +79,12 @@ export default function HomePage() {
       <LatestProductsSection products={latestProducts} />
 
       {/* Who We Are Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto text-center"
-          >
-            <h2 className="text-3xl font-bold mb-6">{t.home.about.title}</h2>
-            <p className="text-lg text-muted-foreground mb-8">
-              {t.home.about.description}
-            </p>
-            <div className="flex justify-center gap-4">
-              <div className="flex items-center gap-4">
-                <img
-                  src="/images/jacao.webp"
-                  alt={t.home.about.teamMember}
-                  className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                />
-                <img
-                  src="/images/davi.webp"
-                  alt={t.home.about.teamMember}
-                  className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                />
-                <img
-                  src="/images/pedro.webp"
-                  alt={t.home.about.teamMember}
-                  className="w-20 h-20 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <AboutSection />
 
       <PricingSection />
 
       {/* FAQ Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl mx-auto"
-          >
-            <h2 className="text-3xl font-bold mb-12 text-center">{t.home.faq.title}</h2>
-            <div className="space-y-6">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">{t.home.faq.items.howItWorks.question}</h3>
-                <p className="text-muted-foreground">
-                  {t.home.faq.items.howItWorks.answer}
-                </p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">{t.home.faq.items.paymentMethods.question}</h3>
-                <p className="text-muted-foreground">
-                  {t.home.faq.items.paymentMethods.answer}
-                </p>
-              </Card>
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2">{t.home.faq.items.subscription.question}</h3>
-                <p className="text-muted-foreground">
-                  {t.home.faq.items.subscription.answer}
-                </p>
-              </Card>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <FaqSection />
 
       {/* Roadmap Section */}
       <section className="py-20 bg-muted/30">

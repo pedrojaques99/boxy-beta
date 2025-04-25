@@ -127,6 +127,52 @@ export type Dictionary = {
       description: string
       joinDiscord: string
     }
+    pricing: {
+      title: string
+      subtitle: string
+      plans: {
+        free: {
+          title: string
+          description: string
+          price: string
+          period: string
+          features: {
+            freebies: string
+            unlimitedFreebies: string
+          }
+          cta: string
+        }
+        annual: {
+          title: string
+          description: string
+          price: string
+          period: string
+          monthlyEquivalent: string
+          discount: string
+          features: {
+            fullAccess: string
+            unlimitedDownloads: string
+            community: string
+            newProducts: string
+            savings: string
+          }
+          cta: string
+        }
+        monthly: {
+          title: string
+          description: string
+          price: string
+          period: string
+          features: {
+            thirtyDayAccess: string
+            downloadsPerDay: string
+            community: string
+            newProducts: string
+          }
+          cta: string
+        }
+      }
+    }
   }
   footer: {
     brand: {
