@@ -60,7 +60,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${protocol}://${window.location.host}/auth/callback?next=/protected`,
+          redirectTo: `${protocol}://${window.location.host}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -68,7 +68,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('OAuth error:', error)
+        throw error
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'Authentication failed. Please try again.')
       setIsLoading(false)
@@ -112,14 +115,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-foreground">Email</FormLabel>
+                      <FormLabel className="text-foreground dark:text-white">Email</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="name@example.com" 
                           type="email" 
                           {...field} 
                           disabled={isEmailLoading}
-                          className="bg-background text-foreground border-input"
+                          className="bg-background text-foreground dark:text-white placeholder:text-muted-foreground border-input focus-visible:ring-1"
                         />
                       </FormControl>
                       <FormMessage />
@@ -131,14 +134,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-foreground">Password</FormLabel>
+                      <FormLabel className="text-foreground dark:text-white">Password</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="••••••••" 
                           type="password" 
                           {...field} 
                           disabled={isEmailLoading}
-                          className="bg-background text-foreground border-input"
+                          className="bg-background text-foreground dark:text-white placeholder:text-muted-foreground border-input focus-visible:ring-1"
                         />
                       </FormControl>
                       <FormMessage />
