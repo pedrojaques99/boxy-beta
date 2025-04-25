@@ -19,6 +19,10 @@ export type Dictionary = {
     title: string
     viewDetails: string
     noProducts: string
+    search: {
+      placeholder: string
+      noResults: string
+    }
     filters: {
       all: string
       category: string

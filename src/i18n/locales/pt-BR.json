@@ -1,9 +1,9 @@
 {
   "auth": {
-    "welcome": "Bem-vindo!",
-    "signInToContinue": "Entre na sua conta para continuar",
-    "continueWithGithub": "Continuar com Github",
-    "continueWithGoogle": "Continuar com Google",
+    "welcome": "Você encontrou uma caixa, abrir?",
+    "signInToContinue": "Entre na sua conta para abrir a caixa",
+    "continueWithGithub": "Abrir com Github",
+    "continueWithGoogle": "Abrir com Google",
     "loggingIn": "Entrando...",
     "error": {
       "title": "Erro de Autenticação",
@@ -17,8 +17,12 @@
   },
   "shop": {
     "title": "Galeria de Produtos",
-    "viewDetails": "Ver Detalhes",
+    "viewDetails": "Abrir a caixa",
     "noProducts": "Nenhum produto disponível",
+    "search": {
+      "placeholder": "Pesquisar produtos...",
+      "noResults": "Nenhum produto encontrado"
+    },
     "filters": {
       "all": "Todos",
       "category": "Categoria",

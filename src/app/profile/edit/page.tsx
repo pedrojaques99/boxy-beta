@@ -208,7 +208,7 @@ export default function EditProfilePage() {
                   className="mt-2"
                 />
                 {uploadProgress > 0 && (
-                  <div className="w-full h-1 bg-gray-200 rounded-full mt-2">
+                  <div className="w-full h-1 bg-stone-200 rounded-full mt-2">
                     <div 
                       className="h-full bg-primary rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}

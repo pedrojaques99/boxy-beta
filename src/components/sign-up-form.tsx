@@ -9,12 +9,16 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { Separator } from '@/components/ui/separator'
+import Image from 'next/image'
+import { Loader2 } from 'lucide-react'
 
 export function SignUpForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isSocialLoading, setIsSocialLoading] = useState(false)
   const router = useRouter()
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -44,6 +48,24 @@ export function SignUpForm() {
       toast.error(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSocialSignUp = async (provider: 'github' | 'google') => {
+    const supabase = createClient()
+    setIsSocialLoading(true)
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/protected`,
+        },
+      })
+      if (error) throw error
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'An error occurred')
+      setIsSocialLoading(false)
     }
   }
 
@@ -120,7 +142,7 @@ export function SignUpForm() {
       </form>
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
+          <Separator className="w-full" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
@@ -128,20 +150,42 @@ export function SignUpForm() {
           </span>
         </div>
       </div>
-      <div className="grid gap-2">
-        <Button variant="outline" type="button" disabled={isLoading}>
-          <svg
-            className="mr-2 h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          GitHub
+      <div className="grid grid-cols-2 gap-4">
+        <Button 
+          onClick={() => handleSocialSignUp('github')} 
+          className="relative" 
+          disabled={isSocialLoading || isLoading}
+          variant="outline"
+        >
+          {isSocialLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Image
+              src="/icons/mdi_github.svg"
+              alt="GitHub"
+              width={20}
+              height={20}
+              className="invert dark:invert-0 opacity-80"
+            />
+          )}
+        </Button>
+        <Button 
+          onClick={() => handleSocialSignUp('google')} 
+          className="relative" 
+          variant="outline"
+          disabled={isSocialLoading || isLoading}
+        >
+          {isSocialLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Image
+              src="/icons/devicon_google.svg"
+              alt="Google"
+              width={20}
+              height={20}
+              className="opacity-80"
+            />
+          )}
         </Button>
       </div>
     </div>

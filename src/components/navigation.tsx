@@ -3,13 +3,25 @@
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme-context';
 import { createClient } from '@/lib/supabase/client';
-import { Moon, Sun } from 'lucide-react';
+import { LogOut, User, Globe, Sun, Moon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { usePathname, useRouter } from "next/navigation"
+import { motion } from "framer-motion";
+import { useTranslations } from '@/hooks/use-translations';
+import { i18n } from '@/i18n/settings';
+
+type Locale = typeof i18n.locales[number];
 
 export function Navigation() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
+  const [currentLocale, setCurrentLocale] = useState<Locale>(i18n.defaultLocale);
   const supabase = createClient();
+  const pathname = usePathname();
+  const router = useRouter();
+  const { t } = useTranslations();
 
   useEffect(() => {
     const getUser = async () => {
@@ -26,50 +38,187 @@ export function Navigation() {
     return () => subscription.unsubscribe();
   }, []);
 
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center">
-            <Link href="/" className="text-xl font-semibold text-gray-900 dark:text-white">
-              Boxy
-            </Link>
-          </div>
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
-          <div className="flex items-center space-x-4">
-            <Link 
-              href="/shop" 
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+  const toggleLanguage = () => {
+    const newLocale: Locale = currentLocale === 'pt-BR' ? 'en' : 'pt-BR';
+    setCurrentLocale(newLocale);
+    const newPath = pathname.startsWith('/en') || pathname.startsWith('/pt-BR')
+      ? pathname.replace(/^\/[^\/]+/, `/${newLocale}`)
+      : `/${newLocale}${pathname}`;
+    router.push(newPath);
+  };
+
+  const handleThemeToggle = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  return (
+    <nav className={cn(
+      "fixed top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm",
+      "dark:border-border/40 dark:bg-background/80"
+    )}>
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <motion.span 
+              className={cn(
+                "font-bold text-xl",
+                "text-foreground/90 dark:text-foreground/90"
+              )}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              Shop
-            </Link>
-            <Link 
-              href="/about" 
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              BOXY
+            </motion.span>
+          </Link>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+            <Link
+              href="/about"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                "text-foreground/60 hover:text-foreground/80",
+                "dark:text-foreground/60 dark:hover:text-foreground/80",
+                pathname === "/about" && "text-foreground dark:text-foreground font-medium"
+              )}
             >
               About
             </Link>
-            <Link 
-              href={user ? "/profile" : "/auth/login"} 
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            <Link
+              href="/shop"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                "text-foreground/60 hover:text-foreground/80",
+                "dark:text-foreground/60 dark:hover:text-foreground/80",
+                pathname === "/shop" && "text-foreground dark:text-foreground font-medium"
+              )}
             >
-              {user ? user.email?.split('@')[0] || 'Profile' : 'Sign In'}
+              Shop
             </Link>
-            
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Toggle theme"
+            <Link
+              href="/labs"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                "text-foreground/60 hover:text-foreground/80",
+                "dark:text-foreground/60 dark:hover:text-foreground/80",
+                pathname === "/labs" && "text-foreground dark:text-foreground font-medium"
+              )}
+            >
+              Labs
+            </Link>
+            <Link
+              href="/price"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                "text-foreground/60 hover:text-foreground/80",
+                "dark:text-foreground/60 dark:hover:text-foreground/80",
+                pathname === "/price" && "text-foreground dark:text-foreground font-medium"
+              )}
+            >
+              Pricing
+            </Link>
+          </nav>
+        </div>
+        <div className="flex flex-1 items-center justify-end space-x-2">
+          {/* Language and Theme Switchers */}
+          <div className="flex items-center space-x-2 mr-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleLanguage}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground relative group"
+            >
+              <Globe className="h-4 w-4" />
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-60 group-hover:opacity-100">
+                {currentLocale === 'pt-BR' ? 'PT' : 'EN'}
+              </span>
+              <span className="sr-only">
+                {currentLocale === 'pt-BR' ? 'Switch to English' : 'Mudar para Português'}
+              </span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleThemeToggle}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
             >
               {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                <Sun className="h-4 w-4" />
               ) : (
-                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                <Moon className="h-4 w-4" />
               )}
-            </button>
+              <span className="sr-only">Toggle theme</span>
+            </Button>
           </div>
+
+          <nav className="flex items-center space-x-3">
+            {user ? (
+              <>
+                <Link href="/profile">
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className={cn(
+                      "text-sm font-medium bg-accent",
+                      "text-accent-foreground hover:bg-accent/90",
+                      "dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90",
+                      pathname === "/profile" && "bg-accent/90"
+                    )}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    My Account
+                  </Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleSignOut}
+                  className={cn(
+                    "text-sm font-normal border-muted-foreground/40",
+                    "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                    "dark:border-muted-foreground/40 dark:text-muted-foreground dark:hover:bg-muted/30 dark:hover:text-foreground"
+                  )}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/login">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className={cn(
+                      "text-sm font-medium",
+                      "text-muted-foreground hover:text-foreground",
+                      "dark:text-muted-foreground dark:hover:text-foreground"
+                    )}
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/auth/sign-up">
+                  <Button 
+                    variant="default"
+                    size="sm"
+                    className={cn(
+                      "text-sm font-medium",
+                      "bg-primary text-primary-foreground hover:bg-primary/90",
+                      "dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
+                    )}
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
+          </nav>
         </div>
       </div>
     </nav>
   );
-} 
+}
