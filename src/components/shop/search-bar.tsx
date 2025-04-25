@@ -32,11 +32,12 @@ export function SearchBar({ onSearch, t }: SearchBarProps) {
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('recentSearches')
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('recentSearches');
     if (saved) {
-      setRecentSearches(JSON.parse(saved))
+      setRecentSearches(JSON.parse(saved));
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (debouncedSearchQuery) {
@@ -57,7 +58,9 @@ export function SearchBar({ onSearch, t }: SearchBarProps) {
           ...recentSearches.filter(s => s !== debouncedSearchQuery)
         ].slice(0, 5)
         setRecentSearches(updated)
-        localStorage.setItem('recentSearches', JSON.stringify(updated))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('recentSearches', JSON.stringify(updated))
+        }
       }
     } else {
       onSearch('')
