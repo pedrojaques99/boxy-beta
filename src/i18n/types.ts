@@ -26,11 +26,6 @@ export type Dictionary = {
     filters: {
       all: string
       category: string
-      textures: string
-      models: string
-      materials: string
-      hdris: string
-      plugins: string
       software: string
       type: string
     }
