@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { getDictionary } from '@/i18n'
 import { i18n } from '@/i18n/settings'
 import { ShopClient } from '@/components/shop/shop-client'
@@ -12,6 +12,18 @@ import { ProductSkeleton } from '@/components/shop/product-skeleton'
 import { useSearchParams } from 'next/navigation'
 
 export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-900 dark:border-white"></div>
+      </div>
+    }>
+      <ShopPageContent />
+    </Suspense>
+  )
+}
+
+function ShopPageContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [software, setSoftware] = useState<string[]>([])
