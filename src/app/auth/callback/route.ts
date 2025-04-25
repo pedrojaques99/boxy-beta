@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  // Always redirect to homepage after successful login
+  const next = '/'
   const error = searchParams.get('error')
 
   // Handle OAuth errors
@@ -43,10 +44,8 @@ export async function GET(request: Request) {
       baseUrl = `https://${host}`
     }
 
-    // Ensure next path starts with a slash
-    const nextPath = next.startsWith('/') ? next : `/${next}`
-
-    return NextResponse.redirect(`${baseUrl}${nextPath}`)
+    // Redirect to homepage
+    return NextResponse.redirect(`${baseUrl}/`)
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('An unexpected error occurred')}`)

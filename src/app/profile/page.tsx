@@ -35,50 +35,59 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        setLoading(true);
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) throw userError;
+        
         if (!user) {
-          router.push('/auth/login');
+          router.replace('/auth/login');
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
+        // First try to get existing profile
+        let { data: existingProfile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (profileError) throw profileError;
+        // If no profile exists, create one
+        if (!existingProfile && !profileError) {
+          const newProfile = {
+            id: user.id,
+            name: user.email?.split('@')[0] || 'User',
+            role: 'user',
+            bio: '',
+            avatar_url: '',
+            created_at: new Date().toISOString(),
+            subscription_type: 'free'
+          };
 
-        if (!profile) {
-          const { data: newProfile, error: createError } = await supabase
+          const { data: createdProfile, error: createError } = await supabase
             .from('profiles')
-            .insert([
-              {
-                id: user.id,
-                name: user.email?.split('@')[0] || 'User',
-                role: 'user',
-                created_at: new Date().toISOString(),
-                subscription_type: 'free'
-              }
-            ])
+            .insert([newProfile])
             .select()
             .single();
 
           if (createError) throw createError;
-          setProfile(newProfile);
-        } else {
-          setProfile(profile);
+          
+          existingProfile = createdProfile;
+        } else if (profileError) {
+          throw profileError;
         }
-      } catch (error) {
-        const { message } = handleError(error);
-        setError(message);
+
+        setProfile(existingProfile);
+      } catch (error: any) {
+        console.error('Profile error:', error);
+        setError(error?.message || 'Failed to load profile');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [router, supabase]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
