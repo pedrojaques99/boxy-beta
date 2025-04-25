@@ -27,12 +27,21 @@ export async function GET(request: Request) {
 
     // Get the forwarded host in case we're behind a load balancer
     const forwardedHost = request.headers.get('x-forwarded-host')
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+    const host = request.headers.get('host')
     
     // Determine the correct base URL
-    const baseUrl = forwardedHost 
-      ? `${protocol}://${forwardedHost}`
-      : origin
+    let baseUrl = origin
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production, always use the production domain
+      baseUrl = 'https://boxy-beta.vercel.app'
+    } else if (forwardedHost) {
+      // If we're behind a load balancer, use the forwarded host
+      baseUrl = `https://${forwardedHost}`
+    } else if (host) {
+      // Fallback to the host header
+      baseUrl = `https://${host}`
+    }
 
     // Ensure next path starts with a slash
     const nextPath = next.startsWith('/') ? next : `/${next}`
