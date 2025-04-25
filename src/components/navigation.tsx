@@ -12,10 +12,12 @@ import { motion } from "framer-motion";
 import { useTranslations } from '@/hooks/use-translations';
 import { i18n } from '@/i18n/settings';
 import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
+  const [isLanguageChanging, setIsLanguageChanging] = useState(false);
   const supabase = createClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -41,12 +43,19 @@ export function Navigation() {
     router.push('/');
   };
 
-  const toggleLanguage = () => {
-    const currentIndex = i18n.locales.indexOf(locale);
-    const nextIndex = (currentIndex + 1) % i18n.locales.length;
-    const newLocale = i18n.locales[nextIndex];
-    localStorage.setItem('locale', newLocale);
-    window.location.reload();
+  const toggleLanguage = async () => {
+    if (isLanguageChanging) return;
+    
+    setIsLanguageChanging(true);
+    try {
+      const newLocale = locale === 'en' ? 'pt-BR' : 'en';
+      localStorage.setItem('locale', newLocale);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error changing language:', error);
+    } finally {
+      setIsLanguageChanging(false);
+    }
   };
 
   const handleThemeToggle = () => {
@@ -124,38 +133,57 @@ export function Navigation() {
         <div className="flex flex-1 items-center justify-end space-x-2">
           {/* Language and Theme Switchers */}
           <div className="flex items-center space-x-2 mr-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleLanguage}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground relative group"
-            >
-              <Image
-                src={locale === 'pt-BR' 
-                  ? "/icons/emojione-v1_flag-for-brazil.svg" 
-                  : "/icons/emojione-v1_flag-for-united-states.svg"}
-                alt={locale === 'pt-BR' ? 'Brazil Flag' : 'US Flag'}
-                width={20}
-                height={20}
-                className="rounded-sm"
-              />
-              <span className="sr-only">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleLanguage}
+                  disabled={isLanguageChanging}
+                  className={cn(
+                    "h-8 w-8 text-muted-foreground hover:text-foreground relative group",
+                    isLanguageChanging && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Image
+                    src={locale === 'pt-BR' 
+                      ? "/icons/emojione-v1_flag-for-brazil.svg" 
+                      : "/icons/emojione-v1_flag-for-united-states.svg"}
+                    alt={locale === 'pt-BR' ? 'Brazil Flag' : 'US Flag'}
+                    width={20}
+                    height={20}
+                    className="rounded-sm"
+                  />
+                  <span className="sr-only">
+                    {locale === 'pt-BR' ? t.navigation?.switchToEnglish : t.navigation?.switchToPortuguese}
+                  </span>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
                 {locale === 'pt-BR' ? t.navigation?.switchToEnglish : t.navigation?.switchToPortuguese}
-              </span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleThemeToggle}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-              <span className="sr-only">{t.navigation?.toggleTheme}</span>
-            </Button>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleThemeToggle}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">{t.navigation?.toggleTheme}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t.navigation?.toggleTheme}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <nav className="flex items-center space-x-3">
