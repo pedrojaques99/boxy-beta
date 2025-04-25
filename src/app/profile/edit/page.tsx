@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { handleError, handleSuccess } from '@/lib/error-handler';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ImagePlus } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -194,25 +194,33 @@ export default function EditProfilePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={profile.avatar_url} />
-                <AvatarFallback>{profile.name?.[0] || 'U'}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <Label htmlFor="avatar">Change Avatar</Label>
-                <Input
+              <div className="relative group">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={profile.avatar_url} />
+                  <AvatarFallback>{profile.name?.[0] || 'U'}</AvatarFallback>
+                </Avatar>
+                <input
                   id="avatar"
                   type="file"
                   accept="image/*"
                   onChange={handleAvatarChange}
-                  className="mt-2"
+                  className="hidden"
                 />
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('avatar')?.click()}
+                  className="absolute -bottom-2 -right-2 p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <ImagePlus className="h-4 w-4" />
+                </button>
                 {uploadProgress > 0 && (
-                  <div className="w-full h-1 bg-stone-200 rounded-full mt-2">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-1 bg-stone-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -225,6 +233,7 @@ export default function EditProfilePage() {
                 value={profile.name}
                 onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                 required
+                className="dark:bg-stone-900 dark:text-stone-100 dark:border-stone-700 dark:placeholder:text-stone-500"
               />
             </div>
 
@@ -235,6 +244,7 @@ export default function EditProfilePage() {
                 value={profile.role}
                 onChange={(e) => setProfile({ ...profile, role: e.target.value })}
                 placeholder="e.g. Developer, Designer, etc."
+                className="dark:bg-stone-900 dark:text-stone-100 dark:border-stone-700 dark:placeholder:text-stone-500"
               />
             </div>
 
@@ -246,6 +256,7 @@ export default function EditProfilePage() {
                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 rows={4}
                 placeholder="Tell us about yourself..."
+                className="dark:bg-stone-900 dark:text-stone-100 dark:border-stone-700 dark:placeholder:text-stone-500"
               />
             </div>
 

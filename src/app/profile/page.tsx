@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { handleError, handleSuccess } from '@/lib/error-handler';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock, Unlock, Crown, Settings, Edit2, Calendar, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserProfile {
   id: string;
@@ -18,6 +20,7 @@ interface UserProfile {
   role: string;
   bio: string;
   created_at: string;
+  subscription_type: 'free' | 'premium';
 }
 
 export default function ProfilePage() {
@@ -47,7 +50,6 @@ export default function ProfilePage() {
         if (profileError) throw profileError;
 
         if (!profile) {
-          // If profile doesn't exist, create one
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert([
@@ -56,6 +58,7 @@ export default function ProfilePage() {
                 name: user.email?.split('@')[0] || 'User',
                 role: 'user',
                 created_at: new Date().toISOString(),
+                subscription_type: 'free'
               }
             ])
             .select()
@@ -102,7 +105,6 @@ export default function ProfilePage() {
       const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
       const filePath = `${profile.id}/${fileName}`;
 
-      // Delete old avatar if exists
       if (profile.avatar_url) {
         const oldPath = profile.avatar_url.split('/').pop();
         if (oldPath) {
@@ -112,14 +114,11 @@ export default function ProfilePage() {
         }
       }
 
-      // Upload new avatar
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
-          // @ts-ignore - Supabase supports onUploadProgress but types are not updated
-          onUploadProgress: (progress: UploadProgressEvent) => {
-            setUploadProgress((progress.loaded / progress.total) * 100);
-          },
+          cacheControl: '3600',
+          upsert: false
         });
 
       if (uploadError) throw uploadError;
@@ -146,8 +145,39 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Card className="bg-card border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold">Profile Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col space-y-6">
+                <div className="flex items-start space-x-6">
+                  <Skeleton className="h-24 w-24 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-card border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-semibold">Account Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -205,6 +235,25 @@ export default function ProfilePage() {
                 <div className="flex flex-col">
                   <h2 className="text-2xl font-bold text-foreground">{profile.name}</h2>
                   <p className="text-muted-foreground">{profile.role}</p>
+                  <div className="mt-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium gap-1 ${
+                      profile.subscription_type === 'premium' 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-200'
+                    }`}>
+                      {profile.subscription_type === 'premium' ? (
+                        <>
+                          <Crown className="h-3 w-3" />
+                          Premium
+                        </>
+                      ) : (
+                        <>
+                          <User className="h-3 w-3" />
+                          Free
+                        </>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -217,15 +266,23 @@ export default function ProfilePage() {
                 </div>
               )}
 
+              <Separator />
+
               {/* Bio Section */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-foreground">Bio</h3>
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Edit2 className="h-4 w-4" />
+                  Bio
+                </h3>
                 <p className="text-muted-foreground">{profile.bio || 'No bio added yet.'}</p>
               </div>
 
               {/* Member Since Section */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-foreground">Member Since</h3>
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Member Since
+                </h3>
                 <p className="text-muted-foreground">
                   {new Date(profile.created_at).toLocaleDateString('en-US', {
                     day: '2-digit',
@@ -235,11 +292,42 @@ export default function ProfilePage() {
                 </p>
               </div>
 
+              <Separator />
+
+              {/* Subscription Info Section */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  {profile.subscription_type === 'premium' ? (
+                    <Unlock className="h-4 w-4" />
+                  ) : (
+                    <Lock className="h-4 w-4" />
+                  )}
+                  Subscription
+                </h3>
+                <div className="flex flex-col gap-2">
+                  <p className="text-muted-foreground">
+                    Current Plan: <span className="font-medium text-foreground capitalize">{profile.subscription_type}</span>
+                  </p>
+                  {profile.subscription_type === 'free' && (
+                    <Button 
+                      onClick={() => router.push('/price')}
+                      variant="default"
+                      size="sm"
+                      className="w-fit"
+                    >
+                      <Crown className="h-4 w-4 mr-2" />
+                      Upgrade to Premium
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               <Button 
                 onClick={() => router.push('/profile/edit')}
                 className="w-fit"
-                variant="default"
+                variant="outline"
               >
+                <Edit2 className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>
             </div>
@@ -249,7 +337,10 @@ export default function ProfilePage() {
         {/* Settings Section */}
         <Card className="bg-card border-0 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-semibold">Account Settings</CardTitle>
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Account Settings
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -258,6 +349,7 @@ export default function ProfilePage() {
                 className="w-full justify-start h-12 px-4"
                 variant="outline"
               >
+                <Crown className="h-4 w-4 mr-2" />
                 Payment Settings
               </Button>
               <Button 
@@ -265,6 +357,7 @@ export default function ProfilePage() {
                 className="w-full justify-start h-12 px-4"
                 variant="outline"
               >
+                <Lock className="h-4 w-4 mr-2" />
                 Security Settings
               </Button>
               <Button 
@@ -272,7 +365,16 @@ export default function ProfilePage() {
                 className="w-full justify-start h-12 px-4"
                 variant="outline"
               >
+                <Settings className="h-4 w-4 mr-2" />
                 Notification Preferences
+              </Button>
+              <Button 
+                onClick={() => router.push('/price')}
+                className="w-full justify-start h-12 px-4"
+                variant="outline"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Manage Subscription
               </Button>
             </div>
           </CardContent>

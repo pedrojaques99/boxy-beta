@@ -10,7 +10,7 @@ interface AppCardProps {
   name: string;
   description: string;
   thumbUrl: string;
-  type: string;
+  isFree: boolean;
   tags: string[];
   createdBy: string;
   appUrl: string;
@@ -21,13 +21,13 @@ export default function AppCard({
   name,
   description,
   thumbUrl,
-  type,
+  isFree,
   tags,
   createdBy,
   appUrl
 }: AppCardProps) {
   const { canAccessProduct, isPremium } = useSubscription();
-  const hasAccess = canAccessProduct(type);
+  const hasAccess = isFree || isPremium;
 
   return (
     <Card className="overflow-hidden group">
@@ -39,7 +39,7 @@ export default function AppCard({
           className={`object-cover ${!hasAccess ? 'filter blur-sm' : ''}`}
         />
         <div className="absolute top-2 right-2 flex gap-2">
-          {type === 'free' ? (
+          {isFree ? (
             <div className="bg-green-500 text-white px-2 py-1 rounded-md text-sm">
               Free
             </div>
