@@ -11,6 +11,11 @@ export type Dictionary = {
       backToLogin: string
     }
   }
+  labs: {
+    title: string
+    description: string
+    noLabs: string
+  }
   protected: {
     hello: string
     logout: string
