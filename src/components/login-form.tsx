@@ -100,8 +100,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   if (!t) return null // Wait for translations to load
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className={cn('flex flex-col items-center gap-6', className)} {...props}>
+      <Card className="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent p-4 w-[400px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">{t.auth.welcome}</CardTitle>
           <CardDescription className="text-muted-foreground">{t.auth.signInToContinue}</CardDescription>
