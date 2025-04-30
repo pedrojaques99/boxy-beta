@@ -55,6 +55,10 @@ export async function POST(req: NextRequest) {
 
     const sub = pagarme.data
 
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database connection error' }, { status: 500 })
+    }
+
     await supabase.from('subscriptions').upsert({
       user_id,
       plan_id,
