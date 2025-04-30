@@ -7,13 +7,25 @@ const supabaseUrl = process.env.SUPABASE_URL
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
 const pagarmeApiKey = process.env.PAGARME_API_KEY
 
-if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
-  throw new Error('Missing required environment variables. Please check SUPABASE_URL, SUPABASE_SERVICE_ROLE, and PAGARME_API_KEY.')
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceRole)
+// Only create Supabase client if all required variables are present
+const supabase = supabaseUrl && supabaseServiceRole 
+  ? createClient(supabaseUrl, supabaseServiceRole)
+  : null
 
 export async function POST(req: NextRequest) {
+  // Check if all required environment variables are present
+  if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
+    console.error('Missing environment variables:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseServiceRole: !!supabaseServiceRole,
+      hasPagarmeApiKey: !!pagarmeApiKey
+    })
+    return NextResponse.json(
+      { error: 'Service configuration error' },
+      { status: 500 }
+    )
+  }
+
   const body = await req.json()
   const { user_id, email, name, plan_id, payment_method, card } = body
 
