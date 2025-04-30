@@ -15,6 +15,7 @@ export type Dictionary = {
     title: string
     description: string
     noLabs: string
+    tryIt: string
   }
   protected: {
     hello: string
