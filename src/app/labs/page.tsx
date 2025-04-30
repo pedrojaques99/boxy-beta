@@ -6,6 +6,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import AppCard from '@/components/AppCard';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslations } from '@/hooks/use-translations';
+import Link from 'next/link';
 
 interface Lab {
   id: string;
@@ -27,6 +29,7 @@ export default function LabsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const { t } = useTranslations();
   
   const supabase = createClient();
 
@@ -90,12 +93,14 @@ export default function LabsPage() {
     </div>
   ), []);
 
+  if (!t) return null;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-stone-900 dark:text-white mb-4">Labs</h1>
+        <h1 className="text-3xl font-bold text-stone-900 dark:text-white mb-4">{t.labs.title}</h1>
         <p className="text-stone-600 dark:text-stone-300">
-          Discover and try out amazing applications created by our community
+          {t.labs.description}
         </p>
       </div>
 
@@ -105,15 +110,17 @@ export default function LabsPage() {
           LoadingSkeleton
         ) : labs.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <p className="text-stone-500">No labs found.</p>
+            <p className="text-stone-500">{t.labs.noLabs}</p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {labs.map((lab, index) => (
-                <div
+                <Link
                   key={lab.id}
+                  href={lab.app_url}
                   ref={index === labs.length - 1 ? lastElementRef : undefined}
+                  className="block transition-transform hover:scale-[1.02] hover:shadow-lg rounded-lg"
                 >
                   <AppCard
                     id={lab.id}
@@ -125,7 +132,7 @@ export default function LabsPage() {
                     createdBy={lab.created_by}
                     appUrl={lab.app_url}
                   />
-                </div>
+                </Link>
               ))}
             </div>
             {isFetching && LoadingSkeleton}

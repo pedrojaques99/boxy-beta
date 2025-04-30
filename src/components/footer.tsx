@@ -1,61 +1,73 @@
-import Link from 'next/link';
+'use client'
+
+import Link from 'next/link'
+import { useTranslations } from '@/hooks/use-translations'
 
 export function Footer() {
+  const { t } = useTranslations()
+
+  if (!t) return null
+
   return (
-    <footer className="bg-white dark:bg-black border-t border-stone-200 dark:border-stone-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer className="py-12 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-lg font-semibold text-stone-900 dark:text-white mb-4">Boxy</h3>
-            <p className="text-stone-600 dark:text-stone-300 text-sm">
-              Your minimalist solution for modern living.
+            <h3 className="font-bold text-lg mb-4">{t.footer.brand.title}</h3>
+            <p className="text-sm text-muted-foreground">
+              {t.footer.brand.description}
             </p>
           </div>
-          
           <div>
-            <h3 className="text-lg font-semibold text-stone-900 dark:text-white mb-4">Quick Links</h3>
+            <h4 className="font-semibold mb-4">{t.footer.products.title}</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/shop" className="text-stone-600 dark:text-stone-300 hover:text-[#bfff58] dark:hover:text-[#bfff58] text-sm transition-colors">
-                  Shop
+                <Link href="/shop" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t.footer.products.explore}
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-stone-600 dark:text-stone-300 hover:text-[#bfff58] dark:hover:text-[#bfff58] text-sm transition-colors">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-stone-600 dark:text-stone-300 hover:text-[#bfff58] dark:hover:text-[#bfff58] text-sm transition-colors">
-                  Contact
+                <Link href="/price" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t.footer.products.pricing}
                 </Link>
               </li>
             </ul>
           </div>
-          
           <div>
-            <h3 className="text-lg font-semibold text-stone-900 dark:text-white mb-4">Legal</h3>
+            <h4 className="font-semibold mb-4">{t.footer.resources.title}</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/privacy" className="text-stone-600 dark:text-stone-300 hover:text-[#bfff58] dark:hover:text-[#bfff58] text-sm transition-colors">
-                  Privacy Policy
+                <Link href="/blog" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t.footer.resources.blog}
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-stone-600 dark:text-stone-300 hover:text-[#bfff58] dark:hover:text-[#bfff58] text-sm transition-colors">
-                  Terms of Service
+                <Link href="/discord" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t.footer.resources.community}
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-4">{t.footer.legal.title}</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t.footer.legal.privacy}
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t.footer.legal.terms}
                 </Link>
               </li>
             </ul>
           </div>
         </div>
-        
-        <div className="mt-8 pt-8 border-t border-stone-200 dark:border-stone-800">
-          <p className="text-center text-stone-600 dark:text-stone-300 text-sm">
-            © {new Date().getFullYear()} Boxy. All rights reserved.
-          </p>
+        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+          <p>{t.footer.copyright.replace('{year}', new Date().getFullYear().toString())}</p>
         </div>
       </div>
     </footer>
-  );
+  )
 } 

@@ -185,5 +185,11 @@
       "terms": "Termos"
     },
     "copyright": "© {year} BOXY. Todos os direitos reservados."
+  },
+  "labs": {
+    "title": "Laboratórios",
+    "description": "Descubra e experimente aplicações incríveis criadas por nossa comunidade",
+    "noLabs": "Nenhum laboratório encontrado",
+    "tryIt": "Experimentar →"
   }
 } 

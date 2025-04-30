@@ -1,16 +1,109 @@
-'use client';
+'use client'
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
-import { useTranslations } from '@/hooks/use-translations';
-import { cn } from '@/lib/utils';
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { motion } from 'framer-motion'
+import { Check } from 'lucide-react'
+import { useTranslations } from '@/hooks/use-translations'
+import { cn } from '@/lib/utils'
+import { CheckoutWizard } from '@/components/checkout/CheckoutWizard'
+import { useUser } from '@supabase/auth-helpers-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { useState } from 'react'
 
 export function PricingSection() {
-  const { t } = useTranslations();
+  const { t } = useTranslations()
+  const user = useUser()
+  const [isAnnualOpen, setIsAnnualOpen] = useState(false)
+  const [isMonthlyOpen, setIsMonthlyOpen] = useState(false)
 
-  if (!t?.home?.pricing?.plans) return null;
+  if (!t?.home?.pricing?.plans) return null
+
+  const PricingCard = ({ 
+    plan, 
+    isHighlighted = false, 
+    delay = 0,
+    isOpen,
+    setIsOpen,
+    planId
+  }: {
+    plan: any
+    isHighlighted?: boolean
+    delay?: number
+    isOpen: boolean
+    setIsOpen: (open: boolean) => void
+    planId: string
+  }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className={cn("pt-4", isHighlighted && "md:-mt-4")}
+    >
+      <Card className={cn(
+        "h-full relative overflow-hidden",
+        "border-2 transition-all duration-300",
+        isHighlighted 
+          ? "border-primary shadow-lg" 
+          : "border-border/50 hover:border-primary/20 hover:shadow-lg"
+      )}>
+        {isHighlighted && (
+          <div className="absolute -top-4 right-6 bg-primary text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium shadow-lg">
+            +12% OFF
+          </div>
+        )}
+        <CardContent className="p-8 h-full flex flex-col">
+          {/* Header */}
+          <div>
+            <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+            {plan.monthly && (
+              <p className="text-sm text-muted-foreground mb-2">
+                {plan.monthly}
+              </p>
+            )}
+            <div className="flex items-baseline mb-6">
+              <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                {plan.price}
+              </span>
+            </div>
+          </div>
+
+          {/* Features List */}
+          <ul className="space-y-4 mb-8 flex-grow">
+            {plan.features.map((feature: string, index: number) => (
+              <li key={index} className="flex items-center gap-3 text-muted-foreground">
+                <Check className={cn(
+                  "h-5 w-5 flex-shrink-0",
+                  isHighlighted ? "text-primary" : "text-primary/80"
+                )} />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Action Button */}
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="w-full mt-auto"
+                variant={isHighlighted ? "default" : "outline"}
+                onClick={() => setIsOpen(true)}
+              >
+                {plan.button}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <CheckoutWizard defaultPlanId={planId}/>
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
 
   return (
     <section className="py-24 bg-gradient-to-b from-background to-muted/30">
@@ -30,106 +123,30 @@ export function PricingSection() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Free Plan */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="pt-4"
-          >
-            <Card className="h-full border-2 border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-lg">
-              <CardContent className="p-8">
-                <div className="flex flex-col h-full">
-                  <h3 className="text-2xl font-bold mb-2">{t.home.pricing.plans.free.name}</h3>
-                  <div className="flex items-baseline mb-6">
-                    <span className="text-5xl font-bold">{t.home.pricing.plans.free.price}</span>
-                  </div>
-                  <ul className="space-y-4 mb-8 flex-grow">
-                    {t.home.pricing.plans.free.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3 text-muted-foreground">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant="outline" className="w-full">
-                    {t.home.pricing.plans.free.button}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Annual Plan */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="pt-4"
-          >
-            <Card className="h-full border-2 border-primary relative overflow-hidden">
-              <div className="absolute -top-4 right-6 bg-primary text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium shadow-lg">
-                +12% OFF
-              </div>
-              <CardContent className="p-8">
-                <div className="flex flex-col h-full">
-                  <h3 className="text-2xl font-bold mb-2">{t.home.pricing.plans.annual.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {t.home.pricing.plans.annual.monthly}
-                  </p>
-                  <div className="flex items-baseline mb-6">
-                    <span className="text-5xl font-bold">{t.home.pricing.plans.annual.price}</span>
-                  </div>
-                  <ul className="space-y-4 mb-8 flex-grow">
-                    {t.home.pricing.plans.annual.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3 text-muted-foreground">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full">
-                    {t.home.pricing.plans.annual.button}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Monthly Plan */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="pt-4"
-          >
-            <Card className="h-full border-2 border-border/50 hover:border-primary/20 transition-all duration-300 hover:shadow-lg">
-              <CardContent className="p-8">
-                <div className="flex flex-col h-full">
-                  <h3 className="text-2xl font-bold mb-2">{t.home.pricing.plans.monthly.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {t.home.pricing.plans.monthly.monthly}
-                  </p>
-                  <div className="flex items-baseline mb-6">
-                    <span className="text-5xl font-bold">{t.home.pricing.plans.monthly.price}</span>
-                  </div>
-                  <ul className="space-y-4 mb-8 flex-grow">
-                    {t.home.pricing.plans.monthly.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-3 text-muted-foreground">
-                        <Check className="h-5 w-5 text-primary flex-shrink-0" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant="outline" className="w-full">
-                    {t.home.pricing.plans.monthly.button}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <PricingCard
+            plan={t.home.pricing.plans.free}
+            delay={0.1}
+            isOpen={false}
+            setIsOpen={() => {}}
+            planId=""
+          />
+          <PricingCard
+            plan={t.home.pricing.plans.annual}
+            isHighlighted
+            delay={0.2}
+            isOpen={isAnnualOpen}
+            setIsOpen={setIsAnnualOpen}
+            planId="pln_anual_id"
+          />
+          <PricingCard
+            plan={t.home.pricing.plans.monthly}
+            delay={0.3}
+            isOpen={isMonthlyOpen}
+            setIsOpen={setIsMonthlyOpen}
+            planId="pln_mensal_id"
+          />
         </div>
       </div>
     </section>
-  );
-} 
+  )
+}

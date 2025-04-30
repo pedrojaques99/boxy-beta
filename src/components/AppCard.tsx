@@ -4,6 +4,8 @@ import { Card, CardContent, CardFooter } from './ui/card';
 import { useSubscription } from '@/hooks/use-subscription';
 import { Button } from './ui/button';
 import { Lock } from 'lucide-react';
+import { useTranslations } from '@/hooks/use-translations';
+import { cn } from '@/lib/utils';
 
 interface AppCardProps {
   id: string;
@@ -27,39 +29,52 @@ export default function AppCard({
   appUrl
 }: AppCardProps) {
   const { canAccessProduct, isPremium } = useSubscription();
+  const { t } = useTranslations();
   const hasAccess = isFree || isPremium;
+  const targetUrl = hasAccess ? appUrl : '/price';
+
+  if (!t) return null;
 
   return (
-    <Card className="overflow-hidden group">
-      <div className="relative h-48 w-full">
+    <Card className={cn(
+      "overflow-hidden group h-full",
+      "transition-all duration-200",
+      "hover:shadow-lg hover:border-accent/50",
+      "flex flex-col"
+    )}>
+      <div className="relative h-48 w-full shrink-0">
         <Image
           src={thumbUrl || '/placeholder.png'}
           alt={name}
           fill
-          className={`object-cover ${!hasAccess ? 'filter blur-sm' : ''}`}
+          className={cn(
+            "object-cover transition-all duration-200",
+            !hasAccess && "filter blur-sm group-hover:blur-none"
+          )}
         />
         <div className="absolute top-2 right-2 flex gap-2">
           {isFree ? (
-            <div className="bg-green-500 text-white px-2 py-1 rounded-md text-sm">
+            <div className="bg-accent/70 border border-accent/50 text-accent-foreground px-2 py-1 rounded-md text-sm">
               Free
             </div>
           ) : (
-            <div className="bg-primary text-primary-foreground px-2 py-1 rounded-md text-sm">
+            <div className="bg-accent/70 border border-accent/50 text-accent-foreground px-2 py-1 rounded-md text-sm">
               Premium
             </div>
           )}
         </div>
       </div>
       
-      <CardContent className="p-4">
-        <Link href={hasAccess ? appUrl : '/price'} className="block">
-          <h3 className="text-xl font-semibold text-stone-800 hover:text-blue-600 transition-colors dark:text-white flex items-center gap-2">
-            {name}
-            {!hasAccess && <Lock className="h-4 w-4" />}
-          </h3>
-        </Link>
+      <CardContent className="p-4 flex-1 flex flex-col">
+        <h3 className={cn(
+          "text-xl font-semibold text-stone-800 dark:text-white",
+          "flex items-center gap-2 group-hover:text-accent transition-colors"
+        )}>
+          {name}
+          {!hasAccess && <Lock className="h-4 w-4" />}
+        </h3>
         
-        <p className="text-stone-600 mt-2 line-clamp-2 dark:text-stone-300">
+        <p className="text-foreground/90 mt-2 dark:text-foreground/60 text-sm">
           {description}
         </p>
         
@@ -67,7 +82,7 @@ export default function AppCard({
           {tags.map((tag, index) => (
             <span
               key={index}
-              className="bg-stone-100 text-stone-600 px-2 py-1 rounded-md text-sm dark:bg-stone-800 dark:text-stone-300"
+              className="bg-foreground/5 text-foreground/30 border border-foreground/5 px-2 py-1 rounded-full text-sm"
             >
               {tag}
             </span>
@@ -75,28 +90,16 @@ export default function AppCard({
         </div>
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between p-4 pt-0">
-        <span className="text-sm text-stone-500 dark:text-stone-400">
+      <CardFooter className="flex items-center justify-between p-4 pt-0 mt-auto border-t border-border/5">
+        <span className="text-sm text-foreground/60">
           By {createdBy}
         </span>
-        {hasAccess ? (
-          <Link
-            href={appUrl}
-            target="_blank"
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium dark:text-blue-400 dark:hover:text-blue-300"
-          >
-            Try it →
-          </Link>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.href = '/price'}
-            className="text-sm"
-          >
-            Upgrade to Premium
-          </Button>
-        )}
+        <span className={cn(
+          "text-sm font-medium",
+          "text-accent group-hover:translate-x-1 transition-transform"
+        )}>
+          {t.labs.tryIt}
+        </span>
       </CardFooter>
     </Card>
   );
