@@ -30,7 +30,13 @@ const STEPS = [
   { id: 'confirmacao', label: 'Confirmação' },
 ]
 
-export function CheckoutWizard({ defaultPlanId }: { defaultPlanId?: string }) {
+export function CheckoutWizard({ 
+  defaultPlanId,
+  onSuccess 
+}: { 
+  defaultPlanId?: string
+  onSuccess?: () => void 
+}) {
   const user = useUser()
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState(defaultPlanId || '')
@@ -77,6 +83,7 @@ export function CheckoutWizard({ defaultPlanId }: { defaultPlanId?: string }) {
 
       setSuccess(true)
       toast.success('Assinatura criada com sucesso!')
+      onSuccess?.()
     } catch (err: any) {
       console.error('Subscription error:', err)
       setSuccess(false)
