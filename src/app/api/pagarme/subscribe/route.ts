@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE!
-)
+// Validate environment variables
+const supabaseUrl = process.env.SUPABASE_URL
+const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
+const pagarmeApiKey = process.env.PAGARME_API_KEY
+
+if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
+  throw new Error('Missing required environment variables. Please check SUPABASE_URL, SUPABASE_SERVICE_ROLE, and PAGARME_API_KEY.')
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceRole)
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
