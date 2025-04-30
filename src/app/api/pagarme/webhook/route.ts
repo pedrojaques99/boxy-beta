@@ -12,6 +12,13 @@ const supabase = supabaseUrl && supabaseServiceRole
   ? createClient(supabaseUrl, supabaseServiceRole)
   : null
 
+const WEBHOOK_EVENTS = {
+  subscription_updated: 'subscription_updated',
+  subscription_canceled: 'subscription_canceled',
+  subscription_payment_failed: 'subscription_payment_failed',
+  subscription_payment_succeeded: 'subscription_payment_succeeded'
+} as const
+
 export async function POST(req: NextRequest) {
   // Check if all required environment variables are present
   if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
@@ -38,24 +45,56 @@ export async function POST(req: NextRequest) {
   const digest = `sha256=${hmac.digest('hex')}`
 
   if (signature !== digest) {
+    console.error('Invalid webhook signature')
     return NextResponse.json({ error: 'Assinatura inválida' }, { status: 401 })
   }
 
   const event = JSON.parse(rawBody)
   const { type, data } = event
 
-  if (type === 'subscription_updated') {
-    const sub = data.subscription
+  try {
+    switch (type) {
+      case WEBHOOK_EVENTS.subscription_updated:
+      case WEBHOOK_EVENTS.subscription_payment_succeeded:
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: data.subscription.status,
+            current_period_end: new Date(data.subscription.current_period.end_at * 1000).toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('pagarme_subscription_id', data.subscription.id)
+        break
 
-    await supabase
-      .from('subscriptions')
-      .update({
-        status: sub.status,
-        current_period_end: new Date(sub.current_period.end_at * 1000).toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('pagarme_subscription_id', sub.id)
+      case WEBHOOK_EVENTS.subscription_canceled:
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'canceled',
+            canceled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('pagarme_subscription_id', data.subscription.id)
+        break
+
+      case WEBHOOK_EVENTS.subscription_payment_failed:
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'payment_failed',
+            last_payment_error: data.payment.error_message,
+            updated_at: new Date().toISOString()
+          })
+          .eq('pagarme_subscription_id', data.subscription.id)
+        break
+
+      default:
+        console.log('Unhandled webhook event:', type)
+    }
+
+    return NextResponse.json({ received: true })
+  } catch (err) {
+    console.error('Webhook processing error:', err)
+    return NextResponse.json({ error: 'Erro ao processar webhook' }, { status: 500 })
   }
-
-  return NextResponse.json({ received: true })
 }

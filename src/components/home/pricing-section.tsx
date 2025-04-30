@@ -14,6 +14,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { useState } from 'react'
+import { PLANS, formatPrice, getPlanInterval } from '@/lib/plans'
 
 export function PricingSection() {
   const { t } = useTranslations()
@@ -37,73 +38,76 @@ export function PricingSection() {
     isOpen: boolean
     setIsOpen: (open: boolean) => void
     planId: string
-  }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className={cn("pt-4", isHighlighted && "md:-mt-4")}
-    >
-      <Card className={cn(
-        "h-full relative overflow-hidden",
-        "border-2 transition-all duration-300",
-        isHighlighted 
-          ? "border-primary shadow-lg" 
-          : "border-border/50 hover:border-primary/20 hover:shadow-lg"
-      )}>
-        {isHighlighted && (
-          <div className="absolute -top-4 right-6 bg-primary text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium shadow-lg">
-            +12% OFF
-          </div>
-        )}
-        <CardContent className="p-8 h-full flex flex-col">
-          {/* Header */}
-          <div>
-            <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-            {plan.monthly && (
-              <p className="text-sm text-muted-foreground mb-2">
-                {plan.monthly}
-              </p>
-            )}
-            <div className="flex items-baseline mb-6">
-              <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
-                {plan.price}
-              </span>
+  }) => {
+    const planData = PLANS[planId]
+    if (!planData) return null
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay }}
+        className={cn("pt-4", isHighlighted && "md:-mt-4")}
+      >
+        <Card className={cn(
+          "h-full relative overflow-hidden",
+          "border-2 transition-all duration-300",
+          isHighlighted 
+            ? "border-primary shadow-lg" 
+            : "border-border/50 hover:border-primary/20 hover:shadow-lg"
+        )}>
+          {isHighlighted && (
+            <div className="absolute -top-4 right-6 bg-primary text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium shadow-lg">
+              +12% OFF
             </div>
-          </div>
+          )}
+          <CardContent className="p-8 h-full flex flex-col">
+            {/* Header */}
+            <div>
+              <h3 className="text-2xl font-bold mb-2">{planData.name}</h3>
+              <p className="text-sm text-muted-foreground mb-2">
+                {getPlanInterval(planData)}
+              </p>
+              <div className="flex items-baseline mb-6">
+                <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                  {formatPrice(planData.price)}
+                </span>
+              </div>
+            </div>
 
-          {/* Features List */}
-          <ul className="space-y-4 mb-8 flex-grow">
-            {plan.features.map((feature: string, index: number) => (
-              <li key={index} className="flex items-center gap-3 text-muted-foreground">
-                <Check className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  isHighlighted ? "text-primary" : "text-primary/80"
-                )} />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
+            {/* Features List */}
+            <ul className="space-y-4 mb-8 flex-grow">
+              {planData.features.map((feature: string, index: number) => (
+                <li key={index} className="flex items-center gap-3 text-muted-foreground">
+                  <Check className={cn(
+                    "h-5 w-5 flex-shrink-0",
+                    isHighlighted ? "text-primary" : "text-primary/80"
+                  )} />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
 
-          {/* Action Button */}
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                className="w-full mt-auto"
-                variant={isHighlighted ? "default" : "outline"}
-                onClick={() => setIsOpen(true)}
-              >
-                {plan.button}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <CheckoutWizard defaultPlanId={planId}/>
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
-    </motion.div>
-  )
+            {/* Action Button */}
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="w-full mt-auto"
+                  variant={isHighlighted ? "default" : "outline"}
+                  onClick={() => setIsOpen(true)}
+                >
+                  {plan.button}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <CheckoutWizard defaultPlanId={planId}/>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
 
   return (
     <section className="py-24 bg-gradient-to-b from-background to-muted/30">

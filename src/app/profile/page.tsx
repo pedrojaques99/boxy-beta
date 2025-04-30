@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@supabase/auth-helpers-react';
+import { toast } from 'react-hot-toast';
 
 interface UserProfile {
   id: string;
@@ -24,10 +26,12 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+  const user = useUser();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [cpf, setCpf] = useState(user?.user_metadata?.cpf || '');
   const supabase = createClient();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -149,6 +153,23 @@ export default function ProfilePage() {
       handleError(error);
     } finally {
       setUploadProgress(0);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { cpf }
+      });
+      if (error) throw error;
+      toast.success('CPF atualizado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao atualizar CPF');
+    } finally {
+      setLoading(false);
     }
   };
 

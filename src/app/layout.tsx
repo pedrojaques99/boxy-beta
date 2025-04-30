@@ -4,6 +4,7 @@ import "./globals.css"
 import { Layout } from "@/components/layout"
 import { Providers } from "@/components/providers"
 import { cn } from "@/lib/utils"
+import { Toaster } from 'react-hot-toast'
 
 export const viewport: Viewport = {
   themeColor: [
@@ -44,6 +45,7 @@ export default function RootLayout({
             </div>
           </Layout>
         </Providers>
+        <Toaster position="top-right" />
       </body>
     </html>
   )
