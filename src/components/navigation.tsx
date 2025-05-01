@@ -21,6 +21,9 @@ export function Navigation() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLanguageChanging, setIsLanguageChanging] = useState(false);
   const [themeState, setThemeState] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') {
+      return 'light'; // Default to light theme during SSR
+    }
     if (theme === 'system') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
