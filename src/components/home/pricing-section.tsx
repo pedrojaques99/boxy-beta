@@ -43,6 +43,12 @@ export function PricingSection() {
     const planData = PLANS[planId]
     if (!planData) return null
 
+    const planTranslations = t.home.pricing.plans[planId]
+    if (!planTranslations) return null
+
+    const features = planTranslations.features || []
+    if (!Array.isArray(features)) return null
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -65,26 +71,26 @@ export function PricingSection() {
           <CardContent className="p-8 h-full flex flex-col">
             {/* Header */}
             <div>
-              <h3 className="text-2xl font-bold mb-2">{t(`${planId}.name`)}</h3>
+              <h3 className="text-2xl font-bold mb-2">{planTranslations.name}</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                {getPlanInterval(planData)}
+                {planTranslations.monthly}
               </p>
               <div className="flex items-baseline mb-6">
                 <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
-                  {formatPrice(planData.price)}
+                  {planTranslations.price}
                 </span>
               </div>
             </div>
 
             {/* Features List */}
             <ul className="space-y-4 mb-8 flex-grow">
-              {planData.features.map((feature: string, index: number) => (
+              {features.map((feature: string, index: number) => (
                 <li key={index} className="flex items-center gap-3 text-muted-foreground">
                   <Check className={cn(
                     "h-5 w-5 flex-shrink-0",
                     isHighlighted ? "text-primary" : "text-primary/80"
                   )} />
-                  <span>{t(`${planId}.features.${feature.toLowerCase().replace(/\s+/g, '_')}`)}</span>
+                  <span>{feature}</span>
                 </li>
               ))}
             </ul>
@@ -97,7 +103,7 @@ export function PricingSection() {
                   variant={isHighlighted ? "default" : "outline"}
                   onClick={() => setIsOpen(true)}
                 >
-                  {t(`${planId}.button`)}
+                  {planTranslations.button}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
@@ -120,10 +126,10 @@ export function PricingSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
-            {t('title')}
+            {t.home.pricing.title}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {t('subtitle')}
+            {t.home.pricing.subtitle}
           </p>
         </motion.div>
 
@@ -141,7 +147,7 @@ export function PricingSection() {
             delay={0.2}
             isOpen={isAnnualOpen}
             setIsOpen={setIsAnnualOpen}
-            planId="yearly"
+            planId="annual"
           />
           <PricingCard
             plan={t.home.pricing.plans.monthly}
