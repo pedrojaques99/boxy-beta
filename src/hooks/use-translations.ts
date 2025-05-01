@@ -11,6 +11,8 @@ export function useTranslations() {
   const [locale, setLocale] = useState<Locale>('en')
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     // Get locale from localStorage or fallback to browser language
     const savedLocale = localStorage.getItem('locale') as Locale
     const browserLocale = navigator.language as Locale
@@ -22,7 +24,9 @@ export function useTranslations() {
     ) || defaultLocale
 
     // Update HTML lang attribute
-    document.documentElement.lang = selectedLocale
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = selectedLocale
+    }
     setLocale(selectedLocale)
 
     // Load dictionary
@@ -31,11 +35,15 @@ export function useTranslations() {
 
   // Listen for localStorage changes from other components
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'locale' && event.newValue) {
         const newLocale = event.newValue as Locale
         if (i18n.locales.includes(newLocale as Locale)) {
-          document.documentElement.lang = newLocale
+          if (typeof document !== 'undefined') {
+            document.documentElement.lang = newLocale
+          }
           setLocale(newLocale)
           getDictionary(newLocale).then(setDictionary)
         }

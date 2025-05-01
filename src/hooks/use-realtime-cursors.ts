@@ -1,51 +1,13 @@
-import { createClient } from '@/lib/supabase/client'
-import { RealtimeChannel } from '@supabase/supabase-js'
+'use client'
+
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { RealtimeChannel } from '@supabase/supabase-js'
+import { useThrottleCallback } from './use-throttle-callback'
 
-/**
- * Throttle a callback to a certain delay, It will only call the callback if the delay has passed, with the arguments
- * from the last call
- */
-const useThrottleCallback = <T extends any[], R>(
-  callback: (...args: T) => R,
-  delay: number
-) => {
-  const lastCall = useRef(0)
-  const timeout = useRef<NodeJS.Timeout | null>(null)
+const EVENT_NAME = 'cursor-move'
 
-  return useCallback(
-    (...args: T) => {
-      const now = Date.now()
-      const remainingTime = delay - (now - lastCall.current)
-
-      if (remainingTime <= 0) {
-        if (timeout.current) {
-          clearTimeout(timeout.current)
-          timeout.current = null
-        }
-        lastCall.current = now
-        callback(...args)
-      } else if (!timeout.current) {
-        timeout.current = setTimeout(() => {
-          lastCall.current = Date.now()
-          timeout.current = null
-          callback(...args)
-        }, remainingTime)
-      }
-    },
-    [callback, delay]
-  )
-}
-
-const supabase = createClient()
-
-const generateRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 100%, 70%)`
-
-const generateRandomNumber = () => Math.floor(Math.random() * 100)
-
-const EVENT_NAME = 'realtime-cursor-move'
-
-type CursorEventPayload = {
+interface CursorEventPayload {
   position: {
     x: number
     y: number
@@ -56,6 +18,26 @@ type CursorEventPayload = {
   }
   color: string
   timestamp: number
+}
+
+const generateRandomColor = () => {
+  const colors = [
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEEAD',
+    '#D4A5A5',
+    '#9B59B6',
+    '#3498DB',
+    '#1ABC9C',
+    '#F1C40F',
+  ]
+  return colors[Math.floor(Math.random() * colors.length)]
+}
+
+const generateRandomNumber = () => {
+  return Math.floor(Math.random() * 1000000)
 }
 
 export const useRealtimeCursors = ({
@@ -130,6 +112,8 @@ export const useRealtimeCursors = ({
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     // Add event listener for mousemove
     window.addEventListener('mousemove', handleMouseMove)
 
