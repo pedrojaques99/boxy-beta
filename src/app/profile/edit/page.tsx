@@ -55,8 +55,8 @@ export default function EditProfilePage() {
 
         setProfile(profile);
       } catch (error) {
-        const { message } = handleError(error);
-        setError(message);
+        const { error: errorMessage } = handleError(error);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
