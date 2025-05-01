@@ -19,11 +19,7 @@ import { cn } from '@/lib/utils'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
-
-const PLANS = [
-  { id: 'pln_mensal_id', label: 'Mensal', price: 'R$ 37,90/mês' },
-  { id: 'pln_anual_id', label: 'Anual', price: 'R$ 379,00/ano' },
-]
+import { PLANS, PlanId } from '@/lib/plans'
 
 const STEPS = [
   { id: 'plano', label: 'Plano' },
@@ -35,93 +31,80 @@ export function CheckoutWizard({
   defaultPlanId,
   onSuccess 
 }: { 
-  defaultPlanId?: string
+  defaultPlanId?: PlanId
   onSuccess?: () => void 
 }) {
   const user = useUser()
   const router = useRouter()
+  const t = useTranslations('checkout')
   const [step, setStep] = useState(0)
-  const [planId, setPlanId] = useState(defaultPlanId || '')
-  const [cardData, setCardData] = useState({
-    holder_name: '',
+  const [planId, setPlanId] = useState<PlanId | undefined>(defaultPlanId)
+  const [card, setCard] = useState({
     number: '',
-    exp_month: '',
-    exp_year: '',
-    cvv: ''
+    name: '',
+    expiry: '',
+    cvc: ''
   })
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState<boolean | null>(null)
-
-  // Redirect to login if not authenticated
-  if (!user) {
-    router.push('/auth/login')
-    return null
-  }
 
   const handleBack = () => {
     if (step > 0) setStep(step - 1)
   }
 
-  const handleSubscribe = async () => {
-    if (!user) {
-      router.push('/auth/login')
+  const handleNext = async () => {
+    if (step === 0 && !planId) {
+      toast.error(t?.selectPlan || 'Please select a plan')
       return
     }
 
-    setLoading(true)
-    try {
-      const res = await fetch('/api/pagarme/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          email: user.email,
-          name: user.user_metadata?.full_name || user.email,
-          plan_id: planId,
-          payment_method: 'credit_card',
-          card: cardData
+    if (step === 1) {
+      setLoading(true)
+      try {
+        const response = await fetch('/api/pagarme/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: user?.id,
+            email: user?.email,
+            name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
+            plan_id: planId,
+            payment_method: 'credit_card',
+            card: {
+              holder_name: card.name,
+              number: card.number.replace(/\s/g, ''),
+              exp_month: card.expiry.split('/')[0],
+              exp_year: card.expiry.split('/')[1],
+              cvv: card.cvc
+            }
+          })
         })
-      })
 
-      const data = await res.json()
-      
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao processar pagamento')
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Erro ao processar pagamento')
+        }
+
+        setStep(2)
+        onSuccess?.()
+      } catch (error: any) {
+        toast.error(error.message || 'Erro ao processar pagamento')
+      } finally {
+        setLoading(false)
       }
-
-      setSuccess(true)
-      toast.success('Assinatura criada com sucesso!')
-      onSuccess?.()
-    } catch (err: any) {
-      console.error('Subscription error:', err)
-      setSuccess(false)
-      toast.error(err.message || 'Erro ao processar pagamento')
-    } finally {
-      setLoading(false)
-      setStep(2)
+    } else {
+      setStep(step + 1)
     }
   }
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">Assinatura Boxy</h1>
-        <p className="text-muted-foreground">Escolha seu plano e complete o pagamento</p>
-      </div>
-
+    <div className="space-y-6">
       <Tabs value={STEPS[step].id} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          {STEPS.map((s, index) => (
-            <TabsTrigger
-              key={s.id}
-              value={s.id}
-              disabled={index > step}
-              className={cn(
-                "relative",
-                index <= step && "text-primary",
-                index === step && "bg-primary/10"
-              )}
-            >
+          {STEPS.map((s) => (
+            <TabsTrigger key={s.id} value={s.id}>
               {s.label}
             </TabsTrigger>
           ))}
@@ -142,29 +125,31 @@ export function CheckoutWizard({
                   {index === 0 && (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {PLANS.map((plan) => (
+                        {Object.entries(PLANS).map(([id, plan]) => (
                           <Card
-                            key={plan.id}
+                            key={id}
                             className={cn(
                               "cursor-pointer p-6 transition-all duration-200 relative overflow-hidden",
                               "hover:border-accent/50 hover:shadow-lg",
-                              planId === plan.id
+                              planId === id
                                 ? "border-accent bg-accent/5 shadow-md"
                                 : "border-border hover:bg-muted/50"
                             )}
-                            onClick={() => setPlanId(plan.id)}
+                            onClick={() => setPlanId(id as PlanId)}
                           >
-                            {planId === plan.id && (
+                            {planId === id && (
                               <div className="absolute top-2 right-2 text-accent">
                                 <Check className="h-5 w-5" />
                               </div>
                             )}
-                            <div className="space-y-2">
-                              <h3 className="font-semibold text-lg">{plan.label}</h3>
-                              <p className="text-muted-foreground">{plan.price}</p>
-                              {plan.id === 'pln_anual_id' && (
+                            <div>
+                              <h3 className="font-semibold text-lg">{plan.name}</h3>
+                              <p className="text-muted-foreground">
+                                {plan.price === 0 ? 'Free' : `R$ ${plan.price.toFixed(2)}/${plan.interval}`}
+                              </p>
+                              {id === 'yearly' && (
                                 <p className="text-sm text-primary font-medium">
-                                  Economize 20% com o plano anual
+                                  Save 20% with yearly plan
                                 </p>
                               )}
                             </div>
@@ -174,10 +159,10 @@ export function CheckoutWizard({
                       <div className="flex justify-between">
                         <Button variant="outline" onClick={handleBack} disabled={step === 0}>
                           <ArrowLeft className="mr-2 h-4 w-4" />
-                          Voltar
+                          Back
                         </Button>
                         <Button disabled={!planId} onClick={() => setStep(1)}>
-                          Continuar
+                          Continue
                         </Button>
                       </div>
                     </>
@@ -185,81 +170,70 @@ export function CheckoutWizard({
 
                   {index === 1 && (
                     <>
-                      <div className="grid gap-4">
-                        <div>
-                          <Label htmlFor="holder_name">Nome no cartão</Label>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="card-number">Card Number</Label>
                           <Input
-                            id="holder_name"
-                            value={cardData.holder_name}
-                            onChange={(e) => setCardData({ ...cardData, holder_name: e.target.value })}
-                            className="text-foreground dark:text-foreground"
+                            id="card-number"
+                            placeholder="1234 5678 9012 3456"
+                            value={card.number}
+                            onChange={(e) => setCard({ ...card, number: e.target.value })}
                           />
                         </div>
-                        <div>
-                          <Label htmlFor="number">Número do cartão</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="card-name">Cardholder Name</Label>
                           <Input
-                            id="number"
-                            value={cardData.number}
-                            onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
-                            className="text-foreground dark:text-foreground"
+                            id="card-name"
+                            placeholder="John Doe"
+                            value={card.name}
+                            onChange={(e) => setCard({ ...card, name: e.target.value })}
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="exp_month">Mês</Label>
+                          <div className="space-y-2">
+                            <Label htmlFor="card-expiry">Expiry Date</Label>
                             <Input
-                              id="exp_month"
-                              value={cardData.exp_month}
-                              onChange={(e) => setCardData({ ...cardData, exp_month: e.target.value })}
-                              className="text-foreground dark:text-foreground"
+                              id="card-expiry"
+                              placeholder="MM/YY"
+                              value={card.expiry}
+                              onChange={(e) => setCard({ ...card, expiry: e.target.value })}
                             />
                           </div>
-                          <div>
-                            <Label htmlFor="exp_year">Ano</Label>
+                          <div className="space-y-2">
+                            <Label htmlFor="card-cvc">CVC</Label>
                             <Input
-                              id="exp_year"
-                              value={cardData.exp_year}
-                              onChange={(e) => setCardData({ ...cardData, exp_year: e.target.value })}
-                              className="text-foreground dark:text-foreground"
+                              id="card-cvc"
+                              placeholder="123"
+                              value={card.cvc}
+                              onChange={(e) => setCard({ ...card, cvc: e.target.value })}
                             />
                           </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="cvv">CVV</Label>
-                          <Input
-                            id="cvv"
-                            value={cardData.cvv}
-                            onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
-                            className="text-foreground dark:text-foreground"
-                          />
                         </div>
                       </div>
                       <div className="flex justify-between">
                         <Button variant="outline" onClick={handleBack}>
                           <ArrowLeft className="mr-2 h-4 w-4" />
-                          Voltar
+                          Back
                         </Button>
-                        <Button onClick={handleSubscribe} disabled={loading}>
-                          {loading ? 'Processando...' : 'Assinar agora'}
+                        <Button onClick={handleNext} disabled={loading}>
+                          {loading ? 'Processing...' : 'Subscribe'}
                         </Button>
                       </div>
                     </>
                   )}
 
                   {index === 2 && (
-                    <div className="text-center py-8">
-                      {success === true && (
-                        <>
-                          <h2 className="text-xl font-bold mb-2">Assinatura confirmada ✅</h2>
-                          <p className="text-muted-foreground">Você já pode aproveitar todos os recursos premium.</p>
-                        </>
-                      )}
-                      {success === false && (
-                        <>
-                          <h2 className="text-xl font-bold mb-2 text-destructive">Erro no pagamento ❌</h2>
-                          <p className="text-muted-foreground">Por favor, tente novamente ou entre em contato com o suporte.</p>
-                        </>
-                      )}
+                    <div className="text-center space-y-4">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                        <Check className="h-8 w-8 text-green-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold">Subscription Created!</h3>
+                      <p className="text-muted-foreground">
+                        Your subscription has been successfully created. You can now access all premium features.
+                      </p>
+                      <Button onClick={() => router.push('/profile')}>
+                        Go to Profile
+                      </Button>
                     </div>
                   )}
                 </motion.div>

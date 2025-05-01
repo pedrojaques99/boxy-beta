@@ -1,12 +1,12 @@
 'use client'
 
 import { useUser } from '@supabase/auth-helpers-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
-import { formatPrice, getPlanById } from '@/lib/plans'
+import { formatPrice, getPlanById, PlanId } from '@/lib/plans'
 import { Subscription } from '@/types/subscription'
 import { CheckoutWizard } from '@/components/checkout/CheckoutWizard'
 import {
@@ -16,9 +16,11 @@ import {
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { useTranslations } from '@/hooks/use-translations'
 
 export default function SubscriptionPage() {
   const user = useUser()
+  const t = useTranslations('profile')
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
@@ -41,7 +43,7 @@ export default function SubscriptionPage() {
       if (error) throw error
       setSubscription(data)
     } catch (err) {
-      console.error(err)
+      console.error('Error loading subscription:', err)
       toast.error('Erro ao carregar assinatura')
     } finally {
       setLoading(false)
@@ -75,13 +77,16 @@ export default function SubscriptionPage() {
 
   if (!user) return null
 
-  const plan = subscription ? getPlanById(subscription.plan_id) : null
+  const plan = subscription ? getPlanById(subscription.plan_id as PlanId) : null
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>Minha Assinatura</CardTitle>
+          <CardTitle>{t?.subscription?.title || 'Subscription'}</CardTitle>
+          <CardDescription>
+            {t?.subscription?.description || 'Manage your subscription plan'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {loading ? (
@@ -89,19 +94,19 @@ export default function SubscriptionPage() {
           ) : subscription ? (
             <>
               <div>
-                <h3 className="text-lg font-semibold">Plano Atual</h3>
+                <h3 className="font-semibold">{t?.subscription?.currentPlan || 'Current Plan'}</h3>
                 <p className="text-muted-foreground">
-                  {plan?.name} - {formatPrice(plan?.price || 0)}
+                  {plan?.name || subscription.plan_id}
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Status</h3>
+                <h3 className="font-semibold">{t?.subscription?.status || 'Status'}</h3>
                 <p className="text-muted-foreground capitalize">
                   {subscription.status}
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Próximo Pagamento</h3>
+                <h3 className="font-semibold">{t?.subscription?.nextBilling || 'Next Billing'}</h3>
                 <p className="text-muted-foreground">
                   {format(new Date(subscription.current_period_end), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </p>
@@ -111,7 +116,7 @@ export default function SubscriptionPage() {
                   variant="outline" 
                   onClick={handleUpdateCard}
                 >
-                  Atualizar Cartão
+                  {t?.subscription?.changePlan || 'Change Plan'}
                 </Button>
                 {subscription.status !== 'canceled' && (
                   <Button 
@@ -126,10 +131,10 @@ export default function SubscriptionPage() {
           ) : (
             <>
               <p className="text-muted-foreground">
-                Você ainda não tem uma assinatura ativa.
+                {t?.subscription?.noSubscription || 'No active subscription'}
               </p>
               <Button onClick={() => setIsCheckoutOpen(true)}>
-                Assinar Agora
+                {t?.subscription?.subscribe || 'Subscribe Now'}
               </Button>
             </>
           )}
@@ -139,7 +144,7 @@ export default function SubscriptionPage() {
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <CheckoutWizard 
-            defaultPlanId={subscription?.plan_id} 
+            defaultPlanId={subscription?.plan_id as PlanId} 
             onSuccess={() => {
               setIsCheckoutOpen(false)
               loadSubscription()

@@ -132,7 +132,7 @@ export function PricingSection() {
             delay={0.1}
             isOpen={false}
             setIsOpen={() => {}}
-            planId=""
+            planId="free"
           />
           <PricingCard
             plan={t.home.pricing.plans.annual}
@@ -140,14 +140,14 @@ export function PricingSection() {
             delay={0.2}
             isOpen={isAnnualOpen}
             setIsOpen={setIsAnnualOpen}
-            planId="pln_anual_id"
+            planId="yearly"
           />
           <PricingCard
             plan={t.home.pricing.plans.monthly}
             delay={0.3}
             isOpen={isMonthlyOpen}
             setIsOpen={setIsMonthlyOpen}
-            planId="pln_mensal_id"
+            planId="monthly"
           />
         </div>
       </div>
