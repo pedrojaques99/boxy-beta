@@ -10,22 +10,11 @@ import { createClient } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useSubscription } from '@/hooks/use-subscription'
+import { Dictionary } from '@/i18n/types'
 
 interface ProductClientProps {
   product: Product
-  t: {
-    shop: {
-      title: string
-      viewDetails: string
-      noProducts: string
-      filters: {
-        all: string
-        category: string
-        software: string
-        type: string
-      }
-    }
-  }
+  t: Dictionary
 }
 
 export function ProductClient({ product, t }: ProductClientProps) {

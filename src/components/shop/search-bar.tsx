@@ -9,18 +9,11 @@ import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { handleError } from '@/lib/error-handler'
 import { toast } from 'sonner'
+import { Dictionary } from '@/i18n/types'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
-  t: {
-    shop: {
-      search: {
-        placeholder: string
-        recentSearches?: string
-        noResults?: string
-      }
-    }
-  }
+  t: Dictionary
 }
 
 export function SearchBar({ onSearch, t }: SearchBarProps) {

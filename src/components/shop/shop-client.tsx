@@ -6,20 +6,16 @@ import { Product } from '@/types'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { Dictionary } from '@/i18n/types'
 
 /**
  * Props interface for the ShopClient component
  * @param products - Array of products to display
- * @param t - Translation object containing shop-related strings
+ * @param t - Translation dictionary
  */
 interface ShopClientProps {
   products: Product[]
-  t: {
-    shop: {
-      title: string
-      viewDetails: string
-    }
-  }
+  t: Dictionary
 }
 
 /**
