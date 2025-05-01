@@ -6,15 +6,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  * Throttle a callback to a certain delay, It will only call the callback if the delay has passed, with the arguments
  * from the last call
  */
-const useThrottleCallback = <Params extends unknown[], Return>(
-  callback: (...args: Params) => Return,
+const useThrottleCallback = <T extends any[], R>(
+  callback: (...args: T) => R,
   delay: number
 ) => {
   const lastCall = useRef(0)
   const timeout = useRef<NodeJS.Timeout | null>(null)
 
   return useCallback(
-    (...args: Params) => {
+    (...args: T) => {
       const now = Date.now()
       const remainingTime = delay - (now - lastCall.current)
 

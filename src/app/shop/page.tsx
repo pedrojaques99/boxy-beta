@@ -10,6 +10,7 @@ import { Product } from '@/types'
 import { SearchBar } from '@/components/shop/search-bar'
 import { ProductSkeleton } from '@/components/shop/product-skeleton'
 import { useSearchParams } from 'next/navigation'
+import { Dictionary } from '@/i18n/types'
 
 export default function ShopPage() {
   return (
@@ -28,7 +29,7 @@ function ShopPageContent() {
   const [categories, setCategories] = useState<string[]>([])
   const [software, setSoftware] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [t, setT] = useState<any>(null)
+  const [t, setT] = useState<Dictionary | null>(null)
   const [page, setPage] = useState(1)
   const supabase = createClient()
   const searchParams = useSearchParams()

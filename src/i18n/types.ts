@@ -34,6 +34,11 @@ export type Dictionary = {
       category: string
       software: string
       type: string
+      textures: string
+      models: string
+      materials: string
+      hdris: string
+      plugins: string
     }
   }
   navigation: {
