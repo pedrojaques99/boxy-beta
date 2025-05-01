@@ -49,6 +49,49 @@ export type Dictionary = {
     signIn: string
     getStarted: string
   }
+  admin: {
+    loading: string
+    title: string
+    description: string
+    auth: {
+      title: string
+      description: string
+      password: {
+        placeholder: string
+      }
+      submit: string
+      success: string
+      error: string
+    }
+    plans: {
+      title: string
+      create: string
+      created: string
+      error: string
+    }
+    products: {
+      title: string
+      name: string
+      description: string
+      type: string
+      category: string
+      software: string
+      tags: string
+      file_url: string
+      add: string
+      delete: string
+      added: string
+      deleted: string
+      error: string
+      thumb: {
+        label: string
+        uploading: string
+        uploaded: string
+        error: string
+        alt: string
+      }
+    }
+  }
   home: {
     hero: {
       title: string
