@@ -82,9 +82,10 @@ export default function ProfilePage() {
         }
 
         setProfile(existingProfile);
-      } catch (error: any) {
+      } catch (error) {
         console.error('Profile error:', error);
-        setError(error?.message || 'Failed to load profile');
+        const { error: errorMessage } = handleError(error);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

@@ -27,7 +27,12 @@
       "all": "All",
       "category": "Category",
       "software": "Software",
-      "type": "Type"
+      "type": "Type",
+      "textures": "Textures",
+      "models": "Models",
+      "materials": "Materials",
+      "hdris": "HDRIs",
+      "plugins": "Plugins"
     }
   },
   "navigation": {
