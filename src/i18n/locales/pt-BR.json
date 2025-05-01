@@ -43,6 +43,18 @@
     "signIn": "Entrar",
     "getStarted": "Começar"
   },
+  "profile": {
+    "subscription": {
+      "title": "Assinatura",
+      "description": "Gerencie seu plano de assinatura",
+      "currentPlan": "Plano Atual",
+      "status": "Status",
+      "nextBilling": "Próxima Cobrança",
+      "changePlan": "Alterar Plano",
+      "noSubscription": "Nenhuma assinatura ativa",
+      "subscribe": "Assinar Agora"
+    }
+  },
   "home": {
     "hero": {
       "title": "A revolução criativa começou.",

@@ -92,6 +92,18 @@ export type Dictionary = {
       }
     }
   }
+  profile: {
+    subscription: {
+      title: string
+      description: string
+      currentPlan: string
+      status: string
+      nextBilling: string
+      changePlan: string
+      noSubscription: string
+      subscribe: string
+    }
+  }
   home: {
     hero: {
       title: string

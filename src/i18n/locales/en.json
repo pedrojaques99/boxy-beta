@@ -43,6 +43,18 @@
     "signIn": "Sign In",
     "getStarted": "Get Started"
   },
+  "profile": {
+    "subscription": {
+      "title": "Subscription",
+      "description": "Manage your subscription plan",
+      "currentPlan": "Current Plan",
+      "status": "Status",
+      "nextBilling": "Next Billing",
+      "changePlan": "Change Plan",
+      "noSubscription": "No active subscription",
+      "subscribe": "Subscribe Now"
+    }
+  },
   "home": {
     "hero": {
       "title": "The creative revolution has begun.",
