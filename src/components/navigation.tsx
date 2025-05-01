@@ -20,7 +20,12 @@ export function Navigation() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLanguageChanging, setIsLanguageChanging] = useState(false);
-  const [themeState, setThemeState] = useState<'light' | 'dark'>(theme);
+  const [themeState, setThemeState] = useState<'light' | 'dark'>(() => {
+    if (theme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return theme;
+  });
   const supabase = createClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -42,7 +47,12 @@ export function Navigation() {
   }, []);
 
   useEffect(() => {
-    setThemeState(theme);
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      setThemeState(systemTheme);
+    } else {
+      setThemeState(theme);
+    }
   }, [theme]);
 
   const handleSignOut = async () => {
@@ -199,64 +209,40 @@ export function Navigation() {
           <nav className="flex items-center space-x-3">
             {user ? (
               <>
-                <Link href="/profile">
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    className={cn(
-                      "text-sm font-medium bg-accent",
-                      "text-accent-foreground hover:bg-accent/90",
-                      "dark:bg-accent dark:text-accent-foreground dark:hover:bg-accent/90",
-                      pathname === "/profile" && "bg-accent/90"
-                    )}
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    {t.navigation?.myAccount}
-                  </Button>
+                <Link
+                  href="/profile"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                    "text-foreground/60 hover:text-foreground/80",
+                    "dark:text-foreground/60 dark:hover:text-foreground/80",
+                    pathname === "/profile" && "text-foreground dark:text-foreground font-medium"
+                  )}
+                >
+                  <User className="h-4 w-4" />
+                  {t.navigation?.myAccount}
                 </Link>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={handleSignOut}
-                  className={cn(
-                    "text-sm font-normal border-muted-foreground/40",
-                    "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
-                    "dark:border-muted-foreground/40 dark:text-muted-foreground dark:hover:bg-muted/30 dark:hover:text-foreground"
-                  )}
+                  className="text-foreground/60 hover:text-foreground/80"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   {t.navigation?.signOut}
                 </Button>
               </>
             ) : (
-              <>
-                <Link href="/auth/login">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className={cn(
-                      "text-sm font-medium",
-                      "text-muted-foreground hover:text-foreground",
-                      "dark:text-muted-foreground dark:hover:text-foreground"
-                    )}
-                  >
-                    {t.navigation?.signIn}
-                  </Button>
-                </Link>
-                <Link href="/auth/sign-up">
-                  <Button 
-                    variant="default"
-                    size="sm"
-                    className={cn(
-                      "text-sm font-medium",
-                      "bg-primary text-primary-foreground hover:bg-primary/90",
-                      "dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
-                    )}
-                  >
-                    {t.navigation?.getStarted}
-                  </Button>
-                </Link>
-              </>
+              <Link
+                href="/auth"
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                  "text-foreground/60 hover:text-foreground/80",
+                  "dark:text-foreground/60 dark:hover:text-foreground/80",
+                  pathname === "/auth" && "text-foreground dark:text-foreground font-medium"
+                )}
+              >
+                {t.navigation?.signIn}
+              </Link>
             )}
           </nav>
         </div>
