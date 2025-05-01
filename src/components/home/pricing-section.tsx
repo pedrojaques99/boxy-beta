@@ -34,19 +34,17 @@ export function PricingSection() {
   if (!t?.home?.pricing?.plans) return null
 
   const PricingCard = ({ 
-    plan, 
+    planId,
     isHighlighted = false, 
     delay = 0,
     isOpen,
     setIsOpen,
-    planId
   }: {
-    plan: Plan
+    planId: PlanId
     isHighlighted?: boolean
     delay?: number
     isOpen: boolean
     setIsOpen: (open: boolean) => void
-    planId: PlanId
   }) => {
     const planData = PLANS[planId]
     if (!planData) return null
@@ -143,26 +141,23 @@ export function PricingSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <PricingCard
-            plan={t.home.pricing.plans.free}
+            planId="free"
             delay={0.1}
             isOpen={false}
             setIsOpen={() => {}}
-            planId="free"
           />
           <PricingCard
-            plan={t.home.pricing.plans.annual}
+            planId="annual"
             isHighlighted
             delay={0.2}
             isOpen={isAnnualOpen}
             setIsOpen={setIsAnnualOpen}
-            planId="annual"
           />
           <PricingCard
-            plan={t.home.pricing.plans.monthly}
+            planId="monthly"
             delay={0.3}
             isOpen={isMonthlyOpen}
             setIsOpen={setIsMonthlyOpen}
-            planId="monthly"
           />
         </div>
       </div>
