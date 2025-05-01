@@ -56,7 +56,10 @@ function ShopPageContent() {
         }
 
         if (!data) return []
-        return [...new Set(data.map(item => String(item[column])))]
+        return [...new Set(data.map(item => {
+          const value = item[column]
+          return value ? String(value) : ''
+        }))]
       }
 
       const [categoriesData, softwareData] = await Promise.all([
@@ -64,8 +67,8 @@ function ShopPageContent() {
         fetchUniqueValues('software')
       ])
 
-      setCategories(categoriesData)
-      setSoftware(softwareData)
+      setCategories(categoriesData.filter(Boolean))
+      setSoftware(softwareData.filter(Boolean))
 
       // Get initial products
       let query = supabase
