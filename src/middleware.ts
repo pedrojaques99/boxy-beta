@@ -6,8 +6,16 @@ export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  // Refresh session if expired
-  await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  // Protege a rota de checkout
+  if (req.nextUrl.pathname.startsWith('/checkout')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/auth/login', req.url))
+    }
+  }
 
   return res
 }
@@ -22,5 +30,7 @@ export const config = {
      * - public (public files)
      */
     '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/checkout/:path*',
+    '/profile/subscription/:path*'
   ],
 }

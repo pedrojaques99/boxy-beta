@@ -18,6 +18,7 @@ import { Check, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 const PLANS = [
   { id: 'pln_mensal_id', label: 'Mensal', price: 'R$ 37,90/mês' },
@@ -38,6 +39,7 @@ export function CheckoutWizard({
   onSuccess?: () => void 
 }) {
   const user = useUser()
+  const router = useRouter()
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState(defaultPlanId || '')
   const [cardData, setCardData] = useState({
@@ -50,13 +52,19 @@ export function CheckoutWizard({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<boolean | null>(null)
 
+  // Redirect to login if not authenticated
+  if (!user) {
+    router.push('/auth/login')
+    return null
+  }
+
   const handleBack = () => {
     if (step > 0) setStep(step - 1)
   }
 
   const handleSubscribe = async () => {
     if (!user) {
-      toast.error('Você precisa estar logado para assinar.')
+      router.push('/auth/login')
       return
     }
 

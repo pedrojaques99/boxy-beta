@@ -1,6 +1,19 @@
 import { Plan } from '@/types/subscription'
 
 export const PLANS: Record<string, Plan> = {
+  'free': {
+    id: 'free',
+    name: 'Gratuito',
+    price: 0,
+    interval: 'month',
+    interval_count: 1,
+    features: [
+      'Recursos básicos',
+      'Suporte por email',
+      'Acesso à comunidade (em breve)'
+    ],
+    pagarme_plan_id: 'free'
+  },
   'pln_mensal_id': {
     id: 'pln_mensal_id',
     name: 'Mensal',
@@ -9,9 +22,10 @@ export const PLANS: Record<string, Plan> = {
     interval_count: 1,
     features: [
       'Acesso a todos os recursos',
+      '10 downloads por dia',
       'Suporte prioritário',
       'Atualizações constantes',
-      'Backup diário'
+      'Acesso à comunidade (em breve)'
     ],
     pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'pln_mensal_id'
   },
@@ -23,9 +37,10 @@ export const PLANS: Record<string, Plan> = {
     interval_count: 1,
     features: [
       'Acesso a todos os recursos',
+      'Sem limite de downloads',
       'Suporte prioritário',
       'Atualizações constantes',
-      'Backup diário',
+      'Acesso à comunidade (em breve)',
       '20% de desconto'
     ],
     pagarme_plan_id: process.env.PAGARME_PLAN_YEARLY_ID || 'pln_anual_id'
