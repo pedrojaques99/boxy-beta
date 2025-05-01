@@ -17,6 +17,14 @@ import { useState } from 'react'
 import { PLANS, formatPrice, getPlanInterval, PlanId } from '@/lib/plans'
 import type { Plan } from '@/types/subscription'
 
+type PlanTranslation = {
+  name: string
+  price: string
+  features: string[]
+  button: string
+  monthly?: string
+}
+
 export function PricingSection() {
   const { t } = useTranslations()
   const user = useUser()
@@ -43,7 +51,7 @@ export function PricingSection() {
     const planData = PLANS[planId]
     if (!planData) return null
 
-    const planTranslations = t.home.pricing.plans[planId]
+    const planTranslations = t.home.pricing.plans[planId] as PlanTranslation
     if (!planTranslations) return null
 
     const features = planTranslations.features || []
@@ -73,7 +81,7 @@ export function PricingSection() {
             <div>
               <h3 className="text-2xl font-bold mb-2">{planTranslations.name}</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                {planId === 'free' ? 'Forever free' : planTranslations.monthly}
+                {planId === 'free' ? 'Forever free' : planTranslations.monthly || ''}
               </p>
               <div className="flex items-baseline mb-6">
                 <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
