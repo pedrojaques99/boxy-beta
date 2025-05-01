@@ -73,7 +73,7 @@ export function PricingSection() {
             <div>
               <h3 className="text-2xl font-bold mb-2">{planTranslations.name}</h3>
               <p className="text-sm text-muted-foreground mb-2">
-                {planTranslations.monthly}
+                {planId === 'free' ? 'Forever free' : planTranslations.monthly}
               </p>
               <div className="flex items-baseline mb-6">
                 <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
