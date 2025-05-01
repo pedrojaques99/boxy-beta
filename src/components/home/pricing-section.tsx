@@ -14,7 +14,8 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog'
 import { useState } from 'react'
-import { PLANS, formatPrice, getPlanInterval } from '@/lib/plans'
+import { PLANS, formatPrice, getPlanInterval, PlanId } from '@/lib/plans'
+import type { Plan } from '@/types/subscription'
 
 export function PricingSection() {
   const { t } = useTranslations()
@@ -32,12 +33,12 @@ export function PricingSection() {
     setIsOpen,
     planId
   }: {
-    plan: any
+    plan: Plan
     isHighlighted?: boolean
     delay?: number
     isOpen: boolean
     setIsOpen: (open: boolean) => void
-    planId: string
+    planId: PlanId
   }) => {
     const planData = PLANS[planId]
     if (!planData) return null

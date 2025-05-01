@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { createClient } from '@supabase/supabase-js'
-import { PLANS } from '@/lib/plans'
+import { PLANS, PlanId } from '@/lib/plans'
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   if (!(plan_id in PLANS)) {
     return NextResponse.json({ error: 'Plano inválido' }, { status: 400 })
   }
-  const plan = PLANS[plan_id as keyof typeof PLANS]
+  const plan = PLANS[plan_id as PlanId]
 
   // Validate card data if credit card payment
   if (payment_method === 'credit_card') {
@@ -121,9 +121,9 @@ export async function POST(req: NextRequest) {
       subscription,
       customer
     })
-  } catch (err: any) {
-    console.error('Subscription error:', err.response?.data || err.message)
-    const error = err.response?.data?.errors?.[0]?.message || 'Erro ao criar assinatura'
+  } catch (err) {
+    console.error('Subscription error:', err instanceof Error ? err.message : 'Unknown error')
+    const error = err instanceof Error ? err.message : 'Erro ao criar assinatura'
     return NextResponse.json({ error }, { status: 500 })
   }
 }

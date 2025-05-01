@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import { useTranslations } from '@/hooks/use-translations';
+import type { Dictionary } from '@/i18n/types';
 
 interface CategoriesSectionProps {
   categories: string[];
@@ -20,7 +21,7 @@ const categoryImages = {
   'default': '/images/categories/default.jpg'
 };
 
-const getCategoryTranslation = (category: string, t: any) => {
+const getCategoryTranslation = (category: string, t: Dictionary) => {
   switch (category) {
     case '3D':
       return t.shop.filters.category;

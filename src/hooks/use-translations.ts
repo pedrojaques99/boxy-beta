@@ -18,8 +18,8 @@ export function useTranslations() {
     
     // Use the first matching locale from our supported list
     const selectedLocale = [savedLocale, browserLocale, defaultLocale].find(
-      locale => i18n.locales.includes(locale as any)
-    ) as Locale || defaultLocale
+      (loc): loc is Locale => i18n.locales.includes(loc as Locale)
+    ) || defaultLocale
 
     // Update HTML lang attribute
     document.documentElement.lang = selectedLocale
@@ -34,7 +34,7 @@ export function useTranslations() {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'locale' && event.newValue) {
         const newLocale = event.newValue as Locale
-        if (i18n.locales.includes(newLocale as any)) {
+        if (i18n.locales.includes(newLocale as Locale)) {
           document.documentElement.lang = newLocale
           setLocale(newLocale)
           getDictionary(newLocale).then(setDictionary)

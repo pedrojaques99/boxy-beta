@@ -11,16 +11,49 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
 
+interface Product {
+  id: string
+  name: string
+  description: string
+  type: string
+  file_url: string
+  category: string
+  software: string
+  tags: string[]
+  thumb: string
+  created_at: string
+}
+
+interface NewProduct {
+  name: string
+  description: string
+  type: string
+  file_url: string
+  category: string
+  software: string
+  tags: string
+  thumb: string
+}
+
+interface PlanCreationResult {
+  success: boolean
+  plans?: {
+    id: string
+    name: string
+  }[]
+  error?: string
+}
+
 function AdminContent() {
   const router = useRouter()
   const { t, locale } = useTranslations()
   const user = useUser()
   const [auth, setAuth] = useState(false)
   const [password, setPassword] = useState('')
-  const [result, setResult] = useState<any>(null)
-  const [products, setProducts] = useState<any[]>([])
+  const [result, setResult] = useState<PlanCreationResult | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
   const [uploading, setUploading] = useState(false)
-  const [newProduct, setNewProduct] = useState({
+  const [newProduct, setNewProduct] = useState<NewProduct>({
     name: '',
     description: '',
     type: '',
