@@ -28,6 +28,7 @@ export type Dictionary = {
     search: {
       placeholder: string
       noResults: string
+      recentSearches: string
     }
     filters: {
       all: string

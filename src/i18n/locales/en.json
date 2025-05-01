@@ -21,7 +21,8 @@
     "noProducts": "No products available",
     "search": {
       "placeholder": "Search products...",
-      "noResults": "No products found"
+      "noResults": "No products found",
+      "recentSearches": "Recent searches"
     },
     "filters": {
       "all": "All",
