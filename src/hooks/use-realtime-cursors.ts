@@ -49,8 +49,14 @@ export const useRealtimeCursors = ({
   username: string
   throttleMs: number
 }) => {
-  const [color] = useState(generateRandomColor())
-  const [userId] = useState(generateRandomNumber())
+  const [color] = useState(() => {
+    if (typeof window === 'undefined') return '#000000'
+    return generateRandomColor()
+  })
+  const [userId] = useState(() => {
+    if (typeof window === 'undefined') return 0
+    return generateRandomNumber()
+  })
   const [cursors, setCursors] = useState<Record<string, CursorEventPayload>>({})
 
   const channelRef = useRef<RealtimeChannel | null>(null)
@@ -84,6 +90,8 @@ export const useRealtimeCursors = ({
   const handleMouseMove = useThrottleCallback(callback, throttleMs)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const channel = supabase.channel(roomName)
     channelRef.current = channel
 
@@ -109,7 +117,7 @@ export const useRealtimeCursors = ({
     return () => {
       channel.unsubscribe()
     }
-  }, [])
+  }, [roomName, userId])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

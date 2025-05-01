@@ -29,7 +29,12 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return defaultTheme;
+    // During SSR, use the default theme
+    if (typeof window === 'undefined') {
+      return defaultTheme;
+    }
+
+    // Get theme from localStorage or use default
     return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
   });
 

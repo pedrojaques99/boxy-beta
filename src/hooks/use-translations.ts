@@ -8,30 +8,33 @@ import { i18n } from '@/i18n/settings'
 
 export function useTranslations() {
   const [dictionary, setDictionary] = useState<Dictionary | null>(null)
-  const [locale, setLocale] = useState<Locale>('en')
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  const [locale, setLocale] = useState<Locale>(() => {
+    // During SSR, use the default locale
+    if (typeof window === 'undefined') {
+      return i18n.defaultLocale
+    }
 
     // Get locale from localStorage or fallback to browser language
     const savedLocale = localStorage.getItem('locale') as Locale
     const browserLocale = navigator.language as Locale
-    const defaultLocale = i18n.defaultLocale
     
     // Use the first matching locale from our supported list
-    const selectedLocale = [savedLocale, browserLocale, defaultLocale].find(
+    return [savedLocale, browserLocale, i18n.defaultLocale].find(
       (loc): loc is Locale => i18n.locales.includes(loc as Locale)
-    ) || defaultLocale
+    ) || i18n.defaultLocale
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
 
     // Update HTML lang attribute
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = selectedLocale
+      document.documentElement.lang = locale
     }
-    setLocale(selectedLocale)
 
     // Load dictionary
-    getDictionary(selectedLocale).then(setDictionary)
-  }, [])
+    getDictionary(locale).then(setDictionary)
+  }, [locale])
 
   // Listen for localStorage changes from other components
   useEffect(() => {
