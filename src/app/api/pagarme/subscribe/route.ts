@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { createClient } from '@supabase/supabase-js'
 import { PLANS } from '@/lib/plans'
+import { PagarmeClient } from '@/lib/pagarme'
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL
@@ -47,10 +48,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Validate plan
-  const plan = PLANS[plan_id]
-  if (!plan) {
+  if (!(plan_id in PLANS)) {
     return NextResponse.json({ error: 'Plano inválido' }, { status: 400 })
   }
+  const plan = PLANS[plan_id as keyof typeof PLANS]
 
   // Validate card data if credit card payment
   if (payment_method === 'credit_card') {
