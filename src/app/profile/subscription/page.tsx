@@ -20,7 +20,7 @@ import { useTranslations } from '@/hooks/use-translations'
 
 export default function SubscriptionPage() {
   const user = useUser()
-  const t = useTranslations()
+  const { t } = useTranslations()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
