@@ -44,6 +44,16 @@ interface PlanCreationResult {
   error?: string
 }
 
+function handleError(error: unknown): { error: string } {
+  if (error instanceof Error) {
+    return { error: error.message };
+  }
+  if (typeof error === 'string') {
+    return { error };
+  }
+  return { error: 'An unknown error occurred' };
+}
+
 function AdminContent() {
   const router = useRouter()
   const { t, locale } = useTranslations()
