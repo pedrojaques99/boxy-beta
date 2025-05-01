@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { createClient } from '@supabase/supabase-js'
 import { PLANS, PlanId } from '@/lib/plans'
+import { handleError } from '@/lib/error-handler'
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL
@@ -105,25 +106,24 @@ export async function POST(req: NextRequest) {
 
     const subscription = subscriptionResponse.data
 
-    // Store in Supabase
-    await supabase.from('subscriptions').upsert({
-      user_id,
-      plan_id: plan.id,
-      pagarme_subscription_id: subscription.id,
-      pagarme_customer_id: customer.id,
-      status: subscription.status,
-      started_at: new Date().toISOString(),
-      current_period_end: new Date(subscription.current_period.end_at * 1000).toISOString()
-    })
+    // Save subscription in Supabase
+    await supabase
+      .from('subscriptions')
+      .insert({
+        user_id,
+        plan_id: plan.id,
+        status: subscription.status,
+        pagarme_subscription_id: subscription.id,
+        pagarme_customer_id: customer.id,
+        current_period_end: new Date(subscription.current_period.end_at * 1000).toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
 
-    return NextResponse.json({ 
-      success: true, 
-      subscription,
-      customer
-    })
+    return NextResponse.json({ success: true, subscription })
   } catch (err) {
-    console.error('Subscription error:', err instanceof Error ? err.message : 'Unknown error')
-    const error = err instanceof Error ? err.message : 'Erro ao criar assinatura'
-    return NextResponse.json({ error }, { status: 500 })
+    const { error: errorMessage } = handleError(err, 'Error creating subscription');
+    console.error('Subscription creation error:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

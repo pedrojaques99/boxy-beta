@@ -1,5 +1,6 @@
 import { createClient } from '../lib/supabase/client'
 import { useEffect, useState } from 'react'
+import { handleError } from '@/lib/error-handler'
 
 export type SubscriptionType = 'free' | 'premium'
 
@@ -24,7 +25,8 @@ export function useSubscription() {
           setSubscriptionType(profile.subscription_type as SubscriptionType)
         }
       } catch (error) {
-        console.error('Error fetching subscription:', error)
+        const { error: errorMessage } = handleError(error, 'Error fetching subscription');
+        console.error(errorMessage);
       } finally {
         setLoading(false)
       }

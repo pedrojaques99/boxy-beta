@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { createClient } from '@supabase/supabase-js'
+import { handleError } from '@/lib/error-handler'
 
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
@@ -48,9 +49,9 @@ export async function PUT(
       .eq('pagarme_subscription_id', params.id)
 
     return NextResponse.json({ success: true, subscription })
-  } catch (err: any) {
-    console.error('Subscription cancellation error:', err.response?.data || err.message)
-    const error = err.response?.data?.errors?.[0]?.message || 'Erro ao cancelar assinatura'
-    return NextResponse.json({ error }, { status: 500 })
+  } catch (err) {
+    const { error: errorMessage } = handleError(err, 'Error canceling subscription');
+    console.error('Subscription cancellation error:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 } 

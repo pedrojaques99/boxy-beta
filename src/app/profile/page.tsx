@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@supabase/auth-helpers-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 interface UserProfile {
   id: string;
@@ -103,13 +103,15 @@ export default function ProfilePage() {
 
     const file = e.target.files[0];
     if (!file.type.startsWith('image/')) {
-      handleError(new Error('Please upload an image file'));
+      const { error: errorMessage } = handleError(new Error('Please upload an image file'));
+      toast.error(errorMessage);
       return;
     }
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      handleError(new Error('Image size should be less than 5MB'));
+      const { error: errorMessage } = handleError(new Error('Image size should be less than 5MB'));
+      toast.error(errorMessage);
       return;
     }
 
@@ -149,9 +151,10 @@ export default function ProfilePage() {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, avatar_url: publicUrl });
-      handleSuccess('Avatar updated successfully');
+      toast.success('Avatar updated successfully');
     } catch (error) {
-      handleError(error);
+      const { error: errorMessage } = handleError(error, 'Error updating avatar');
+      toast.error(errorMessage);
     } finally {
       setUploadProgress(0);
     }
@@ -165,10 +168,10 @@ export default function ProfilePage() {
         data: { cpf }
       });
       if (error) throw error;
-      toast.success('CPF atualizado com sucesso!');
+      toast.success('CPF updated successfully');
     } catch (err) {
-      console.error(err);
-      toast.error('Erro ao atualizar CPF');
+      const { error: errorMessage } = handleError(err, 'Error updating CPF');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

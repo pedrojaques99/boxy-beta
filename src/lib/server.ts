@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { handleError } from '@/lib/error-handler'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -17,7 +18,9 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {
+          } catch (err) {
+            const { error: errorMessage } = handleError(err, 'Error setting cookies in server component');
+            console.error('Cookie setting error:', errorMessage);
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.

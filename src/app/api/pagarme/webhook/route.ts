@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { handleError } from '@/lib/error-handler'
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL
@@ -94,7 +95,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (err) {
-    console.error('Webhook processing error:', err)
-    return NextResponse.json({ error: 'Erro ao processar webhook' }, { status: 500 })
+    const { error: errorMessage } = handleError(err, 'Error processing webhook');
+    console.error('Webhook processing error:', errorMessage);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

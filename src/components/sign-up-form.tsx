@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { handleError } from '@/lib/error-handler'
 import {
   Form,
   FormControl,
@@ -70,7 +71,8 @@ export function SignUpForm() {
       toast.success('Check your email to confirm your account')
       router.push('/auth/sign-up-success')
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred during sign up')
+      const { error: errorMessage } = handleError(error, 'Error during sign up');
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +91,8 @@ export function SignUpForm() {
       })
       if (error) throw error
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'An error occurred during social sign up')
+      const { error: errorMessage } = handleError(error, 'Error during social sign up');
+      toast.error(errorMessage);
       setIsSocialLoading(false)
     }
   }

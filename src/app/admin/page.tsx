@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
+import { handleError } from '@/lib/error-handler'
 
 interface Product {
   id: string
@@ -42,16 +43,6 @@ interface PlanCreationResult {
     name: string
   }[]
   error?: string
-}
-
-function handleError(error: unknown): { error: string } {
-  if (error instanceof Error) {
-    return { error: error.message };
-  }
-  if (typeof error === 'string') {
-    return { error };
-  }
-  return { error: 'An unknown error occurred' };
 }
 
 function AdminContent() {
@@ -109,7 +100,7 @@ function AdminContent() {
       setResult(data)
       toast.success(t?.admin?.plans?.created || 'Plans created successfully!')
     } catch (error) {
-      const { error: errorMessage } = handleError(error);
+      const { error: errorMessage } = handleError(error, 'Error creating plans');
       toast.error(errorMessage);
     }
   }
@@ -125,7 +116,7 @@ function AdminContent() {
       fetchProducts()
       toast.success(t?.admin?.products?.added || 'Product added successfully!')
     } catch (error) {
-      const { error: errorMessage } = handleError(error);
+      const { error: errorMessage } = handleError(error, 'Error adding product');
       toast.error(errorMessage);
     }
   }
@@ -139,7 +130,7 @@ function AdminContent() {
       fetchProducts()
       toast.success(t?.admin?.products?.deleted || 'Product deleted successfully!')
     } catch (error) {
-      const { error: errorMessage } = handleError(error);
+      const { error: errorMessage } = handleError(error, 'Error deleting product');
       toast.error(errorMessage);
     }
   }
@@ -157,9 +148,9 @@ function AdminContent() {
       const { data: publicUrlData } = supabase.storage.from('thumbs').getPublicUrl(filePath)
       setNewProduct((prev) => ({ ...prev, thumb: publicUrlData.publicUrl }))
       toast.success(t?.admin?.products?.thumb?.uploaded || 'Thumb uploaded successfully!')
-    } catch (err) {
-      console.error('Erro ao fazer upload da thumb:', err)
-      toast.error(t?.admin?.products?.thumb?.error || 'Error uploading thumb')
+    } catch (error) {
+      const { error: errorMessage } = handleError(error, 'Error uploading thumb');
+      toast.error(errorMessage);
     } finally {
       setUploading(false)
     }

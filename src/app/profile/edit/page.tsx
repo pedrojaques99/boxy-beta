@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { handleError, handleSuccess } from '@/lib/error-handler';
+import { handleError } from '@/lib/error-handler';
 import { Loader2, ImagePlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface UserProfile {
   id: string;
@@ -73,7 +74,9 @@ export default function EditProfilePage() {
     try {
       // Validate required fields
       if (!profile.name?.trim()) {
-        throw new Error('Name is required');
+        const { error: errorMessage } = handleError(new Error('Name is required'));
+        toast.error(errorMessage);
+        return;
       }
 
       const { error } = await supabase
@@ -87,10 +90,11 @@ export default function EditProfilePage() {
 
       if (error) throw error;
       
-      handleSuccess('Profile updated successfully');
+      toast.success('Profile updated successfully');
       router.push('/profile');
     } catch (error) {
-      handleError(error);
+      const { error: errorMessage } = handleError(error, 'Error updating profile');
+      toast.error(errorMessage);
       setSaving(false);
     }
   };
@@ -100,13 +104,15 @@ export default function EditProfilePage() {
 
     const file = e.target.files[0];
     if (!file.type.startsWith('image/')) {
-      handleError(new Error('Please upload an image file'));
+      const { error: errorMessage } = handleError(new Error('Please upload an image file'));
+      toast.error(errorMessage);
       return;
     }
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      handleError(new Error('Image size should be less than 5MB'));
+      const { error: errorMessage } = handleError(new Error('Image size should be less than 5MB'));
+      toast.error(errorMessage);
       return;
     }
 
@@ -150,9 +156,10 @@ export default function EditProfilePage() {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, avatar_url: publicUrl });
-      handleSuccess('Avatar updated successfully');
+      toast.success('Avatar updated successfully');
     } catch (error) {
-      handleError(error);
+      const { error: errorMessage } = handleError(error, 'Error updating avatar');
+      toast.error(errorMessage);
     } finally {
       setUploadProgress(0);
     }

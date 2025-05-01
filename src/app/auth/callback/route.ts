@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { handleError } from '@/lib/error-handler'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -22,8 +23,9 @@ export async function GET(request: Request) {
     const { error: authError } = await supabase.auth.exchangeCodeForSession(code)
     
     if (authError) {
-      console.error('Auth error:', authError)
-      return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(authError.message)}`)
+      const { error: errorMessage } = handleError(authError, 'Auth error');
+      console.error('Auth error:', errorMessage);
+      return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(errorMessage)}`)
     }
 
     // Get the forwarded host in case we're behind a load balancer
@@ -47,7 +49,8 @@ export async function GET(request: Request) {
     // Redirect to homepage
     return NextResponse.redirect(`${baseUrl}/`)
   } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('An unexpected error occurred')}`)
+    const { error: errorMessage } = handleError(error, 'Unexpected error in auth callback');
+    console.error('Unexpected error:', errorMessage);
+    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(errorMessage)}`)
   }
 } 

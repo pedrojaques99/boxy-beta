@@ -17,9 +17,10 @@ import { useTranslations } from '@/hooks/use-translations'
 import { Check, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { toast } from 'react-hot-toast'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
+import { handleError } from '@/lib/error-handler'
 
 const STEPS = ['plan', 'payment', 'confirm']
 
@@ -73,8 +74,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         toast.success('Subscription created successfully!')
         onSuccess?.()
       } catch (err) {
-        console.error(err)
-        toast.error('Failed to process payment')
+        const { error: errorMessage } = handleError(err, 'Error processing payment');
+        toast.error(errorMessage);
       } finally {
         setLoading(false)
       }

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from '@/hooks/use-translations';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
+import { handleError } from '@/lib/error-handler';
 
 interface Lab {
   id: string;
@@ -51,7 +52,7 @@ export default function LabsPage() {
 
       if (error) {
         console.error('Error fetching labs:', error);
-        const { error: errorMessage } = handleError(error);
+        const { error: errorMessage } = handleError(error, 'Error fetching labs');
         toast.error(errorMessage);
         return;
       }
@@ -65,6 +66,8 @@ export default function LabsPage() {
       }
     } catch (error) {
       console.error('Error fetching labs:', error);
+      const { error: errorMessage } = handleError(error, 'Error fetching labs');
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

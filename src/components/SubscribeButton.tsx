@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { useUser } from '@supabase/auth-helpers-react'
+import { handleError } from '@/lib/error-handler'
+import { toast } from 'sonner'
 
 type Props = {
   plan_id: string // ID do plano no Pagar.me
@@ -14,7 +16,10 @@ export function SubscribeButton({ plan_id, variant = 'default' }: Props) {
   const [loading, setLoading] = useState(false)
 
   const handleSubscribe = async () => {
-    if (!user) return alert('Você precisa estar logado.')
+    if (!user) {
+      toast.error('Você precisa estar logado.');
+      return;
+    }
 
     setLoading(true)
 
@@ -40,9 +45,10 @@ export function SubscribeButton({ plan_id, variant = 'default' }: Props) {
 
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      alert('Assinatura criada com sucesso!')
-    } catch (err: any) {
-      alert('Erro: ' + err.message)
+      toast.success('Assinatura criada com sucesso!')
+    } catch (err) {
+      const { error: errorMessage } = handleError(err, 'Error creating subscription');
+      toast.error(errorMessage);
     } finally {
       setLoading(false)
     }
@@ -52,7 +58,7 @@ export function SubscribeButton({ plan_id, variant = 'default' }: Props) {
 
   return (
     <Button variant={variant} className="w-full" onClick={handleSubscribe} disabled={loading}>
-      {loading ? 'Processando...' : 'Assinar agora'}
+      {loading ? 'Assinando...' : 'Assinar Agora'}
     </Button>
   )
 }

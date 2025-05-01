@@ -7,6 +7,8 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { handleError } from '@/lib/error-handler'
+import { toast } from 'sonner'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
@@ -45,6 +47,9 @@ export function SearchBar({ onSearch, t }: SearchBarProps) {
       const search = async () => {
         try {
           await onSearch(debouncedSearchQuery)
+        } catch (err) {
+          const { error: errorMessage } = handleError(err, 'Error performing search');
+          toast.error(errorMessage);
         } finally {
           setIsLoading(false)
         }
@@ -53,13 +58,18 @@ export function SearchBar({ onSearch, t }: SearchBarProps) {
       
       // Save to recent searches
       if (debouncedSearchQuery.trim()) {
-        const updated = [
-          debouncedSearchQuery,
-          ...recentSearches.filter(s => s !== debouncedSearchQuery)
-        ].slice(0, 5)
-        setRecentSearches(updated)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('recentSearches', JSON.stringify(updated))
+        try {
+          const updated = [
+            debouncedSearchQuery,
+            ...recentSearches.filter(s => s !== debouncedSearchQuery)
+          ].slice(0, 5)
+          setRecentSearches(updated)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('recentSearches', JSON.stringify(updated))
+          }
+        } catch (err) {
+          const { error: errorMessage } = handleError(err, 'Error saving recent searches');
+          toast.error(errorMessage);
         }
       }
     } else {

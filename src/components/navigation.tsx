@@ -14,6 +14,7 @@ import { i18n } from '@/i18n/settings';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { handleError } from '@/lib/error-handler';
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
@@ -58,7 +59,8 @@ export function Navigation() {
       localStorage.setItem('locale', newLocale);
       window.location.reload();
     } catch (error) {
-      console.error('Error changing language:', error);
+      const { error: errorMessage } = handleError(error, 'Error changing language');
+      console.error(errorMessage);
     } finally {
       setIsLanguageChanging(false);
     }
