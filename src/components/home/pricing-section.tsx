@@ -17,7 +17,7 @@ import { useState } from 'react'
 import { PLANS, formatPrice, getPlanInterval } from '@/lib/plans'
 
 export function PricingSection() {
-  const t = useTranslations('plans')
+  const { t } = useTranslations()
   const user = useUser()
   const [isAnnualOpen, setIsAnnualOpen] = useState(false)
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false)
