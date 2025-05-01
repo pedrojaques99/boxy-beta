@@ -29,9 +29,9 @@ export const PLANS = {
     ],
     pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'pln_mensal_id'
   },
-  yearly: {
-    id: 'yearly',
-    name: 'Yearly',
+  annual: {
+    id: 'annual',
+    name: 'Annual',
     price: 379.00,
     interval: 'year',
     interval_count: 1,
