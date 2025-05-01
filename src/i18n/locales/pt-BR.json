@@ -161,37 +161,39 @@
         "free": {
           "name": "Gratuito",
           "price": "R$ 0,00",
-          "interval": "mês",
-          "features": {
-            "basic": "Recursos básicos",
-            "support": "Suporte por email",
-            "community": "Acesso à comunidade (em breve)"
-          }
+          "features": [
+            "Recursos básicos",
+            "Suporte por email",
+            "Acesso à comunidade (em breve)"
+          ],
+          "button": "Começar"
+        },
+        "annual": {
+          "name": "Anual",
+          "price": "R$ 379,00",
+          "monthly": "R$ 31,58/mês",
+          "features": [
+            "Acesso a todos os recursos",
+            "Downloads ilimitados",
+            "Suporte prioritário",
+            "Atualizações constantes",
+            "Acesso à comunidade (em breve)",
+            "20% de desconto"
+          ],
+          "button": "Assinar"
         },
         "monthly": {
           "name": "Mensal",
           "price": "R$ 37,90",
-          "interval": "mês",
-          "features": {
-            "all": "Acesso a todos os recursos",
-            "downloads": "10 downloads por dia",
-            "support": "Suporte prioritário",
-            "updates": "Atualizações constantes",
-            "community": "Acesso à comunidade (em breve)"
-          }
-        },
-        "yearly": {
-          "name": "Anual",
-          "price": "R$ 379,00",
-          "interval": "ano",
-          "features": {
-            "all": "Acesso a todos os recursos",
-            "downloads": "Sem limite de downloads",
-            "support": "Suporte prioritário",
-            "updates": "Atualizações constantes",
-            "community": "Acesso à comunidade (em breve)",
-            "discount": "20% de desconto"
-          }
+          "monthly": "R$ 37,90/mês",
+          "features": [
+            "Acesso a todos os recursos",
+            "10 downloads por dia",
+            "Suporte prioritário",
+            "Atualizações constantes",
+            "Acesso à comunidade (em breve)"
+          ],
+          "button": "Assinar"
         }
       }
     }
