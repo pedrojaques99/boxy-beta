@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { createClient } from '@supabase/supabase-js'
 import { PLANS } from '@/lib/plans'
-import { PagarmeClient } from '@/lib/pagarme'
 
 // Validate environment variables
 const supabaseUrl = process.env.SUPABASE_URL
