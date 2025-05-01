@@ -127,39 +127,39 @@
       "subtitle": "Selecione o plano que melhor atende às suas necessidades",
       "plans": {
         "free": {
-          "name": "Grátis",
-          "price": "R$ 00",
-          "features": [
-            "Acesso aos produtos gratuitos",
-            "Acesso à comunidade (em breve)",
-            "Recursos básicos"
-          ],
-          "button": "Ver Freebies"
-        },
-        "annual": {
-          "name": "Boxer Anual",
-          "price": "R$ 397,92",
-          "monthly": "equivalente a 33,16/mês",
-          "features": [
-            "Acesso total da loja",
-            "Downloads ilimitados",
-            "Comunidade (em breve)",
-            "Novos produtos todo mês",
-            "Economize R$ 57 anual"
-          ],
-          "button": "Seja um Boxer"
+          "name": "Gratuito",
+          "price": "R$ 0,00",
+          "interval": "mês",
+          "features": {
+            "basic": "Recursos básicos",
+            "support": "Suporte por email",
+            "community": "Acesso à comunidade (em breve)"
+          }
         },
         "monthly": {
-          "name": "Boxer Mensal",
+          "name": "Mensal",
           "price": "R$ 37,90",
-          "monthly": "Cobrado mensalmente",
-          "features": [
-            "Acesso por 30 dias",
-            "10x downloads por dia",
-            "Comunidade (em breve)",
-            "Novos produtos todo mês"
-          ],
-          "button": "Seja um Boxer"
+          "interval": "mês",
+          "features": {
+            "all": "Acesso a todos os recursos",
+            "downloads": "10 downloads por dia",
+            "support": "Suporte prioritário",
+            "updates": "Atualizações constantes",
+            "community": "Acesso à comunidade (em breve)"
+          }
+        },
+        "yearly": {
+          "name": "Anual",
+          "price": "R$ 379,00",
+          "interval": "ano",
+          "features": {
+            "all": "Acesso a todos os recursos",
+            "downloads": "Sem limite de downloads",
+            "support": "Suporte prioritário",
+            "updates": "Atualizações constantes",
+            "community": "Acesso à comunidade (em breve)",
+            "discount": "20% de desconto"
+          }
         }
       }
     }

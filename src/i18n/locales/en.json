@@ -128,38 +128,38 @@
       "plans": {
         "free": {
           "name": "Free",
-          "price": "R$ 00",
-          "features": [
-            "Access to free products",
-            "Community access (coming soon)",
-            "Basic features"
-          ],
-          "button": "View Freebies"
-        },
-        "annual": {
-          "name": "Annual Boxer",
-          "price": "R$ 397,92",
-          "monthly": "equivalent to 33,16/month",
-          "features": [
-            "Full store access",
-            "Unlimited downloads",
-            "Community (coming soon)",
-            "New products every month",
-            "Save R$ 57 annually"
-          ],
-          "button": "Become a Boxer"
+          "price": "R$ 0.00",
+          "interval": "month",
+          "features": {
+            "basic": "Basic features",
+            "support": "Email support",
+            "community": "Community access (coming soon)"
+          }
         },
         "monthly": {
-          "name": "Monthly Boxer",
-          "price": "R$ 37,90",
-          "monthly": "Charged monthly",
-          "features": [
-            "30-day access",
-            "10x downloads per day",
-            "Community (coming soon)",
-            "New products every month"
-          ],
-          "button": "Become a Boxer"
+          "name": "Monthly",
+          "price": "R$ 37.90",
+          "interval": "month",
+          "features": {
+            "all": "Access to all features",
+            "downloads": "10 downloads per day",
+            "support": "Priority support",
+            "updates": "Constant updates",
+            "community": "Community access (coming soon)"
+          }
+        },
+        "yearly": {
+          "name": "Yearly",
+          "price": "R$ 379.00",
+          "interval": "year",
+          "features": {
+            "all": "Access to all features",
+            "downloads": "Unlimited downloads",
+            "support": "Priority support",
+            "updates": "Constant updates",
+            "community": "Community access (coming soon)",
+            "discount": "20% discount"
+          }
         }
       }
     }
