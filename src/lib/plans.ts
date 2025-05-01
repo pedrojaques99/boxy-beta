@@ -1,48 +1,47 @@
-import { useTranslations } from 'next-intl';
 import { Plan } from '@/types/subscription'
 
 export const PLANS = {
   free: {
     id: 'free',
-    name: 'plans.free.name',
+    name: 'Free',
     price: 0,
     interval: 'month',
     interval_count: 1,
     features: [
-      'plans.free.features.basic',
-      'plans.free.features.support',
-      'plans.free.features.community'
+      'Basic features',
+      'Email support',
+      'Community access (coming soon)'
     ],
     pagarme_plan_id: 'free'
   },
   monthly: {
     id: 'monthly',
-    name: 'plans.monthly.name',
+    name: 'Monthly',
     price: 37.90,
     interval: 'month',
     interval_count: 1,
     features: [
-      'plans.monthly.features.all',
-      'plans.monthly.features.downloads',
-      'plans.monthly.features.support',
-      'plans.monthly.features.updates',
-      'plans.monthly.features.community'
+      'Access to all features',
+      '10 downloads per day',
+      'Priority support',
+      'Constant updates',
+      'Community access (coming soon)'
     ],
     pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'pln_mensal_id'
   },
   yearly: {
     id: 'yearly',
-    name: 'plans.yearly.name',
+    name: 'Yearly',
     price: 379.00,
     interval: 'year',
     interval_count: 1,
     features: [
-      'plans.yearly.features.all',
-      'plans.yearly.features.downloads',
-      'plans.yearly.features.support',
-      'plans.yearly.features.updates',
-      'plans.yearly.features.community',
-      'plans.yearly.features.discount'
+      'Access to all features',
+      'Unlimited downloads',
+      'Priority support',
+      'Constant updates',
+      'Community access (coming soon)',
+      '20% discount'
     ],
     pagarme_plan_id: process.env.PAGARME_PLAN_YEARLY_ID || 'pln_anual_id'
   }
@@ -62,6 +61,8 @@ export function formatPrice(price: number) {
 }
 
 export function getPlanInterval(interval: string, count: number) {
-  const t = useTranslations('plans');
-  return count === 1 ? t(`${interval}.interval`) : `${count} ${t(`${interval}.interval`)}s`;
+  if (interval === 'month') {
+    return count === 1 ? 'month' : `${count} months`;
+  }
+  return count === 1 ? 'year' : `${count} years`;
 } 

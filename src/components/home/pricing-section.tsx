@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
@@ -17,7 +17,7 @@ import { useState } from 'react'
 import { PLANS, formatPrice, getPlanInterval } from '@/lib/plans'
 
 export function PricingSection() {
-  const { t } = useTranslations()
+  const t = useTranslations('plans')
   const user = useUser()
   const [isAnnualOpen, setIsAnnualOpen] = useState(false)
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false)
@@ -64,7 +64,7 @@ export function PricingSection() {
           <CardContent className="p-8 h-full flex flex-col">
             {/* Header */}
             <div>
-              <h3 className="text-2xl font-bold mb-2">{planData.name}</h3>
+              <h3 className="text-2xl font-bold mb-2">{t(`${planId}.name`)}</h3>
               <p className="text-sm text-muted-foreground mb-2">
                 {getPlanInterval(planData)}
               </p>
@@ -83,7 +83,7 @@ export function PricingSection() {
                     "h-5 w-5 flex-shrink-0",
                     isHighlighted ? "text-primary" : "text-primary/80"
                   )} />
-                  <span>{feature}</span>
+                  <span>{t(`${planId}.features.${feature.toLowerCase().replace(/\s+/g, '_')}`)}</span>
                 </li>
               ))}
             </ul>
@@ -96,7 +96,7 @@ export function PricingSection() {
                   variant={isHighlighted ? "default" : "outline"}
                   onClick={() => setIsOpen(true)}
                 >
-                  {plan.button}
+                  {t(`${planId}.button`)}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
@@ -119,10 +119,10 @@ export function PricingSection() {
           className="text-center mb-16"
         >
           <h2 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
-            {t.home.pricing.title}
+            {t('title')}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            {t.home.pricing.subtitle}
+            {t('subtitle')}
           </p>
         </motion.div>
 

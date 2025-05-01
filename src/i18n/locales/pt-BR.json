@@ -191,5 +191,48 @@
     "description": "Descubra e experimente aplicações incríveis criadas por nossa comunidade",
     "noLabs": "Nenhum laboratório encontrado",
     "tryIt": "Experimentar →"
+  },
+  "admin": {
+    "loading": "Carregando...",
+    "title": "Painel Administrativo",
+    "description": "Gerencie seus planos e produtos",
+    "auth": {
+      "title": "Área Administrativa",
+      "description": "Digite a senha de administrador para continuar",
+      "password": {
+        "placeholder": "Digite a senha de admin"
+      },
+      "submit": "Entrar",
+      "success": "Autenticado com sucesso!",
+      "error": "Senha incorreta"
+    },
+    "plans": {
+      "title": "1. Criar planos no Pagar.me",
+      "create": "Criar planos Pagar.me",
+      "created": "Planos criados com sucesso!",
+      "error": "Erro ao criar planos"
+    },
+    "products": {
+      "title": "2. CRUD de produtos",
+      "name": "Nome",
+      "description": "Descrição",
+      "type": "Tipo",
+      "category": "Categoria",
+      "software": "Software",
+      "tags": "Tags (separadas por vírgula)",
+      "file_url": "URL do arquivo",
+      "add": "Adicionar Produto",
+      "delete": "Deletar",
+      "added": "Produto adicionado com sucesso!",
+      "deleted": "Produto deletado com sucesso!",
+      "error": "Erro ao processar produto",
+      "thumb": {
+        "label": "Thumb (upload direto)",
+        "uploading": "Enviando...",
+        "uploaded": "Thumb enviada com sucesso!",
+        "error": "Erro ao enviar thumb",
+        "alt": "Preview da thumb"
+      }
+    }
   }
 } 

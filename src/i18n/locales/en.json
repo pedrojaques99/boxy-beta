@@ -191,5 +191,48 @@
     "description": "Discover and try out amazing applications created by our community",
     "noLabs": "No labs found",
     "tryIt": "Try it →"
+  },
+  "admin": {
+    "loading": "Loading...",
+    "title": "Admin Panel",
+    "description": "Manage your plans and products",
+    "auth": {
+      "title": "Administrative Area",
+      "description": "Enter the administrator password to continue",
+      "password": {
+        "placeholder": "Enter admin password"
+      },
+      "submit": "Login",
+      "success": "Successfully authenticated!",
+      "error": "Incorrect password"
+    },
+    "plans": {
+      "title": "1. Create Pagar.me plans",
+      "create": "Create Pagar.me plans",
+      "created": "Plans created successfully!",
+      "error": "Error creating plans"
+    },
+    "products": {
+      "title": "2. Products CRUD",
+      "name": "Name",
+      "description": "Description",
+      "type": "Type",
+      "category": "Category",
+      "software": "Software",
+      "tags": "Tags (comma separated)",
+      "file_url": "File URL",
+      "add": "Add Product",
+      "delete": "Delete",
+      "added": "Product added successfully!",
+      "deleted": "Product deleted successfully!",
+      "error": "Error processing product",
+      "thumb": {
+        "label": "Thumb (direct upload)",
+        "uploading": "Uploading...",
+        "uploaded": "Thumb uploaded successfully!",
+        "error": "Error uploading thumb",
+        "alt": "Thumb preview"
+      }
+    }
   }
 } 
