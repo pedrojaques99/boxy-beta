@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { useThrottleCallback } from './use-throttle-callback'
 
@@ -60,6 +60,7 @@ export const useRealtimeCursors = ({
   const [cursors, setCursors] = useState<Record<string, CursorEventPayload>>({})
 
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const supabase = createClient()
 
   const callback = useCallback(
     (event: MouseEvent) => {
@@ -117,7 +118,7 @@ export const useRealtimeCursors = ({
     return () => {
       channel.unsubscribe()
     }
-  }, [roomName, userId])
+  }, [roomName, userId, supabase])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
