@@ -19,6 +19,7 @@ export function Navigation() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLanguageChanging, setIsLanguageChanging] = useState(false);
+  const [themeState, setThemeState] = useState<'light' | 'dark'>(theme);
   const supabase = createClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -38,6 +39,10 @@ export function Navigation() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    setThemeState(theme);
+  }, [theme]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -60,7 +65,9 @@ export function Navigation() {
   };
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const newTheme = themeState === 'dark' ? 'light' : 'dark';
+    setThemeState(newTheme);
+    setTheme(newTheme);
   };
 
   if (!t) return null;
@@ -173,7 +180,7 @@ export function Navigation() {
                   onClick={handleThemeToggle}
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
                 >
-                  {theme === 'dark' ? (
+                  {themeState === 'dark' ? (
                     <Sun className="h-4 w-4" />
                   ) : (
                     <Moon className="h-4 w-4" />

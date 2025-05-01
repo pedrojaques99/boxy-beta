@@ -44,7 +44,7 @@ function ShopPageContent() {
       setT(dictionary)
 
       // Get unique values for filters
-      const fetchUniqueValues = async (column: string) => {
+      const fetchUniqueValues = async (column: keyof Product): Promise<string[]> => {
         const { data, error } = await supabase
           .from('products')
           .select(column)
@@ -56,7 +56,7 @@ function ShopPageContent() {
         }
 
         if (!data) return []
-        return [...new Set(data.map(item => String(item[column as keyof typeof item])))]
+        return [...new Set(data.map(item => String(item[column])))]
       }
 
       const [categoriesData, softwareData] = await Promise.all([

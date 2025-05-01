@@ -12,11 +12,21 @@ import { Input } from '@/components/ui/input'
 import { Send } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+interface ChatMessage {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: {
+    name: string;
+    avatar?: string;
+  };
+}
+
 interface RealtimeChatProps {
-  roomName: string
-  username: string
-  onMessage?: (messages: ChatMessage[]) => void
-  messages?: ChatMessage[]
+  roomName: string;
+  username: string;
+  onMessage?: (messages: ChatMessage[]) => void;
+  messages?: ChatMessage[];
 }
 
 /**

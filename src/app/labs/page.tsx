@@ -8,6 +8,7 @@ import AppCard from '@/components/AppCard';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslations } from '@/hooks/use-translations';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 interface Lab {
   id: string;
@@ -48,7 +49,12 @@ export default function LabsPage() {
 
       const { data, error, count } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching labs:', error);
+        const { error: errorMessage } = handleError(error);
+        toast.error(errorMessage);
+        return;
+      }
 
       setHasMore((data?.length || 0) === ITEMS_PER_PAGE);
       

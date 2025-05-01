@@ -92,11 +92,15 @@ function AdminContent() {
   const handleCreatePlans = async () => {
     try {
       const res = await fetch('/api/pagarme/create-plans', { method: 'POST' })
+      if (!res.ok) {
+        throw new Error('Failed to create plans');
+      }
       const data = await res.json()
       setResult(data)
       toast.success(t?.admin?.plans?.created || 'Plans created successfully!')
     } catch (error) {
-      toast.error(t?.admin?.plans?.error || 'Error creating plans')
+      const { error: errorMessage } = handleError(error);
+      toast.error(errorMessage);
     }
   }
 
@@ -104,25 +108,29 @@ function AdminContent() {
     try {
       const tagsArray = newProduct.tags.split(',').map((t) => t.trim())
       const { error } = await supabase.from('products').insert([{ ...newProduct, tags: tagsArray }])
-      if (!error) {
-        setNewProduct({ name: '', description: '', type: '', file_url: '', category: '', software: '', tags: '', thumb: '' })
-        fetchProducts()
-        toast.success(t?.admin?.products?.added || 'Product added successfully!')
+      if (error) {
+        throw error;
       }
+      setNewProduct({ name: '', description: '', type: '', file_url: '', category: '', software: '', tags: '', thumb: '' })
+      fetchProducts()
+      toast.success(t?.admin?.products?.added || 'Product added successfully!')
     } catch (error) {
-      toast.error(t?.admin?.products?.error || 'Error processing product')
+      const { error: errorMessage } = handleError(error);
+      toast.error(errorMessage);
     }
   }
 
   const handleDeleteProduct = async (id: string) => {
     try {
       const { error } = await supabase.from('products').delete().eq('id', id)
-      if (!error) {
-        fetchProducts()
-        toast.success(t?.admin?.products?.deleted || 'Product deleted successfully!')
+      if (error) {
+        throw error;
       }
+      fetchProducts()
+      toast.success(t?.admin?.products?.deleted || 'Product deleted successfully!')
     } catch (error) {
-      toast.error(t?.admin?.products?.error || 'Error processing product')
+      const { error: errorMessage } = handleError(error);
+      toast.error(errorMessage);
     }
   }
 

@@ -11,9 +11,9 @@ interface AppCardProps {
   id: string;
   name: string;
   description: string;
-  thumbUrl: string;
+  thumbUrl?: string;
   isFree: boolean;
-  tags: string[];
+  tags?: string[];
   createdBy: string;
   appUrl: string;
 }
@@ -22,9 +22,9 @@ export default function AppCard({
   id,
   name,
   description,
-  thumbUrl,
+  thumbUrl = '/placeholder.png',
   isFree,
-  tags,
+  tags = [],
   createdBy,
   appUrl
 }: AppCardProps) {

@@ -159,37 +159,39 @@
         "free": {
           "name": "Free",
           "price": "R$ 0.00",
-          "interval": "month",
-          "features": {
-            "basic": "Basic features",
-            "support": "Email support",
-            "community": "Community access (coming soon)"
-          }
+          "features": [
+            "Basic features",
+            "Email support",
+            "Community access (coming soon)"
+          ],
+          "button": "Get Started"
+        },
+        "annual": {
+          "name": "Annual",
+          "price": "R$ 379.00",
+          "monthly": "R$ 31.58/month",
+          "features": [
+            "Access to all features",
+            "Unlimited downloads",
+            "Priority support",
+            "Constant updates",
+            "Community access (coming soon)",
+            "20% discount"
+          ],
+          "button": "Subscribe"
         },
         "monthly": {
           "name": "Monthly",
           "price": "R$ 37.90",
-          "interval": "month",
-          "features": {
-            "all": "Access to all features",
-            "downloads": "10 downloads per day",
-            "support": "Priority support",
-            "updates": "Constant updates",
-            "community": "Community access (coming soon)"
-          }
-        },
-        "yearly": {
-          "name": "Yearly",
-          "price": "R$ 379.00",
-          "interval": "year",
-          "features": {
-            "all": "Access to all features",
-            "downloads": "Unlimited downloads",
-            "support": "Priority support",
-            "updates": "Constant updates",
-            "community": "Community access (coming soon)",
-            "discount": "20% discount"
-          }
+          "monthly": "R$ 37.90/month",
+          "features": [
+            "Access to all features",
+            "10 downloads per day",
+            "Priority support",
+            "Constant updates",
+            "Community access (coming soon)"
+          ],
+          "button": "Subscribe"
         }
       }
     }

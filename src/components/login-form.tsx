@@ -36,9 +36,14 @@ const formSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
+interface LoginError {
+  message: string;
+  code?: string;
+}
+
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const { t } = useTranslations()
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<LoginError | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isEmailLoading, setIsEmailLoading] = useState(false)
 
@@ -73,7 +78,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         throw error
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Authentication failed. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed. Please try again.'
+      setError({ message: errorMessage, code: 'oauth_error' })
       setIsLoading(false)
     }
   }
@@ -91,7 +97,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
       if (error) throw error
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Invalid email or password')
+      const errorMessage = error instanceof Error ? error.message : 'Invalid email or password'
+      setError({ message: errorMessage, code: 'auth_error' })
     } finally {
       setIsEmailLoading(false)
     }
@@ -150,7 +157,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 />
                 {error && (
                   <div className="rounded-md bg-destructive/10 p-3">
-                    <p className="text-sm text-destructive">{error}</p>
+                    <p className="text-sm text-destructive">{error.message}</p>
                   </div>
                 )}
                 <Button 
