@@ -20,7 +20,7 @@ import { useTranslations } from '@/hooks/use-translations'
 
 export default function SubscriptionPage() {
   const user = useUser()
-  const t = useTranslations('profile')
+  const t = useTranslations()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
@@ -83,9 +83,9 @@ export default function SubscriptionPage() {
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>{t?.subscription?.title || 'Subscription'}</CardTitle>
+          <CardTitle>{t?.profile?.subscription?.title || 'Subscription'}</CardTitle>
           <CardDescription>
-            {t?.subscription?.description || 'Manage your subscription plan'}
+            {t?.profile?.subscription?.description || 'Manage your subscription plan'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -94,19 +94,19 @@ export default function SubscriptionPage() {
           ) : subscription ? (
             <>
               <div>
-                <h3 className="font-semibold">{t?.subscription?.currentPlan || 'Current Plan'}</h3>
+                <h3 className="font-semibold">{t?.profile?.subscription?.currentPlan || 'Current Plan'}</h3>
                 <p className="text-muted-foreground">
                   {plan?.name || subscription.plan_id}
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold">{t?.subscription?.status || 'Status'}</h3>
+                <h3 className="font-semibold">{t?.profile?.subscription?.status || 'Status'}</h3>
                 <p className="text-muted-foreground capitalize">
                   {subscription.status}
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold">{t?.subscription?.nextBilling || 'Next Billing'}</h3>
+                <h3 className="font-semibold">{t?.profile?.subscription?.nextBilling || 'Next Billing'}</h3>
                 <p className="text-muted-foreground">
                   {format(new Date(subscription.current_period_end), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </p>
@@ -116,7 +116,7 @@ export default function SubscriptionPage() {
                   variant="outline" 
                   onClick={handleUpdateCard}
                 >
-                  {t?.subscription?.changePlan || 'Change Plan'}
+                  {t?.profile?.subscription?.changePlan || 'Change Plan'}
                 </Button>
                 {subscription.status !== 'canceled' && (
                   <Button 
@@ -131,10 +131,10 @@ export default function SubscriptionPage() {
           ) : (
             <>
               <p className="text-muted-foreground">
-                {t?.subscription?.noSubscription || 'No active subscription'}
+                {t?.profile?.subscription?.noSubscription || 'No active subscription'}
               </p>
               <Button onClick={() => setIsCheckoutOpen(true)}>
-                {t?.subscription?.subscribe || 'Subscribe Now'}
+                {t?.profile?.subscription?.subscribe || 'Subscribe Now'}
               </Button>
             </>
           )}
