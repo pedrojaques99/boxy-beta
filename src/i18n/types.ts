@@ -104,6 +104,19 @@ export type Dictionary = {
       subscribe: string
     }
   }
+  checkout: {
+    selectPlan: string
+    paymentDetails: string
+    confirm: string
+    cardNumber: string
+    cardName: string
+    expiryDate: string
+    cvv: string
+    plan: string
+    price: string
+    back: string
+    next: string
+  }
   home: {
     hero: {
       title: string

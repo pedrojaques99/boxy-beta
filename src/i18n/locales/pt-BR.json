@@ -55,6 +55,20 @@
       "subscribe": "Assinar Agora"
     }
   },
+  "checkout": {
+    "selectPlan": "Selecione um Plano",
+    "paymentDetails": "Detalhes do Pagamento",
+    "confirm": "Confirmar Assinatura",
+    "cardNumber": "Número do Cartão",
+    "cardName": "Nome no Cartão",
+    "expiryDate": "Data de Validade",
+    "cvv": "CVV",
+    "plan": "Plano",
+    "price": "Preço",
+    "back": "Voltar",
+    "next": "Próximo",
+    "confirm": "Confirmar"
+  },
   "home": {
     "hero": {
       "title": "A revolução criativa começou.",

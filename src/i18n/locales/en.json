@@ -55,6 +55,19 @@
       "subscribe": "Subscribe Now"
     }
   },
+  "checkout": {
+    "selectPlan": "Select a Plan",
+    "paymentDetails": "Payment Details",
+    "confirm": "Confirm Subscription",
+    "cardNumber": "Card Number",
+    "cardName": "Cardholder Name",
+    "expiryDate": "Expiry Date",
+    "cvv": "CVV",
+    "plan": "Plan",
+    "price": "Price",
+    "back": "Back",
+    "next": "Next"
+  },
   "home": {
     "hero": {
       "title": "The creative revolution has begun.",
