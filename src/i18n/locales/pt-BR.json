@@ -21,7 +21,8 @@
     "noProducts": "Nenhum produto disponível",
     "search": {
       "placeholder": "Buscar produtos...",
-      "noResults": "Nenhum produto encontrado"
+      "noResults": "Nenhum produto encontrado",
+      "recentSearches": "Buscas recentes"
     },
     "filters": {
       "all": "Todos",
