@@ -3,6 +3,8 @@ import { pagarme } from '@/lib/pagarme'
 
 export async function POST() {
   try {
+    console.log('Iniciando criação de planos no Pagar.me...')
+    
     // Planos que serão criados
     const plans = [
       {
@@ -23,10 +25,13 @@ export async function POST() {
       }
     ]
 
+    console.log('Configurando cliente Pagar.me...')
     const createdPlans = await Promise.all(
       plans.map(async (plan) => {
         try {
+          console.log(`Criando plano: ${plan.name}...`)
           const response = await pagarme.plans.create(plan)
+          console.log(`Plano ${plan.name} criado com sucesso:`, response)
           return {
             id: response.id,
             name: response.name,
@@ -35,21 +40,26 @@ export async function POST() {
           }
         } catch (error) {
           console.error(`Erro ao criar plano ${plan.name}:`, error)
+          if (error instanceof Error) {
+            throw new Error(`Erro ao criar plano ${plan.name}: ${error.message}`)
+          }
           throw error
         }
       })
     )
 
+    console.log('Todos os planos criados com sucesso:', createdPlans)
     return NextResponse.json({
       success: true,
       plans: createdPlans
     })
   } catch (error) {
-    console.error('Erro ao criar planos:', error)
+    console.error('Erro detalhado ao criar planos:', error)
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create plans' 
+        error: error instanceof Error ? error.message : 'Failed to create plans',
+        details: error
       },
       { status: 500 }
     )
