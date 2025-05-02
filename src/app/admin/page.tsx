@@ -52,6 +52,7 @@ function AdminContent() {
   const [auth, setAuth] = useState(false)
   const [password, setPassword] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [result, setResult] = useState<PlanCreationResult | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [uploading, setUploading] = useState(false)
@@ -71,7 +72,12 @@ function AdminContent() {
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (user) {
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -81,16 +87,22 @@ function AdminContent() {
         if (profile?.role === 'admin') {
           setIsAdmin(true)
           setAuth(true)
-          fetchProducts()
+          await fetchProducts()
         } else {
           toast.error(t?.admin?.auth?.error || 'You are not authorized to access this page')
           router.push('/')
         }
+      } catch (error) {
+        console.error('Error checking admin status:', error)
+        toast.error(t?.admin?.auth?.error || 'Error checking permissions')
+        router.push('/')
+      } finally {
+        setIsLoading(false)
       }
     }
 
     checkAdminStatus()
-  }, [user, router, supabase, t])
+  }, [user])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -176,6 +188,10 @@ function AdminContent() {
 
   if (!t) {
     return <div className="p-10">Loading translations...</div>
+  }
+
+  if (isLoading) {
+    return <div className="p-10">{t?.admin?.loading || 'Loading...'}</div>
   }
 
   if (!user) {
