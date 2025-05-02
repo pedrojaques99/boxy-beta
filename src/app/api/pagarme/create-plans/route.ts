@@ -5,6 +5,11 @@ export async function POST() {
   try {
     console.log('Iniciando criação de planos no Pagar.me...')
     
+    // Verificar se o cliente Pagar.me está configurado
+    if (!pagarme) {
+      throw new Error('Cliente Pagar.me não está configurado corretamente')
+    }
+
     // Planos que serão criados
     const plans = [
       {
@@ -25,7 +30,7 @@ export async function POST() {
       }
     ]
 
-    console.log('Configurando cliente Pagar.me...')
+    console.log('Iniciando criação dos planos:', plans)
     const createdPlans = await Promise.all(
       plans.map(async (plan) => {
         try {
@@ -55,11 +60,14 @@ export async function POST() {
     })
   } catch (error) {
     console.error('Erro detalhado ao criar planos:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create plans'
+    const errorDetails = error instanceof Error ? error.stack : error
+    
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Failed to create plans',
-        details: error
+        error: errorMessage,
+        details: errorDetails
       },
       { status: 500 }
     )
