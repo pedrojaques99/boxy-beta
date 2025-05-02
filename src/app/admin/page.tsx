@@ -83,7 +83,7 @@ function AdminContent() {
           setAuth(true)
           fetchProducts()
         } else {
-          toast.error(t?.admin?.notAuthorized || 'You are not authorized to access this page')
+          toast.error(t?.admin?.auth?.error || 'You are not authorized to access this page')
           router.push('/')
         }
       }
@@ -183,7 +183,7 @@ function AdminContent() {
   }
 
   if (!isAdmin) {
-    return <div className="p-10">{t?.admin?.notAuthorized || 'You are not authorized to access this page'}</div>
+    return <div className="p-10">{t?.admin?.auth?.error || 'You are not authorized to access this page'}</div>
   }
 
   if (!auth) {

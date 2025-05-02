@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint && npm run check-translations",
+    "check-translations": "node scripts/check-translations.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
