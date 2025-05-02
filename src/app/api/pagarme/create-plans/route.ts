@@ -1,32 +1,61 @@
 import { NextResponse } from 'next/server'
-import { pagarme } from '@/lib/pagarme'
+import axios from 'axios'
+
+// Constantes para a API V5 do Pagar.me
+const PAGARME_API_KEY = process.env.PAGARME_API_KEY
+const PAGARME_API_URL = 'https://api.pagar.me/core/v5'
 
 export async function POST() {
   try {
-    console.log('Iniciando criação de planos no Pagar.me...')
+    console.log('Iniciando criação de planos no Pagar.me V5...')
     
-    // Verificar se o cliente Pagar.me está configurado
-    if (!pagarme) {
-      throw new Error('Cliente Pagar.me não está configurado corretamente')
+    if (!PAGARME_API_KEY) {
+      throw new Error('PAGARME_API_KEY não está configurada no .env')
     }
 
     // Planos que serão criados
     const plans = [
       {
         name: 'Plano Mensal',
-        amount: 3790, // R$ 37,90 em centavos
-        days: 30,
-        payment_methods: ['credit_card'],
-        installments: 12,
-        trial_days: 0
+        interval: 'month',
+        interval_count: 1,
+        billing_type: 'exact_day',
+        billing_day: 1,
+        minimum_price: 3790, // R$ 37,90 em centavos
+        installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        currency: 'BRL',
+        trial_period_days: 0,
+        items: [
+          {
+            name: 'Assinatura Mensal',
+            quantity: 1,
+            pricing_scheme: {
+              price: 3790, // R$ 37,90 em centavos
+              scheme_type: 'unit'
+            }
+          }
+        ]
       },
       {
         name: 'Plano Anual',
-        amount: 37900, // R$ 379,00 em centavos
-        days: 365,
-        payment_methods: ['credit_card'],
-        installments: 12,
-        trial_days: 0
+        interval: 'year',
+        interval_count: 1,
+        billing_type: 'exact_day',
+        billing_day: 1,
+        minimum_price: 37900, // R$ 379,00 em centavos
+        installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        currency: 'BRL',
+        trial_period_days: 0,
+        items: [
+          {
+            name: 'Assinatura Anual',
+            quantity: 1,
+            pricing_scheme: {
+              price: 37900, // R$ 379,00 em centavos
+              scheme_type: 'unit'
+            }
+          }
+        ]
       }
     ]
 
@@ -35,18 +64,29 @@ export async function POST() {
       plans.map(async (plan) => {
         try {
           console.log(`Criando plano: ${plan.name}...`)
-          const response = await pagarme.plans.create(plan)
-          console.log(`Plano ${plan.name} criado com sucesso:`, response)
+          const response = await axios.post(
+            `${PAGARME_API_URL}/plans`,
+            plan,
+            {
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${Buffer.from(PAGARME_API_KEY + ':').toString('base64')}`
+              }
+            }
+          )
+          
+          console.log(`Plano ${plan.name} criado com sucesso:`, response.data)
           return {
-            id: response.id,
-            name: response.name,
-            amount: response.amount,
-            status: response.status
+            id: response.data.id,
+            name: response.data.name,
+            interval: response.data.interval,
+            status: response.data.status
           }
         } catch (error) {
-          console.error(`Erro ao criar plano ${plan.name}:`, error)
-          if (error instanceof Error) {
-            throw new Error(`Erro ao criar plano ${plan.name}: ${error.message}`)
+          console.error(`Erro ao criar plano ${plan.name}:`, error.response?.data || error)
+          if (error.response?.data) {
+            throw new Error(`Erro ao criar plano ${plan.name}: ${JSON.stringify(error.response.data)}`)
           }
           throw error
         }

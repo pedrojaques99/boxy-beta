@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
+import { Alert, AlertCircle, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -75,7 +76,31 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   if (!isAdmin) {
-    return <div className="p-10">{t?.admin?.auth?.error || 'You are not authorized to access this page'}</div>
+    return (
+      <div className="p-10">
+        <div className="mb-5 text-red-600 font-bold">{t?.admin?.auth?.error || 'You are not authorized to access this page'}</div>
+        
+        <Card className="mb-5">
+          <CardHeader>
+            <CardTitle>Detalhes do usuário</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div><strong>Email:</strong> {user.email}</div>
+            <div><strong>ID:</strong> {user.id}</div>
+            <div><strong>Role:</strong> <span className="text-red-600">não é admin</span></div>
+          </CardContent>
+        </Card>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Acesso restrito</AlertTitle>
+          <AlertDescription>
+            Para acessar esta página, seu perfil deve ter a role &quot;admin&quot; na tabela &quot;profiles&quot; do Supabase.
+            Contacte o administrador do sistema para solicitar acesso.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   if (!auth) {
