@@ -242,6 +242,7 @@
     "plans": {
       "title": "1. Create Pagar.me plans",
       "create": "Create Pagar.me plans",
+      "creating": "Creating plans...",
       "created": "Plans created successfully!",
       "error": "Error creating plans"
     },

@@ -242,6 +242,7 @@
     "plans": {
       "title": "1. Criar planos no Pagar.me",
       "create": "Criar planos Pagar.me",
+      "creating": "Criando planos...",
       "created": "Planos criados com sucesso!",
       "error": "Erro ao criar planos"
     },
