@@ -84,18 +84,10 @@ function AdminContent() {
           .eq('id', user.id)
           .single()
 
-        if (profile?.role === 'admin') {
-          setIsAdmin(true)
-          setAuth(true)
-          await fetchProducts()
-        } else {
-          toast.error(t?.admin?.auth?.error || 'You are not authorized to access this page')
-          router.push('/')
-        }
+        setIsAdmin(profile?.role === 'admin')
       } catch (error) {
         console.error('Error checking admin status:', error)
-        toast.error(t?.admin?.auth?.error || 'Error checking permissions')
-        router.push('/')
+        setIsAdmin(false)
       } finally {
         setIsLoading(false)
       }
