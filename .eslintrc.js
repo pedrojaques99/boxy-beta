@@ -1,14 +1,12 @@
 /** @type {import('eslint').Linter.Config} */
-const config = {
-  root: true,
+module.exports = {
   extends: ['next/core-web-vitals'],
-  plugins: ['@typescript-eslint'],
   rules: {
-    'no-literal-strings': ['error', {
-      ignore: ['^[A-Z_]+$', '^[a-z]+$', '^[0-9]+$'], // Ignora constantes, palavras simples e números
-      message: 'Use translation system instead of literal strings. Example: t?.key?.subkey || "fallback"'
-    }]
+    '@next/next/no-html-link-for-pages': 'off',
+    'react/jsx-key': 'error',
+    'react/no-unescaped-entities': 'off',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-console': ['warn', { allow: ['warn', 'error'] }]
   }
-}
-
-module.exports = config 
+} 
