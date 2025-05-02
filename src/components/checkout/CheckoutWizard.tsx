@@ -67,15 +67,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           })
         })
 
+        const data = await res.json()
+
         if (!res.ok) {
-          throw new Error('Failed to process payment')
+          throw new Error(data.message || 'Failed to process payment')
         }
 
         toast.success('Subscription created successfully!')
         onSuccess?.()
       } catch (err) {
-        const { error: errorMessage } = handleError(err, 'Error processing payment');
-        toast.error(errorMessage);
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+        toast.error(errorMessage)
+        console.error('Payment error details:', err)
       } finally {
         setLoading(false)
       }
@@ -161,6 +164,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   value={card.number}
                   onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
                   maxLength={16}
+                  className="text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -170,6 +174,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   placeholder="John Doe"
                   value={card.name}
                   onChange={(e) => setCard({ ...card, name: e.target.value })}
+                  className="text-foreground"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -189,6 +194,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       }
                     }}
                     maxLength={5}
+                    className="text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
@@ -199,6 +205,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     value={card.cvv}
                     onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
                     maxLength={4}
+                    className="text-foreground"
                   />
                 </div>
               </div>
