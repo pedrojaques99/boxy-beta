@@ -228,44 +228,44 @@
   "admin": {
     "loading": "Carregando...",
     "title": "Painel Administrativo",
-    "description": "Gerencie seus planos e produtos",
+    "description": "Gerencie seus produtos e planos",
     "auth": {
-      "title": "Área Administrativa",
-      "description": "Digite a senha de administrador para continuar",
+      "title": "Autenticação",
+      "description": "Digite a senha de administrador",
       "password": {
-        "placeholder": "Digite a senha de admin"
+        "placeholder": "Senha de administrador"
       },
       "submit": "Entrar",
-      "success": "Autenticado com sucesso!",
+      "success": "Autenticado com sucesso",
       "error": "Senha incorreta"
     },
     "plans": {
-      "title": "1. Criar planos no Pagar.me",
-      "create": "Criar planos Pagar.me",
+      "title": "Planos",
+      "create": "Criar planos",
       "creating": "Criando planos...",
-      "created": "Planos criados com sucesso!",
+      "created": "Planos criados com sucesso",
       "error": "Erro ao criar planos"
     },
     "products": {
-      "title": "2. CRUD de produtos",
+      "title": "Produtos",
       "name": "Nome",
       "description": "Descrição",
       "type": "Tipo",
       "category": "Categoria",
       "software": "Software",
-      "tags": "Tags (separadas por vírgula)",
+      "tags": "Tags",
       "file_url": "URL do arquivo",
-      "add": "Adicionar Produto",
-      "delete": "Deletar",
-      "added": "Produto adicionado com sucesso!",
-      "deleted": "Produto deletado com sucesso!",
+      "add": "Adicionar",
+      "delete": "Excluir",
+      "added": "Produto adicionado",
+      "deleted": "Produto excluído",
       "error": "Erro ao processar produto",
       "thumb": {
-        "label": "Thumb (upload direto)",
+        "label": "Miniatura",
         "uploading": "Enviando...",
-        "uploaded": "Thumb enviada com sucesso!",
-        "error": "Erro ao enviar thumb",
-        "alt": "Preview da thumb"
+        "uploaded": "Enviado",
+        "error": "Erro ao enviar",
+        "alt": "Miniatura do produto"
       }
     }
   }
