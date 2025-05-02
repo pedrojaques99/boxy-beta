@@ -1,4 +1,5 @@
-export default {
+/** @type {import('eslint').Linter.Config} */
+const config = {
   root: true,
   extends: ['next/core-web-vitals'],
   plugins: ['@typescript-eslint'],
@@ -8,4 +9,6 @@ export default {
       message: 'Use translation system instead of literal strings. Example: t?.key?.subkey || "fallback"'
     }]
   }
-} 
+}
+
+module.exports = config 
