@@ -1,3 +1,5 @@
+"use client"
+
 import { AuthGuard } from '@/components/admin/AuthGuard'
 import { useTranslations } from '@/hooks/use-translations'
 import dynamic from 'next/dynamic'
