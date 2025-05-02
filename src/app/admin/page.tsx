@@ -114,16 +114,28 @@ function AdminContent() {
 
   const handleCreatePlans = async () => {
     try {
-      const res = await fetch('/api/pagarme/create-plans', { method: 'POST' })
+      console.log('Iniciando criação de planos...')
+      const res = await fetch('/api/pagarme/create-plans', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
       if (!res.ok) {
-        throw new Error('Failed to create plans');
+        const errorData = await res.json()
+        console.error('Erro na resposta:', errorData)
+        throw new Error(errorData.message || 'Failed to create plans')
       }
+
       const data = await res.json()
+      console.log('Planos criados com sucesso:', data)
       setResult(data)
       toast.success(t?.admin?.plans?.created || 'Plans created successfully!')
     } catch (error) {
-      const { error: errorMessage } = handleError(error, 'Error creating plans');
-      toast.error(errorMessage);
+      console.error('Erro detalhado:', error)
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
+      toast.error(errorMessage)
     }
   }
 
