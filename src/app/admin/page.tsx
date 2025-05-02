@@ -51,6 +51,7 @@ function AdminContent() {
   const user = useUser()
   const [auth, setAuth] = useState(false)
   const [password, setPassword] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [result, setResult] = useState<PlanCreationResult | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [uploading, setUploading] = useState(false)
@@ -69,10 +70,27 @@ function AdminContent() {
   const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
 
   useEffect(() => {
-    if (!user) {
-      router.push('/auth/login')
+    const checkAdminStatus = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role === 'admin') {
+          setIsAdmin(true)
+          setAuth(true)
+          fetchProducts()
+        } else {
+          toast.error(t?.admin?.notAuthorized || 'You are not authorized to access this page')
+          router.push('/')
+        }
+      }
     }
-  }, [user, router])
+
+    checkAdminStatus()
+  }, [user, router, supabase, t])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -162,6 +180,10 @@ function AdminContent() {
 
   if (!user) {
     return <div className="p-10">{t?.admin?.loading || 'Loading...'}</div>
+  }
+
+  if (!isAdmin) {
+    return <div className="p-10">{t?.admin?.notAuthorized || 'You are not authorized to access this page'}</div>
   }
 
   if (!auth) {
