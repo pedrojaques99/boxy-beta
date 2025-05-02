@@ -13,7 +13,6 @@ export default function AdminPage() {
       <div className="container mx-auto py-8 space-y-8">
         <h1 className="text-2xl font-bold">{t?.admin?.title || 'Admin Dashboard'}</h1>
         <div className="grid gap-8">
-          <ProductsCRUD />
           <PlanCreation />
         </div>
       </div>
