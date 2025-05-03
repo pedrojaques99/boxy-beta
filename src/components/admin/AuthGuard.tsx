@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -24,6 +24,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [password, setPassword] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [profileData, setProfileData] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
   const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
@@ -32,26 +34,49 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const checkAdminStatus = async () => {
       if (!user) {
         setIsLoading(false)
+        setError('Usuário não está autenticado')
         return
       }
 
       try {
-        const { data: profile } = await supabase
+        console.log('Verificando status de admin para:', user.id)
+        
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', user.id)
           .single()
 
-        setIsAdmin(profile?.role === 'admin')
+        if (profileError) {
+          console.error('Erro ao buscar perfil:', profileError)
+          setError(`Erro ao buscar perfil: ${profileError.message}`)
+          setIsAdmin(false)
+          setProfileData(null)
+        } else {
+          console.log('Perfil encontrado:', profile)
+          setProfileData(profile)
+          setIsAdmin(profile?.role === 'admin')
+          if (profile?.role === 'admin') {
+            console.log('Usuário é admin')
+            setAuth(true) // Auto-autenticar se for admin
+          } else {
+            console.log('Usuário não é admin:', profile?.role)
+          }
+        }
       } catch (error) {
-        console.error('Error checking admin status:', error)
+        console.error('Erro ao verificar status de admin:', error)
+        setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
         setIsAdmin(false)
       } finally {
         setIsLoading(false)
       }
     }
 
-    checkAdminStatus()
+    if (user) {
+      checkAdminStatus()
+    } else {
+      setIsLoading(false)
+    }
   }, [user])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,31 +89,60 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
   }
 
-  if (!t) {
-    return <div className="p-10">Loading translations...</div>
-  }
-
   if (isLoading) {
-    return <div className="p-10">{t?.admin?.loading || 'Loading...'}</div>
+    return (
+      <div className="flex flex-col items-center justify-center p-10 h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <div>{t?.admin?.loading || 'Verificando permissões...'}</div>
+      </div>
+    )
   }
 
   if (!user) {
-    return <div className="p-10">{t?.admin?.loading || 'Loading...'}</div>
+    return (
+      <div className="p-10">
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Acesso negado</AlertTitle>
+          <AlertDescription>
+            Você precisa estar logado para acessar esta página.
+          </AlertDescription>
+        </Alert>
+        <Button onClick={() => router.push('/auth/login')}>
+          Fazer login
+        </Button>
+      </div>
+    )
   }
 
   if (!isAdmin) {
     return (
       <div className="p-10">
-        <div className="mb-5 text-red-600 font-bold">{t?.admin?.auth?.error || 'You are not authorized to access this page'}</div>
+        <div className="mb-5 text-red-600 font-bold">{t?.admin?.auth?.error || 'Você não tem permissão para acessar esta página'}</div>
         
         <Card className="mb-5">
           <CardHeader>
             <CardTitle>Detalhes do usuário</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
             <div><strong>Email:</strong> {user.email}</div>
             <div><strong>ID:</strong> {user.id}</div>
-            <div><strong>Role:</strong> <span className="text-red-600">não é admin</span></div>
+            <div><strong>Role:</strong> <span className="text-red-600">{profileData?.role || 'não definido'}</span></div>
+            
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro na verificação</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="p-3 bg-yellow-50 rounded border border-yellow-200 mt-4">
+              <p className="text-sm">Para que seu usuário tenha acesso administrativo, execute esta query no Supabase:</p>
+              <pre className="bg-gray-100 p-2 rounded text-xs mt-2 overflow-auto">
+                UPDATE profiles SET role = 'admin' WHERE id = '{user.id}';
+              </pre>
+            </div>
           </CardContent>
         </Card>
         
