@@ -39,8 +39,7 @@ export async function POST() {
         name: 'Plano Anual',
         interval: 'year',
         interval_count: 1,
-        billing_type: 'exact_day',
-        billing_days: [1],
+        billing_type: 'prepaid',
         minimum_price: 37900, // R$ 379,00 em centavos
         installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         currency: 'BRL',
