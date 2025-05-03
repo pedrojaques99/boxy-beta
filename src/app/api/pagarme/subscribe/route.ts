@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { user_id, email, name, plan_id, payment_method, card } = body
+  const { user_id, email, name, plan_id, payment_method, card, billing_address } = body
 
   // Log the request data (without sensitive information)
   console.log('Subscription request:', {
@@ -73,11 +73,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Erro ao buscar dados do usuário' }, { status: 500 })
   }
 
-  const cpf = userData.user.user_metadata?.cpf
+  // Preferir o CPF enviado pelo frontend, senão pegar do user_metadata
+  const cpf = card?.cpf || userData.user.user_metadata?.cpf
   if (!cpf) {
     return NextResponse.json({ 
       error: 'CPF não encontrado',
-      details: 'Por favor, adicione seu CPF no perfil antes de assinar'
+      details: 'Por favor, preencha o CPF no checkout ou no perfil antes de assinar'
     }, { status: 400 })
   }
 
@@ -104,7 +105,8 @@ export async function POST(req: NextRequest) {
         type: 'individual',
         code: user_id,
         document_type: 'cpf',
-        document: cpf
+        document: cpf,
+        address: billing_address
       },
       {
         headers: {

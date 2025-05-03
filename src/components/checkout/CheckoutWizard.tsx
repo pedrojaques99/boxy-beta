@@ -39,7 +39,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     number: '',
     name: '',
     expiry: '',
-    cvv: ''
+    cvv: '',
+    cpf: ''
+  })
+  const [billing, setBilling] = useState({
+    street: '',
+    number: '',
+    complement: '',
+    zip_code: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    country: 'BR'
   })
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
@@ -86,8 +97,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
               number: card.number,
               exp_month: card.expiry.split('/')[0],
               exp_year: card.expiry.split('/')[1],
-              cvv: card.cvv
-            }
+              cvv: card.cvv,
+              cpf: card.cpf
+            },
+            billing_address: billing
           })
         })
 
@@ -119,7 +132,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             ...card,
             number: card.number.replace(/\d(?=\d{4})/g, '*'),
             cvv: '***'
-          }
+          },
+          billing: billing
         })
         toast.error(errorMessage)
       } finally {
@@ -139,7 +153,14 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           card.number.length >= 16 &&
           card.name.length > 0 &&
           card.expiry.length === 5 &&
-          card.cvv.length >= 3
+          card.cvv.length >= 3 &&
+          card.cpf.length === 11 &&
+          billing.street.length > 0 &&
+          billing.number.length > 0 &&
+          billing.zip_code.length === 8 &&
+          billing.neighborhood.length > 0 &&
+          billing.city.length > 0 &&
+          billing.state.length === 2
         )
       case 2:
         return true
@@ -240,6 +261,17 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="card-cpf">CPF</Label>
+                <Input
+                  id="card-cpf"
+                  placeholder="00000000000"
+                  value={card.cpf}
+                  onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
+                  maxLength={11}
+                  className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="card-expiry">{t?.checkout?.expiryDate || 'Expiry Date'}</Label>
@@ -271,6 +303,34 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-street">Rua</Label>
+                <Input id="billing-street" value={billing.street} onChange={e => setBilling({ ...billing, street: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-number">Número</Label>
+                <Input id="billing-number" value={billing.number} onChange={e => setBilling({ ...billing, number: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-complement">Complemento</Label>
+                <Input id="billing-complement" value={billing.complement} onChange={e => setBilling({ ...billing, complement: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-zip">CEP</Label>
+                <Input id="billing-zip" value={billing.zip_code} onChange={e => setBilling({ ...billing, zip_code: e.target.value.replace(/\D/g, '') })} maxLength={8} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-neighborhood">Bairro</Label>
+                <Input id="billing-neighborhood" value={billing.neighborhood} onChange={e => setBilling({ ...billing, neighborhood: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-city">Cidade</Label>
+                <Input id="billing-city" value={billing.city} onChange={e => setBilling({ ...billing, city: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billing-state">Estado</Label>
+                <Input id="billing-state" value={billing.state} onChange={e => setBilling({ ...billing, state: e.target.value })} maxLength={2} />
               </div>
             </CardContent>
           </Card>
