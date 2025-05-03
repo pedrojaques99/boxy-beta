@@ -70,15 +70,29 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         const data = await res.json()
 
         if (!res.ok) {
-          throw new Error(data.message || 'Failed to process payment')
+          console.error('Payment error response:', {
+            status: res.status,
+            statusText: res.statusText,
+            data: data
+          })
+          throw new Error(data.message || data.error || 'Failed to process payment')
         }
 
         toast.success('Subscription created successfully!')
         onSuccess?.()
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+        console.error('Payment error details:', {
+          error: err,
+          message: errorMessage,
+          planId,
+          card: {
+            ...card,
+            number: card.number.replace(/\d(?=\d{4})/g, '*'), // Mask card number
+            cvv: '***' // Mask CVV
+          }
+        })
         toast.error(errorMessage)
-        console.error('Payment error details:', err)
       } finally {
         setLoading(false)
       }
@@ -164,7 +178,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   value={card.number}
                   onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
                   maxLength={16}
-                  className="text-foreground"
+                  className="text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -174,7 +188,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   placeholder="John Doe"
                   value={card.name}
                   onChange={(e) => setCard({ ...card, name: e.target.value })}
-                  className="text-foreground"
+                  className="text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -194,7 +208,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       }
                     }}
                     maxLength={5}
-                    className="text-foreground"
+                    className="text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
                 <div className="space-y-2">
@@ -205,7 +219,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     value={card.cvv}
                     onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
                     maxLength={4}
-                    className="text-foreground"
+                    className="text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
