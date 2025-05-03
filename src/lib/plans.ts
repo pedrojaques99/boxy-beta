@@ -27,7 +27,7 @@ export const PLANS = {
       'Constant updates',
       'Community access (coming soon)'
     ],
-    pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'pln_mensal_id'
+    pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'plan_p4kmbJNu2uPbW31y'
   },
   annual: {
     id: 'annual',
@@ -43,7 +43,7 @@ export const PLANS = {
       'Community access (coming soon)',
       '20% discount'
     ],
-    pagarme_plan_id: process.env.PAGARME_PLAN_YEARLY_ID || 'pln_anual_id'
+    pagarme_plan_id: process.env.PAGARME_PLAN_YEARLY_ID || 'plan_zYpEr7RIzIv9NKAV'
   }
 } as const;
 
