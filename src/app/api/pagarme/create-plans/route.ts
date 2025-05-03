@@ -24,7 +24,6 @@ export async function POST() {
         minimum_price: 3790, // R$ 37,90 em centavos
         installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         currency: 'BRL',
-        trial_period_days: 0,
         items: [
           {
             name: 'Assinatura Mensal',
@@ -45,7 +44,6 @@ export async function POST() {
         minimum_price: 37900, // R$ 379,00 em centavos
         installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         currency: 'BRL',
-        trial_period_days: 0,
         items: [
           {
             name: 'Assinatura Anual',
