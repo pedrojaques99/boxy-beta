@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
 import { handleError } from '@/lib/error-handler'
 
-const STEPS = ['plan', 'payment', 'confirm']
+const STEPS = ['plan', 'user', 'payment', 'confirm', 'result']
 
 interface CheckoutWizardProps {
   defaultPlanId?: PlanId
@@ -35,14 +35,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const { t } = useTranslations()
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState<PlanId | undefined>(defaultPlanId)
-  const [card, setCard] = useState({
-    number: '',
-    name: '',
-    expiry: '',
-    cvv: '',
-    cpf: ''
-  })
-  const [billing, setBilling] = useState({
+  const [userData, setUserData] = useState({
+    name: user?.user_metadata?.full_name || '',
+    email: user?.email || '',
     street: '',
     number: '',
     complement: '',
@@ -52,6 +47,14 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     state: '',
     country: 'BR'
   })
+  const [card, setCard] = useState({
+    number: '',
+    name: '',
+    expiry: '',
+    cvv: '',
+    cpf: ''
+  })
+  const [result, setResult] = useState<{ success: boolean, message: string }>({ success: false, message: '' })
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
 
@@ -100,7 +103,16 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
               cvv: card.cvv,
               cpf: card.cpf
             },
-            billing_address: billing
+            billing_address: {
+              street: userData.street,
+              number: userData.number,
+              complement: userData.complement,
+              zip_code: userData.zip_code,
+              neighborhood: userData.neighborhood,
+              city: userData.city,
+              state: userData.state,
+              country: userData.country
+            }
           })
         })
 
@@ -133,7 +145,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             number: card.number.replace(/\d(?=\d{4})/g, '*'),
             cvv: '***'
           },
-          billing: billing
+          billing: userData
         })
         toast.error(errorMessage)
       } finally {
@@ -150,19 +162,24 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         return !!planId
       case 1:
         return (
-          card.number.length >= 16 &&
+          userData.name.length > 0 &&
+          userData.email.length > 0 &&
+          userData.street.length > 0 &&
+          userData.number.length > 0 &&
+          userData.zip_code.length === 8 &&
+          userData.neighborhood.length > 0 &&
+          userData.city.length > 0 &&
+          userData.state.length === 2
+        )
+      case 2:
+        return (
+          card.number.length === 16 &&
           card.name.length > 0 &&
           card.expiry.length === 5 &&
           card.cvv.length >= 3 &&
-          card.cpf.length === 11 &&
-          billing.street.length > 0 &&
-          billing.number.length > 0 &&
-          billing.zip_code.length === 8 &&
-          billing.neighborhood.length > 0 &&
-          billing.city.length > 0 &&
-          billing.state.length === 2
+          card.cpf.length === 11
         )
-      case 2:
+      case 3:
         return true
       default:
         return false
@@ -202,11 +219,13 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>
-                {step === 0 && (t?.checkout?.selectPlan || 'Escolha seu plano')}
-                {step === 1 && (t?.checkout?.paymentDetails || 'Dados de pagamento')}
-                {step === 2 && (t?.checkout?.confirm || 'Confirmação')}
+                {step === 0 && 'Escolha seu plano'}
+                {step === 1 && 'Dados do usuário'}
+                {step === 2 && 'Dados de pagamento'}
+                {step === 3 && 'Confirmação'}
+                {step === 4 && (result.success ? 'Sucesso' : 'Erro')}
               </CardTitle>
-              {step > 0 && (
+              {step > 0 && step < 4 && (
                 <div className="text-sm text-muted-foreground mt-2">
                   Plano: <b>{planId && PLANS[planId].name}</b> — {planId && PLANS[planId].price}
                 </div>
@@ -230,58 +249,103 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
               {step === 1 && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="card-number">{t?.checkout?.cardNumber || 'Card Number'}</Label>
+                    <Label htmlFor="user-name">Nome completo</Label>
+                    <Input
+                      id="user-name"
+                      placeholder="Seu nome"
+                      value={userData.name}
+                      onChange={e => setUserData({ ...userData, name: e.target.value })}
+                      className={cn(userData.name.length === 0 && 'border-red-500')}
+                    />
+                    {userData.name.length === 0 && <span className="text-xs text-red-500">Nome obrigatório</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-email">E-mail</Label>
+                    <Input
+                      id="user-email"
+                      placeholder="seu@email.com"
+                      value={userData.email}
+                      onChange={e => setUserData({ ...userData, email: e.target.value })}
+                      className={cn(userData.email.length === 0 && 'border-red-500')}
+                    />
+                    {userData.email.length === 0 && <span className="text-xs text-red-500">E-mail obrigatório</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-street">Rua</Label>
+                    <Input id="user-street" value={userData.street} onChange={e => setUserData({ ...userData, street: e.target.value })} className={cn(userData.street.length === 0 && 'border-red-500')} />
+                    {userData.street.length === 0 && <span className="text-xs text-red-500">Rua obrigatória</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-number">Número</Label>
+                    <Input id="user-number" value={userData.number} onChange={e => setUserData({ ...userData, number: e.target.value })} className={cn(userData.number.length === 0 && 'border-red-500')} />
+                    {userData.number.length === 0 && <span className="text-xs text-red-500">Número obrigatório</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-complement">Complemento</Label>
+                    <Input id="user-complement" value={userData.complement} onChange={e => setUserData({ ...userData, complement: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-zip">CEP</Label>
+                    <Input id="user-zip" value={userData.zip_code} onChange={e => setUserData({ ...userData, zip_code: e.target.value.replace(/\D/g, '') })} maxLength={8} className={cn(userData.zip_code.length > 0 && userData.zip_code.length < 8 && 'border-red-500')} />
+                    {userData.zip_code.length > 0 && userData.zip_code.length < 8 && <span className="text-xs text-red-500">CEP inválido</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-neighborhood">Bairro</Label>
+                    <Input id="user-neighborhood" value={userData.neighborhood} onChange={e => setUserData({ ...userData, neighborhood: e.target.value })} className={cn(userData.neighborhood.length === 0 && 'border-red-500')} />
+                    {userData.neighborhood.length === 0 && <span className="text-xs text-red-500">Bairro obrigatório</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-city">Cidade</Label>
+                    <Input id="user-city" value={userData.city} onChange={e => setUserData({ ...userData, city: e.target.value })} className={cn(userData.city.length === 0 && 'border-red-500')} />
+                    {userData.city.length === 0 && <span className="text-xs text-red-500">Cidade obrigatória</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-state">Estado</Label>
+                    <Input id="user-state" value={userData.state} onChange={e => setUserData({ ...userData, state: e.target.value })} maxLength={2} className={cn(userData.state.length > 0 && userData.state.length < 2 && 'border-red-500')} />
+                    {userData.state.length > 0 && userData.state.length < 2 && <span className="text-xs text-red-500">Estado inválido</span>}
+                  </div>
+                </>
+              )}
+              {step === 2 && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-number">Número do cartão</Label>
                     <Input
                       id="card-number"
                       placeholder="1234 5678 9012 3456"
                       value={card.number}
                       onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
                       maxLength={16}
-                      className={cn(
-                        "text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground",
-                        card.number.length > 0 && card.number.length < 16 && 'border-red-500'
-                      )}
+                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
                     />
-                    {card.number.length > 0 && card.number.length < 16 && (
-                      <span className="text-xs text-red-500">Número de cartão inválido</span>
-                    )}
+                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">Número de cartão inválido</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-name">{t?.checkout?.cardName || 'Cardholder Name'}</Label>
+                    <Label htmlFor="card-name">Nome impresso no cartão</Label>
                     <Input
                       id="card-name"
                       placeholder="John Doe"
                       value={card.name}
                       onChange={(e) => setCard({ ...card, name: e.target.value })}
-                      className={cn(
-                        "text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground",
-                        card.name.length === 0 && 'border-red-500'
-                      )}
+                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.name.length === 0 && 'border-red-500')}
                     />
-                    {card.name.length === 0 && (
-                      <span className="text-xs text-red-500">Nome obrigatório</span>
-                    )}
+                    {card.name.length === 0 && <span className="text-xs text-red-500">Nome obrigatório</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-cpf">CPF</Label>
+                    <Label htmlFor="card-cpf">CPF do titular</Label>
                     <Input
                       id="card-cpf"
                       placeholder="00000000000"
                       value={card.cpf}
                       onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
                       maxLength={11}
-                      className={cn(
-                        "text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground",
-                        card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500'
-                      )}
+                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
                     />
-                    {card.cpf.length > 0 && card.cpf.length < 11 && (
-                      <span className="text-xs text-red-500">CPF inválido</span>
-                    )}
+                    {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">CPF inválido</span>}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="card-expiry">{t?.checkout?.expiryDate || 'Expiry Date'}</Label>
+                      <Label htmlFor="card-expiry">Validade</Label>
                       <Input
                         id="card-expiry"
                         placeholder="MM/YY"
@@ -296,104 +360,132 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                           }
                         }}
                         maxLength={5}
-                        className={cn(
-                          "text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground",
-                          card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500'
-                        )}
+                        className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
                       />
-                      {card.expiry.length > 0 && card.expiry.length < 5 && (
-                        <span className="text-xs text-red-500">Data inválida</span>
-                      )}
+                      {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">Data inválida</span>}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="card-cvv">{t?.checkout?.cvv || 'CVV'}</Label>
+                      <Label htmlFor="card-cvv">CVV</Label>
                       <Input
                         id="card-cvv"
                         placeholder="123"
                         value={card.cvv}
                         onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
                         maxLength={4}
-                        className={cn(
-                          "text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground",
-                          card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500'
-                        )}
+                        className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
                       />
-                      {card.cvv.length > 0 && card.cvv.length < 3 && (
-                        <span className="text-xs text-red-500">CVV inválido</span>
-                      )}
+                      {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">CVV inválido</span>}
                     </div>
-                  </div>
-                  {/* Endereço de cobrança */}
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-street">Rua</Label>
-                    <Input id="billing-street" value={billing.street} onChange={e => setBilling({ ...billing, street: e.target.value })} className={cn(billing.street.length === 0 && 'border-red-500')} />
-                    {billing.street.length === 0 && <span className="text-xs text-red-500">Rua obrigatória</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-number">Número</Label>
-                    <Input id="billing-number" value={billing.number} onChange={e => setBilling({ ...billing, number: e.target.value })} className={cn(billing.number.length === 0 && 'border-red-500')} />
-                    {billing.number.length === 0 && <span className="text-xs text-red-500">Número obrigatório</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-complement">Complemento</Label>
-                    <Input id="billing-complement" value={billing.complement} onChange={e => setBilling({ ...billing, complement: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-zip">CEP</Label>
-                    <Input id="billing-zip" value={billing.zip_code} onChange={e => setBilling({ ...billing, zip_code: e.target.value.replace(/\D/g, '') })} maxLength={8} className={cn(billing.zip_code.length > 0 && billing.zip_code.length < 8 && 'border-red-500')} />
-                    {billing.zip_code.length > 0 && billing.zip_code.length < 8 && <span className="text-xs text-red-500">CEP inválido</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-neighborhood">Bairro</Label>
-                    <Input id="billing-neighborhood" value={billing.neighborhood} onChange={e => setBilling({ ...billing, neighborhood: e.target.value })} className={cn(billing.neighborhood.length === 0 && 'border-red-500')} />
-                    {billing.neighborhood.length === 0 && <span className="text-xs text-red-500">Bairro obrigatório</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-city">Cidade</Label>
-                    <Input id="billing-city" value={billing.city} onChange={e => setBilling({ ...billing, city: e.target.value })} className={cn(billing.city.length === 0 && 'border-red-500')} />
-                    {billing.city.length === 0 && <span className="text-xs text-red-500">Cidade obrigatória</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="billing-state">Estado</Label>
-                    <Input id="billing-state" value={billing.state} onChange={e => setBilling({ ...billing, state: e.target.value })} maxLength={2} className={cn(billing.state.length > 0 && billing.state.length < 2 && 'border-red-500')} />
-                    {billing.state.length > 0 && billing.state.length < 2 && <span className="text-xs text-red-500">Estado inválido</span>}
                   </div>
                 </>
               )}
-              {step === 2 && (
+              {step === 3 && (
                 <div className="space-y-4">
                   <div className="text-center">
                     <Check className="mx-auto mb-2 h-8 w-8 text-green-500" />
-                    <div className="text-lg font-semibold mb-2">Confirme sua assinatura</div>
+                    <div className="text-lg font-semibold mb-2">Confirme seus dados</div>
                     <div className="text-sm text-muted-foreground mb-2">
                       Plano: <b>{planId && PLANS[planId].name}</b> — {planId && PLANS[planId].price}
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    <div><b>Nome:</b> {card.name}</div>
+                    <div><b>Nome:</b> {userData.name}</div>
+                    <div><b>Email:</b> {userData.email}</div>
+                    <div><b>Rua:</b> {userData.street}, {userData.number} {userData.complement && `- ${userData.complement}`}</div>
+                    <div><b>Bairro:</b> {userData.neighborhood}</div>
+                    <div><b>Cidade:</b> {userData.city} - {userData.state}</div>
+                    <div><b>CEP:</b> {userData.zip_code}</div>
+                    <div><b>Cartão:</b> **** **** **** {card.number.slice(-4)}</div>
                     <div><b>CPF:</b> {card.cpf}</div>
-                    <div><b>Rua:</b> {billing.street}, {billing.number} {billing.complement && `- ${billing.complement}`}</div>
-                    <div><b>Bairro:</b> {billing.neighborhood}</div>
-                    <div><b>Cidade:</b> {billing.city} - {billing.state}</div>
-                    <div><b>CEP:</b> {billing.zip_code}</div>
                   </div>
+                </div>
+              )}
+              {step === 4 && (
+                <div className="space-y-4 text-center">
+                  {result.success ? (
+                    <>
+                      <Check className="mx-auto mb-2 h-8 w-8 text-green-500" />
+                      <div className="text-lg font-semibold mb-2">Assinatura criada com sucesso!</div>
+                      <div className="text-muted-foreground">Bem-vindo ao plano {planId && PLANS[planId].name}.</div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-red-500 text-2xl">Erro</span>
+                      <div className="text-muted-foreground mt-2">{result.message}</div>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>
             <div className="flex justify-between mt-6 px-6 pb-6">
-              <Button variant="outline" onClick={handleBack} disabled={step === 0}>
+              <Button variant="outline" onClick={handleBack} disabled={step === 0 || step === 4}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                {t?.checkout?.back || 'Voltar'}
+                Voltar
               </Button>
-              <Button onClick={handleNext} disabled={!isStepValid() || loading}>
-                {loading ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : step === STEPS.length - 1 ? (
-                  t?.checkout?.confirm || 'Confirmar'
-                ) : (
-                  t?.checkout?.next || 'Próximo'
-                )}
-              </Button>
+              {step < 3 && (
+                <Button onClick={handleNext} disabled={!isStepValid() || loading}>
+                  {loading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : 'Próximo'}
+                </Button>
+              )}
+              {step === 3 && (
+                <Button onClick={async () => {
+                  setLoading(true)
+                  try {
+                    const res = await fetch('/api/pagarme/subscribe', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        user_id: user.id,
+                        email: userData.email,
+                        name: userData.name,
+                        plan_id: planId,
+                        payment_method: 'credit_card',
+                        card: {
+                          holder_name: card.name,
+                          number: card.number,
+                          exp_month: card.expiry.split('/')[0],
+                          exp_year: card.expiry.split('/')[1],
+                          cvv: card.cvv,
+                          cpf: card.cpf
+                        },
+                        billing_address: {
+                          street: userData.street,
+                          number: userData.number,
+                          complement: userData.complement,
+                          zip_code: userData.zip_code,
+                          neighborhood: userData.neighborhood,
+                          city: userData.city,
+                          state: userData.state,
+                          country: userData.country
+                        }
+                      })
+                    })
+                    let data = null
+                    try {
+                      data = await res.json()
+                    } catch {
+                      data = {}
+                    }
+                    if (!res.ok || !data.success) {
+                      setResult({ success: false, message: data.error || data.message || 'Erro ao processar assinatura.' })
+                    } else {
+                      setResult({ success: true, message: 'Assinatura criada com sucesso!' })
+                    }
+                    setStep(4)
+                  } catch (err) {
+                    setResult({ success: false, message: err instanceof Error ? err.message : 'Erro inesperado.' })
+                    setStep(4)
+                  } finally {
+                    setLoading(false)
+                  }
+                }} disabled={loading}>
+                  {loading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : 'Confirmar'}
+                </Button>
+              )}
             </div>
           </Card>
         </motion.div>
