@@ -231,7 +231,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </div>
               )}
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
               {step === 0 && (
                 <div className="space-y-4">
                   {Object.entries(PLANS).map(([id, plan]) => (
@@ -247,7 +247,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </div>
               )}
               {step === 1 && (
-                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="user-name">Nome completo</Label>
                     <Input
@@ -304,10 +304,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <Input id="user-state" value={userData.state} onChange={e => setUserData({ ...userData, state: e.target.value })} maxLength={2} className={cn(userData.state.length > 0 && userData.state.length < 2 && 'border-red-500')} />
                     {userData.state.length > 0 && userData.state.length < 2 && <span className="text-xs text-red-500">Estado inválido</span>}
                   </div>
-                </>
+                </div>
               )}
               {step === 2 && (
-                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="card-number">Número do cartão</Label>
                     <Input
@@ -343,41 +343,39 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     />
                     {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">CPF inválido</span>}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="card-expiry">Validade</Label>
-                      <Input
-                        id="card-expiry"
-                        placeholder="MM/YY"
-                        value={card.expiry}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '')
-                          if (value.length <= 4) {
-                            setCard({
-                              ...card,
-                              expiry: value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
-                            })
-                          }
-                        }}
-                        maxLength={5}
-                        className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
-                      />
-                      {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">Data inválida</span>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="card-cvv">CVV</Label>
-                      <Input
-                        id="card-cvv"
-                        placeholder="123"
-                        value={card.cvv}
-                        onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
-                        maxLength={4}
-                        className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
-                      />
-                      {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">CVV inválido</span>}
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-expiry">Validade</Label>
+                    <Input
+                      id="card-expiry"
+                      placeholder="MM/YY"
+                      value={card.expiry}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '')
+                        if (value.length <= 4) {
+                          setCard({
+                            ...card,
+                            expiry: value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
+                          })
+                        }
+                      }}
+                      maxLength={5}
+                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
+                    />
+                    {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">Data inválida</span>}
                   </div>
-                </>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-cvv">CVV</Label>
+                    <Input
+                      id="card-cvv"
+                      placeholder="123"
+                      value={card.cvv}
+                      onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
+                      maxLength={4}
+                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
+                    />
+                    {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">CVV inválido</span>}
+                  </div>
+                </div>
               )}
               {step === 3 && (
                 <div className="space-y-4">
@@ -411,7 +409,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   ) : (
                     <>
                       <span className="text-red-500 text-2xl">Erro</span>
-                      <div className="text-muted-foreground mt-2">{result.message}</div>
+                      <div className="text-muted-foreground mt-2 break-words max-w-xs mx-auto">{result.message || 'Erro ao processar assinatura.'}</div>
                     </>
                   )}
                 </div>
@@ -465,11 +463,12 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     let data = null
                     try {
                       data = await res.json()
-                    } catch {
-                      data = {}
+                    } catch (err) {
+                      data = { error: err instanceof Error ? err.message : 'Erro inesperado ao processar resposta.' }
                     }
                     if (!res.ok || !data.success) {
                       setResult({ success: false, message: data.error || data.message || 'Erro ao processar assinatura.' })
+                      console.error('Erro ao assinar:', data)
                     } else {
                       setResult({ success: true, message: 'Assinatura criada com sucesso!' })
                     }
@@ -477,6 +476,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   } catch (err) {
                     setResult({ success: false, message: err instanceof Error ? err.message : 'Erro inesperado.' })
                     setStep(4)
+                    console.error('Erro ao assinar:', err)
                   } finally {
                     setLoading(false)
                   }
