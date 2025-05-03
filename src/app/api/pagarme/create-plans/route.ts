@@ -20,7 +20,7 @@ export async function POST() {
         interval: 'month',
         interval_count: 1,
         billing_type: 'exact_day',
-        billing_day: 1,
+        billing_days: [1],
         minimum_price: 3790, // R$ 37,90 em centavos
         installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         currency: 'BRL',
@@ -40,7 +40,7 @@ export async function POST() {
         interval: 'year',
         interval_count: 1,
         billing_type: 'exact_day',
-        billing_day: 1,
+        billing_days: [1],
         minimum_price: 37900, // R$ 379,00 em centavos
         installments: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         currency: 'BRL',
