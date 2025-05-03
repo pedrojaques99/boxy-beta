@@ -7,7 +7,7 @@
 'use client'
 
 import { useUser } from '@supabase/auth-helpers-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -42,6 +42,13 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     cvv: ''
   })
   const [loading, setLoading] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
+
+  useEffect(() => {
+    if (user !== null) {
+      setAuthLoading(false)
+    }
+  }, [user])
 
   const handleBack = () => {
     if (step > 0) {
@@ -54,7 +61,13 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       setLoading(true)
       try {
         if (!user) {
-          throw new Error('User not authenticated')
+          console.error('User state:', user)
+          throw new Error('User not authenticated. Please try logging in again.')
+        }
+
+        if (!user.id || !user.email) {
+          console.error('User data incomplete:', { id: user.id, email: user.email })
+          throw new Error('User data incomplete. Please try logging in again.')
         }
 
         const res = await fetch('/api/pagarme/subscribe', {
@@ -97,10 +110,15 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           error: err,
           message: errorMessage,
           planId,
+          user: user ? {
+            id: user.id,
+            email: user.email,
+            metadata: user.user_metadata
+          } : null,
           card: {
             ...card,
-            number: card.number.replace(/\d(?=\d{4})/g, '*'), // Mask card number
-            cvv: '***' // Mask CVV
+            number: card.number.replace(/\d(?=\d{4})/g, '*'),
+            cvv: '***'
           }
         })
         toast.error(errorMessage)
@@ -128,6 +146,26 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       default:
         return false
     }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="space-y-4 p-8 text-center">
+        <h3 className="text-lg font-semibold">Authentication Required</h3>
+        <p>Please log in to continue with your subscription.</p>
+        <Button onClick={() => router.push('/login')}>
+          Go to Login
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -189,7 +227,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   value={card.number}
                   onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
                   maxLength={16}
-                  className="text-foreground placeholder:text-muted-foreground"
+                  className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -199,7 +237,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   placeholder="John Doe"
                   value={card.name}
                   onChange={(e) => setCard({ ...card, name: e.target.value })}
-                  className="text-foreground placeholder:text-muted-foreground"
+                  className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -219,7 +257,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       }
                     }}
                     maxLength={5}
-                    className="text-foreground placeholder:text-muted-foreground"
+                    className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
                   />
                 </div>
                 <div className="space-y-2">
@@ -230,7 +268,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     value={card.cvv}
                     onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
                     maxLength={4}
-                    className="text-foreground placeholder:text-muted-foreground"
+                    className="text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground"
                   />
                 </div>
               </div>
