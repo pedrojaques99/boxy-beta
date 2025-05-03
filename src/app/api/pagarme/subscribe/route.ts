@@ -15,17 +15,51 @@ const supabase = supabaseUrl && supabaseServiceRole
   : null
 
 export async function POST(req: NextRequest) {
-  if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
-    console.error('Missing environment variables')
-    return NextResponse.json({ error: 'Service configuration error' }, { status: 500 })
+  // Validate environment variables with detailed logging
+  const missingVars = []
+  if (!supabaseUrl) missingVars.push('SUPABASE_URL')
+  if (!supabaseServiceRole) missingVars.push('SUPABASE_SERVICE_ROLE')
+  if (!pagarmeApiKey) missingVars.push('PAGARME_API_KEY')
+
+  if (missingVars.length > 0) {
+    console.error('Missing environment variables:', missingVars)
+    return NextResponse.json({ 
+      error: 'Service configuration error',
+      details: `Missing required environment variables: ${missingVars.join(', ')}`
+    }, { status: 500 })
   }
 
   const body = await req.json()
   const { user_id, email, name, plan_id, payment_method, card } = body
 
+  // Log the request data (without sensitive information)
+  console.log('Subscription request:', {
+    user_id,
+    email,
+    name,
+    plan_id,
+    payment_method,
+    card: card ? {
+      ...card,
+      number: card.number.replace(/\d(?=\d{4})/g, '*'),
+      cvv: '***'
+    } : null
+  })
+
   // Validate required fields
   if (!user_id || !email || !name || !plan_id || !payment_method) {
-    return NextResponse.json({ error: 'Campos obrigatórios faltando' }, { status: 400 })
+    const missingFields = []
+    if (!user_id) missingFields.push('user_id')
+    if (!email) missingFields.push('email')
+    if (!name) missingFields.push('name')
+    if (!plan_id) missingFields.push('plan_id')
+    if (!payment_method) missingFields.push('payment_method')
+
+    console.error('Missing required fields:', missingFields)
+    return NextResponse.json({ 
+      error: 'Missing required fields',
+      details: `The following fields are required: ${missingFields.join(', ')}`
+    }, { status: 400 })
   }
 
   // Get user's CPF
