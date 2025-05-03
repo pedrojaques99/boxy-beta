@@ -53,17 +53,28 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     if (step === STEPS.length - 1) {
       setLoading(true)
       try {
+        if (!user) {
+          throw new Error('User not authenticated')
+        }
+
         const res = await fetch('/api/pagarme/subscribe', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
+            user_id: user.id,
+            email: user.email,
+            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
             plan_id: planId,
-            card_number: card.number,
-            card_holder_name: card.name,
-            card_expiration_date: card.expiry,
-            card_cvv: card.cvv
+            payment_method: 'credit_card',
+            card: {
+              holder_name: card.name,
+              number: card.number,
+              exp_month: card.expiry.split('/')[0],
+              exp_year: card.expiry.split('/')[1],
+              cvv: card.cvv
+            }
           })
         })
 
@@ -75,7 +86,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             statusText: res.statusText,
             data: data
           })
-          throw new Error(data.message || data.error || 'Failed to process payment')
+          throw new Error(data.error || data.message || 'Failed to process payment')
         }
 
         toast.success('Subscription created successfully!')
