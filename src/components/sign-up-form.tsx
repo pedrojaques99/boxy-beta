@@ -58,19 +58,44 @@ export function SignUpForm() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log('Iniciando registro com email:', values.email)
+      
+      const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            full_name: values.email.split('@')[0], // Inicialmente usamoss o nome do email
+          }
         },
       })
 
+      console.log('Resposta do registro:', { data, error })
+
       if (error) throw error
+      
+      // Verificar se precisamos confirmar o email
+      if (data?.user?.identities?.length === 0) {
+        toast.error('Este email já está registrado. Por favor, faça login.')
+        router.push('/auth/login')
+        return
+      }
       
       toast.success('Check your email to confirm your account')
       router.push('/auth/sign-up-success')
     } catch (error: unknown) {
+      console.error('Erro detalhado no registro:', error)
+      
+      // Tratamento especial para erros de email já em uso
+      if (error instanceof Error && 
+         (error.message.includes('already registered') || 
+          error.message.includes('already in use'))) {
+        toast.error('Este email já está registrado. Por favor, faça login.')
+        router.push('/auth/login')
+        return
+      }
+      
       const { error: errorMessage } = handleError(error, 'Error during sign up');
       toast.error(errorMessage);
     } finally {
