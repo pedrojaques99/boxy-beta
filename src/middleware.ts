@@ -18,6 +18,19 @@ import type { NextRequest } from 'next/server'
 export async function middleware(req: NextRequest) {
   console.log(`Middleware executando para: ${req.nextUrl.pathname}`)
   
+  // Logs de cookies para debug
+  const allCookies = req.cookies.getAll();
+  console.log(`Cookies recebidos (${allCookies.length}):`, allCookies.map(c => c.name).join(', '));
+  
+  // Log de cookies de autenticação específicos
+  const authCookies = allCookies.filter(c => 
+    c.name.includes('supabase') || 
+    c.name.includes('auth') || 
+    c.name.includes('session')
+  );
+  console.log('Cookies de autenticação:', authCookies.map(c => c.name).join(', '));
+  
+  // Cria uma resposta padrão para modificar depois
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
@@ -27,73 +40,88 @@ export async function middleware(req: NextRequest) {
     } = await supabase.auth.getSession()
 
     console.log(`Status da sessão: ${session ? 'Autenticado' : 'Não autenticado'}`)
+    
+    // Criamos uma resposta vazia para usar se precisarmos redirecionar
+    let redirectResponse: NextResponse | null = null;
 
     // Protege a rota de checkout
     if (req.nextUrl.pathname.startsWith('/checkout')) {
       if (!session) {
         console.log('Redirecionando de /checkout para /auth/login (usuário não autenticado)')
-        return NextResponse.redirect(new URL('/auth/login?redirectTo=/checkout', req.url))
+        redirectResponse = NextResponse.redirect(new URL('/auth/login?redirectTo=/checkout', req.url))
       }
     }
     
     // Protege todas as rotas do profile
-    if (req.nextUrl.pathname.startsWith('/profile')) {
+    if (!redirectResponse && req.nextUrl.pathname.startsWith('/profile')) {
       if (!session) {
         console.log('Redirecionando de /profile para /auth/login (usuário não autenticado)')
-        return NextResponse.redirect(new URL(`/auth/login?redirectTo=${req.nextUrl.pathname}`, req.url))
+        redirectResponse = NextResponse.redirect(new URL(`/auth/login?redirectTo=${req.nextUrl.pathname}`, req.url))
       }
     }
     
     // Protege a rota de price (página de assinatura)
-    if (req.nextUrl.pathname.startsWith('/price')) {
+    if (!redirectResponse && req.nextUrl.pathname.startsWith('/price')) {
       if (!session) {
         console.log('Redirecionando de /price para /auth/login (usuário não autenticado)')
-        return NextResponse.redirect(new URL('/auth/login?redirectTo=/price', req.url))
+        redirectResponse = NextResponse.redirect(new URL('/auth/login?redirectTo=/price', req.url))
       }
     }
 
     // Protege a rota de admin explicitamente
-    if (req.nextUrl.pathname.startsWith('/admin')) {
+    if (!redirectResponse && req.nextUrl.pathname.startsWith('/admin')) {
       // Verificação de autenticação
       if (!session) {
         console.log('Redirecionando de /admin para /auth/login (usuário não autenticado)')
-        return NextResponse.redirect(new URL('/auth/login?redirectTo=/admin', req.url))
-      }
-      
-      try {
-        console.log(`Verificando status de admin para usuário ID: ${session.user.id}`)
-        
-        // Check if user has admin role
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        
-        console.log('Perfil obtido do Supabase:', profile, error ? `Erro: ${error.message}` : 'Sem erro')
+        redirectResponse = NextResponse.redirect(new URL('/auth/login?redirectTo=/admin', req.url))
+      } else {
+        try {
+          console.log(`Verificando status de admin para usuário ID: ${session.user.id}`)
           
-        if (error) {
-          console.error('Erro ao verificar perfil:', error)
-          // Continue permitindo acesso em caso de erro na consulta
+          // Check if user has admin role
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
+          
+          console.log('Perfil obtido do Supabase:', profile, error ? `Erro: ${error.message}` : 'Sem erro')
+            
+          if (error) {
+            console.error('Erro ao verificar perfil:', error)
+            // Continue permitindo acesso em caso de erro na consulta
+            // para evitar bloqueios indevidos
+          } else if (profile?.role !== 'admin') {
+            console.log(`Usuário não é admin. Role atual: ${profile?.role || 'não definido'}`)
+            
+            // Redirect non-admin users to access denied page
+            redirectResponse = NextResponse.redirect(new URL('/auth/access-denied', req.url))
+          } else {
+            console.log('Usuário autenticado como admin, permitindo acesso')
+          }
+        } catch (error) {
+          console.error('Erro ao verificar status de admin no middleware:', error)
+          // Continue permitindo acesso em caso de erro
           // para evitar bloqueios indevidos
-        } else if (profile?.role !== 'admin') {
-          console.log(`Usuário não é admin. Role atual: ${profile?.role || 'não definido'}`)
-          
-          // Redirect non-admin users to access denied page
-          return NextResponse.redirect(new URL('/auth/access-denied', req.url))
-          
-          // OU alternativamente, continuar e deixar o cliente lidar com isso
-        } else {
-          console.log('Usuário autenticado como admin, permitindo acesso')
         }
-      } catch (error) {
-        console.error('Erro ao verificar status de admin no middleware:', error)
-        // Continue permitindo acesso em caso de erro
-        // para evitar bloqueios indevidos
       }
     }
 
-    return res
+    // Se precisamos redirecionar, retorne a resposta de redirecionamento
+    if (redirectResponse) {
+      // Importante: copie os cookies da resposta do supabase para a resposta de redirecionamento
+      const supabaseCookies = res.cookies.getAll();
+      supabaseCookies.forEach(cookie => {
+        redirectResponse?.cookies.set(cookie.name, cookie.value);
+      });
+      
+      console.log('Redirecionando com cookies da sessão:', supabaseCookies.map(c => c.name).join(', '));
+      return redirectResponse;
+    }
+
+    // Se não redirecionamos, continue com a resposta original
+    console.log('Middleware concluído sem redirecionamento');
+    return res;
   } catch (error) {
     console.error('Erro no middleware:', error)
     // Em caso de erro, continuar a requisição

@@ -88,20 +88,47 @@ export async function GET(request: Request) {
     // Determine the correct base URL
     let baseUrl = origin
     
-    if (process.env.NODE_ENV === 'production') {
-      // In production, always use the production domain
+    // For local development, always use the original origin URL
+    const isLocalDevelopment = host?.includes('localhost') || host?.includes('127.0.0.1')
+    
+    if (process.env.NODE_ENV === 'production' && !isLocalDevelopment) {
+      // In production, always use the production domain (but not for localhost)
       baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://boxy-beta.vercel.app'
-    } else if (forwardedHost) {
-      // If we're behind a load balancer, use the forwarded host
+    } else if (forwardedHost && !isLocalDevelopment) {
+      // If we're behind a load balancer, use the forwarded host (but not for localhost)
       baseUrl = `https://${forwardedHost}`
-    } else if (host) {
-      // Fallback to the host header
+    } else if (host && !isLocalDevelopment) {
+      // Fallback to the host header (but not for localhost)
       baseUrl = `https://${host}`
+    }
+    
+    // For localhost, always preserve the original origin
+    if (isLocalDevelopment) {
+      console.log('Detected localhost environment, preserving original origin:', origin)
+      baseUrl = origin
     }
 
     console.log('Redirecionando para:', `${baseUrl}${redirectTo}`)
     // Redirect to the specified path or homepage
-    return NextResponse.redirect(`${baseUrl}${redirectTo}`)
+    const redirectResponse = NextResponse.redirect(`${baseUrl}${redirectTo}`)
+    
+    // Adicione cookies de debug para entender melhor o que está acontecendo
+    redirectResponse.cookies.set('auth_debug', 'callback_completed', {
+      path: '/',
+      maxAge: 60 * 5, // 5 minutes
+      httpOnly: false, // Tornando visível do lado do cliente para debug
+      sameSite: 'lax'
+    });
+    
+    // Adicione timestamp para debug
+    redirectResponse.cookies.set('auth_timestamp', Date.now().toString(), {
+      path: '/',
+      maxAge: 60 * 5, // 5 minutes
+      httpOnly: false,
+      sameSite: 'lax'
+    });
+    
+    return redirectResponse
   } catch (error) {
     const { error: errorMessage } = handleError(error, 'Unexpected error in auth callback');
     console.error('Erro inesperado no callback de autenticação:', errorMessage);

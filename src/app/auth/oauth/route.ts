@@ -13,14 +13,65 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
       const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
-      const isLocalEnv = process.env.NODE_ENV === 'development'
-      if (isLocalEnv) {
-        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-        return NextResponse.redirect(`${origin}${next}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${next}`)
+      const host = request.headers.get('host')
+      const isLocalDevelopment = host?.includes('localhost') || host?.includes('127.0.0.1')
+      
+      // For localhost, always use original origin
+      if (isLocalDevelopment) {
+        console.log('Detected localhost environment, preserving original origin:', origin)
+        const redirectResponse = NextResponse.redirect(`${origin}${next}`)
+        
+        // Adicione cookies de debug
+        redirectResponse.cookies.set('auth_debug', 'oauth_localhost_completed', {
+          path: '/',
+          maxAge: 60 * 5, // 5 minutes
+          httpOnly: false,
+          sameSite: 'lax'
+        });
+        
+        return redirectResponse
+      } else if (process.env.NODE_ENV === 'production') {
+        // In production, check for forwarded host
+        if (forwardedHost) {
+          const redirectResponse = NextResponse.redirect(`https://${forwardedHost}${next}`)
+          
+          // Adicione cookies de debug
+          redirectResponse.cookies.set('auth_debug', 'oauth_production_forwarded_completed', {
+            path: '/',
+            maxAge: 60 * 5, // 5 minutes
+            httpOnly: false,
+            sameSite: 'lax'
+          });
+          
+          return redirectResponse
+        } else {
+          // Use the SITE_URL if defined, otherwise fall back to origin
+          const productionUrl = process.env.NEXT_PUBLIC_SITE_URL
+          const redirectResponse = NextResponse.redirect(`${productionUrl || origin}${next}`)
+          
+          // Adicione cookies de debug
+          redirectResponse.cookies.set('auth_debug', 'oauth_production_url_completed', {
+            path: '/',
+            maxAge: 60 * 5, // 5 minutes
+            httpOnly: false,
+            sameSite: 'lax'
+          });
+          
+          return redirectResponse
+        }
       } else {
-        return NextResponse.redirect(`${origin}${next}`)
+        // Default fallback
+        const redirectResponse = NextResponse.redirect(`${origin}${next}`)
+        
+        // Adicione cookies de debug
+        redirectResponse.cookies.set('auth_debug', 'oauth_default_completed', {
+          path: '/',
+          maxAge: 60 * 5, // 5 minutes
+          httpOnly: false,
+          sameSite: 'lax'
+        });
+        
+        return redirectResponse
       }
     }
   }
