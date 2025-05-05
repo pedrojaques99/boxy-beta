@@ -172,14 +172,10 @@ export function PricingSection() {
     planId,
     isHighlighted = false, 
     delay = 0,
-    isOpen,
-    setIsOpen,
   }: {
     planId: PlanId
     isHighlighted?: boolean
     delay?: number
-    isOpen: boolean
-    setIsOpen: (open: boolean) => void
   }) => {
     const planData = PLANS[planId]
     if (!planData) return null
@@ -195,52 +191,30 @@ export function PricingSection() {
     // Verificar se o usuário tem qualquer outro plano pago (menos o free)
     const hasActivePaidPlan = userSubscription && planId !== 'free' && userSubscription.plan_id !== planId
 
-    const handleDialogOpen = async (open: boolean) => {
-      console.log('handleDialogOpen chamado, open:', open, 'planId:', planId)
-      
-      if (open) {
-        // Verificar sessão antes de abrir o diálogo
-        try {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (!session) {
-            // Redirecionar para login se não houver sessão
-            console.log('Usuário não autenticado, redirecionando para login')
-            window.location.href = '/auth/login'
-            return
-          }
-        } catch (err) {
-          console.error('Erro ao verificar sessão:', err)
-        }
-      
-        // Sempre definir o planId selecionado primeiro, independente de outras condições
-        setSelectedPlanId(planId)
-        
-        // Verificações que limitam funcionalidade, mas não impedem diálogo de abrir
-        if (isCurrentPlan) {
-          console.log('Usuário já possui este plano')
-          return // Não abre o diálogo se já é o plano atual
+    const handleSubscribe = async () => {
+      // If free plan, do nothing
+      if (planId === 'free') return
+
+      // Check for session first
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          // Redirect to login if no session
+          window.location.href = '/auth/login?redirect=/checkout/' + planId
+          return
         }
         
+        // If user has an active paid plan, redirect to profile
         if (hasActivePaidPlan) {
-          console.log('Usuário já possui outro plano pago')
-          // Ainda vamos abrir o diálogo, mas com opção de ir para perfil
+          window.location.href = '/profile'
+          return
         }
         
-        setIsDialogLoading(true)
-        console.log('Estado de loading definido, abrindo diálogo')
-        
-        // Ensure loading state is visible and component is mounted
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-      
-      // Sempre definir o estado do diálogo conforme o parâmetro open
-      setIsOpen(open)
-      console.log('Estado do diálogo definido:', open)
-      
-      if (!open) {
-        // Reset loading state when dialog closes
-        setIsDialogLoading(false)
-        console.log('Dialog fechado, resetando loading state')
+        // Otherwise redirect to the checkout page for this plan
+        window.location.href = '/checkout/' + planId
+      } catch (err) {
+        console.error('Erro ao verificar sessão:', err)
+        window.location.href = '/auth/login?redirect=/checkout/' + planId
       }
     }
 
@@ -306,90 +280,18 @@ export function PricingSection() {
             </ul>
 
             {/* Action Button */}
-            <Dialog open={isOpen} onOpenChange={(open) => handleDialogOpen(open)}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="w-full mt-auto"
-                  variant={isCurrentPlan ? "outline" : isHighlighted ? "default" : "outline"}
-                  disabled={isCurrentPlan || isLoading}
-                  onClick={() => {
-                    console.log('Botão clicado, planId:', planId)
-                    // Não queremos definir o planId aqui, isso deveria acontecer no diálogo
-                    // mas vamos garantir que ele seja definido
-                    setSelectedPlanId(planId)
-                  }}
-                >
-                  {isLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : isDialogLoading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : (
-                    buttonText
-                  )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[700px]">
-                <DialogTitle className="sr-only">Subscription Checkout</DialogTitle>
-                {isDialogLoading ? (
-                  <div className="flex items-center justify-center p-8">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                  </div>
-                ) : hasActivePaidPlan ? (
-                  <div className="p-6 space-y-4">
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Você já possui uma assinatura ativa</AlertTitle>
-                      <AlertDescription>
-                        Para mudar de plano, acesse seu perfil e gerencie sua assinatura atual.
-                      </AlertDescription>
-                    </Alert>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => {
-                        setIsOpen(false)
-                        window.location.href = '/profile'
-                      }}
-                    >
-                      Ir para Perfil
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {selectedPlanId && (
-                      <CheckoutWizard 
-                        defaultPlanId={selectedPlanId}
-                        onSuccess={() => {
-                          console.log('Checkout concluído com sucesso')
-                          setIsOpen(false)
-                          setIsDialogLoading(false)
-                          // Recarregar a verificação de assinatura após sucesso
-                          window.location.reload()
-                        }}
-                      />
-                    )}
-                    {!selectedPlanId && (
-                      <div className="p-6 space-y-4 text-center">
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertTitle>Erro ao selecionar plano</AlertTitle>
-                          <AlertDescription>
-                            Não foi possível identificar o plano selecionado. Por favor, tente novamente.
-                          </AlertDescription>
-                        </Alert>
-                        <Button 
-                          className="w-full" 
-                          onClick={() => {
-                            setIsOpen(false)
-                          }}
-                        >
-                          Fechar
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="w-full mt-auto"
+              variant={isCurrentPlan ? "outline" : isHighlighted ? "default" : "outline"}
+              disabled={isCurrentPlan || isLoading || (planId === 'free')}
+              onClick={handleSubscribe}
+            >
+              {isLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                buttonText
+              )}
+            </Button>
           </CardContent>
         </Card>
       </motion.div>
@@ -435,21 +337,15 @@ export function PricingSection() {
               <PricingCard
                 planId="free"
                 delay={0.1}
-                isOpen={false}
-                setIsOpen={() => {}}
               />
               <PricingCard
                 planId="annual"
                 isHighlighted
                 delay={0.2}
-                isOpen={isAnnualOpen}
-                setIsOpen={setIsAnnualOpen}
               />
               <PricingCard
                 planId="monthly"
                 delay={0.3}
-                isOpen={isMonthlyOpen}
-                setIsOpen={setIsMonthlyOpen}
               />
             </div>
           </>
