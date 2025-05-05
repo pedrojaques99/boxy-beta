@@ -12,7 +12,8 @@ import { CheckoutWizard } from '@/components/checkout/CheckoutWizard'
 import {
   Dialog,
   DialogContent,
-  DialogTrigger
+  DialogTrigger,
+  DialogTitle
 } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -214,6 +215,7 @@ export default function SubscriptionPage() {
 
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
         <DialogContent className="sm:max-w-[700px]">
+          <DialogTitle className="sr-only">Checkout</DialogTitle>
           <CheckoutWizard 
             defaultPlanId={subscription?.plan_id as PlanId} 
             onSuccess={() => {

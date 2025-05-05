@@ -11,7 +11,8 @@ import { useUser } from '@supabase/auth-helpers-react'
 import {
   Dialog,
   DialogContent,
-  DialogTrigger
+  DialogTrigger,
+  DialogTitle
 } from '@/components/ui/dialog'
 import { useState, useEffect } from 'react'
 import { PLANS, formatPrice, getPlanInterval, PlanId } from '@/lib/plans'
@@ -229,6 +230,7 @@ export function PricingSection() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[700px]">
+                <DialogTitle className="sr-only">Subscription Checkout</DialogTitle>
                 {isDialogLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
