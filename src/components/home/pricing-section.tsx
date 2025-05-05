@@ -30,6 +30,7 @@ export function PricingSection() {
   const user = useUser()
   const [isAnnualOpen, setIsAnnualOpen] = useState(false)
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false)
+  const [isDialogLoading, setIsDialogLoading] = useState(false)
 
   if (!t?.home?.pricing?.plans) return null
 
@@ -54,6 +55,19 @@ export function PricingSection() {
 
     const features = planTranslations.features || []
     if (!Array.isArray(features)) return null
+
+    const handleDialogOpen = (open: boolean) => {
+      if (open) {
+        setIsDialogLoading(true)
+        // Small delay to ensure loading state is visible
+        setTimeout(() => {
+          setIsDialogLoading(false)
+          setIsOpen(true)
+        }, 100)
+      } else {
+        setIsOpen(false)
+      }
+    }
 
     return (
       <motion.div
@@ -102,18 +116,28 @@ export function PricingSection() {
             </ul>
 
             {/* Action Button */}
-            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <Dialog open={isOpen} onOpenChange={handleDialogOpen}>
               <DialogTrigger asChild>
                 <Button 
                   className="w-full mt-auto"
                   variant={isHighlighted ? "default" : "outline"}
-                  onClick={() => setIsOpen(true)}
+                  disabled={isDialogLoading}
                 >
-                  {planTranslations.button}
+                  {isDialogLoading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    planTranslations.button
+                  )}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
-                <CheckoutWizard defaultPlanId={planId}/>
+                {isDialogLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  </div>
+                ) : (
+                  <CheckoutWizard defaultPlanId={planId}/>
+                )}
               </DialogContent>
             </Dialog>
           </CardContent>

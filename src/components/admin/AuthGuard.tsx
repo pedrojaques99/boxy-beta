@@ -31,53 +31,54 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
 
   useEffect(() => {
+    let mounted = true
+
     const checkAdminStatus = async () => {
       if (!user) {
-        setIsLoading(false)
-        setError('Usuário não está autenticado')
+        if (mounted) {
+          setIsLoading(false)
+          setError('Usuário não está autenticado')
+        }
         return
       }
 
       try {
-        console.log('Verificando status de admin para:', user.id)
-        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single()
 
+        if (!mounted) return
+
         if (profileError) {
-          console.error('Erro ao buscar perfil:', profileError)
           setError(`Erro ao buscar perfil: ${profileError.message}`)
           setIsAdmin(false)
           setProfileData(null)
         } else {
-          console.log('Perfil encontrado:', profile)
           setProfileData(profile)
           setIsAdmin(profile?.role === 'admin')
           if (profile?.role === 'admin') {
-            console.log('Usuário é admin')
-            setAuth(true) // Auto-autenticar se for admin
-          } else {
-            console.log('Usuário não é admin:', profile?.role)
+            setAuth(true)
           }
         }
       } catch (error) {
-        console.error('Erro ao verificar status de admin:', error)
+        if (!mounted) return
         setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
         setIsAdmin(false)
       } finally {
-        setIsLoading(false)
+        if (mounted) {
+          setIsLoading(false)
+        }
       }
     }
 
-    if (user) {
-      checkAdminStatus()
-    } else {
-      setIsLoading(false)
+    checkAdminStatus()
+
+    return () => {
+      mounted = false
     }
-  }, [user])
+  }, [user, supabase])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
