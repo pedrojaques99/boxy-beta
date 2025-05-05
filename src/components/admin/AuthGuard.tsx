@@ -26,11 +26,28 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [profileData, setProfileData] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
 
   const supabase = createClient()
   const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
 
+  // First useEffect to handle mounted state
   useEffect(() => {
+    setIsMounted(true)
+    
+    // Set a maximum loading time to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setIsLoading(false)
+    }, 10000) // 10 seconds maximum loading time
+    
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isMounted) return
+    
     let mounted = true
 
     const checkAdminStatus = async () => {
@@ -43,11 +60,16 @@ export function AuthGuard({ children }: AuthGuardProps) {
       }
 
       try {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single()
+          
+        clearTimeout(timeoutId)
 
         if (!mounted) return
 
@@ -78,7 +100,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return () => {
       mounted = false
     }
-  }, [user, supabase])
+  }, [user, supabase, isMounted])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

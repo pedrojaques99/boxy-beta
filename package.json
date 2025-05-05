@@ -38,6 +38,7 @@
     "pagarme": "^4.35.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^6.0.0",
     "react-hook-form": "^7.56.1",
     "react-hot-toast": "^2.5.2",
     "sonner": "^2.0.3",

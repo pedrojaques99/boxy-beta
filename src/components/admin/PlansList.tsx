@@ -33,18 +33,29 @@ export function PlansList() {
   const { t } = useTranslations()
   const [result, setResult] = useState<PlanListResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const fetchPlans = async () => {
     try {
       setIsLoading(true)
       console.log('Buscando planos existentes...')
       
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+      
       const res = await fetch('/api/pagarme/list-plans', { 
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        signal: controller.signal
       })
+      
+      clearTimeout(timeoutId)
 
       const data = await res.json()
       console.log('Resposta da API:', data)
@@ -75,8 +86,10 @@ export function PlansList() {
   }
 
   useEffect(() => {
-    fetchPlans()
-  }, [])
+    if (isClient) {
+      fetchPlans()
+    }
+  }, [isClient])
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {

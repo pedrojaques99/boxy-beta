@@ -95,16 +95,19 @@ export function Navigation() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <motion.span 
-              className={cn(
-                "font-bold text-xl",
-                "text-foreground/90 dark:text-foreground/90"
-              )}
+            <motion.div
+              className="h-7 w-auto"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >
-              BOXY
-            </motion.span>
+              <Image 
+                src="/logo/boxy-logotype-green.svg"
+                alt="BOXY Logo"
+                width={100}
+                height={22}
+                priority
+              />
+            </motion.div>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             <Link

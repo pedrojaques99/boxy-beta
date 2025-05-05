@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
-import { AlertCircle, CheckCircle, InfoIcon } from 'lucide-react'
+import { AlertCircle, CheckCircle, InfoIcon, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 interface Plan {
@@ -32,12 +32,18 @@ export function PlanCreation() {
       setIsLoading(true)
       console.log('Iniciando criação de planos...')
       
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+      
       const res = await fetch('/api/pagarme/create-plans', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        signal: controller.signal
       })
+      
+      clearTimeout(timeoutId)
 
       const data = await res.json()
       console.log('Resposta da API:', data)
@@ -81,7 +87,7 @@ export function PlanCreation() {
         disabled={isLoading}
       >
         {isLoading 
-          ? (t?.admin?.plans?.creating || 'Creating plans...') 
+          ? <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> {t?.admin?.plans?.creating || 'Creating plans...'}</span> 
           : (t?.admin?.plans?.create || 'Create plans')
         }
       </Button>

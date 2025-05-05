@@ -7,20 +7,62 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { InfoIcon } from 'lucide-react'
+import { InfoIcon, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Suspense, useState, useEffect } from 'react'
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 
-// Lazy load the components
+// Lazy load the components with proper error handling
 const PlanCreation = dynamic(() => import('@/components/admin/PlanCreation').then(mod => mod.PlanCreation), {
-  loading: () => <div className="animate-pulse h-10 bg-gray-200 rounded" />
+  loading: () => <div className="flex items-center space-x-2 p-4 rounded">
+    <Loader2 className="h-5 w-5 animate-spin" />
+    <span>Carregando criação de planos...</span>
+  </div>,
+  ssr: false
 })
 
 const PlansList = dynamic(() => import('@/components/admin/PlansList').then(mod => mod.PlansList), {
-  loading: () => <div className="animate-pulse h-32 bg-gray-200 rounded" />
+  loading: () => <div className="flex items-center space-x-2 p-4 rounded">
+    <Loader2 className="h-5 w-5 animate-spin" />
+    <span>Carregando lista de planos...</span>
+  </div>,
+  ssr: false
 })
+
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div className="p-4 border border-red-200 rounded bg-red-50">
+      <Alert variant="destructive">
+        <AlertTitle>Ocorreu um erro ao carregar o componente</AlertTitle>
+        <AlertDescription>
+          {error.message}
+          <div className="mt-2">
+            <Button onClick={resetErrorBoundary} variant="outline" size="sm">
+              Tentar novamente
+            </Button>
+          </div>
+        </AlertDescription>
+      </Alert>
+    </div>
+  )
+}
 
 export default function AdminPage() {
   const { t } = useTranslations()
+  const [isMounted, setIsMounted] = useState(false)
+  
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Carregando painel administrativo...</span>
+      </div>
+    )
+  }
 
   return (
     <AuthGuard>
@@ -60,7 +102,11 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PlanCreation />
+                <ErrorBoundary FallbackComponent={ErrorFallback}>
+                  <Suspense fallback={<div className="animate-pulse h-10 bg-gray-200 rounded" />}>
+                    <PlanCreation />
+                  </Suspense>
+                </ErrorBoundary>
               </CardContent>
             </Card>
             
@@ -72,7 +118,11 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PlansList />
+                <ErrorBoundary FallbackComponent={ErrorFallback}>
+                  <Suspense fallback={<div className="animate-pulse h-32 bg-gray-200 rounded" />}>
+                    <PlansList />
+                  </Suspense>
+                </ErrorBoundary>
               </CardContent>
             </Card>
           </TabsContent>

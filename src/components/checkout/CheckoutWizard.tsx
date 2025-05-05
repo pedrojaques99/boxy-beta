@@ -7,14 +7,14 @@
 'use client'
 
 import { useUser } from '@supabase/auth-helpers-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useTranslations } from '@/hooks/use-translations'
-import { Check, ArrowLeft, CreditCard, User, MapPin, Lock, AlertCircle, ArrowRight } from 'lucide-react'
+import { Check, ArrowLeft, CreditCard, User, MapPin, Lock, AlertCircle, ArrowRight, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -59,10 +59,25 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     setMounted(true)
-    return () => setMounted(false)
+    
+    // Add a timeout to prevent infinite loading
+    const authTimeout = setTimeout(() => {
+      if (authLoading) {
+        setAuthLoading(false)
+      }
+    }, 5000) // 5 seconds maximum for auth loading
+    
+    return () => {
+      setMounted(false)
+      clearTimeout(authTimeout)
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -80,6 +95,19 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const handleNext = async () => {
     if (step === STEPS.length - 1) {
       setLoading(true)
+      
+      // Set a timeout to prevent infinite loading
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+      
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (mounted && loading) {
+          setLoading(false)
+          toast.error("Request timed out. Please try again later.")
+        }
+      }, 15000) // 15 seconds maximum for payment processing
+      
       try {
         if (!user) {
           throw new Error('User not authenticated. Please try logging in again.')
@@ -89,6 +117,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           throw new Error('User data incomplete. Please try logging in again.')
         }
 
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 12000) // 12 second timeout
+        
         const res = await fetch('/api/pagarme/subscribe', {
           method: 'POST',
           headers: {
@@ -118,8 +149,11 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
               state: userData.state,
               country: userData.country
             }
-          })
+          }),
+          signal: controller.signal
         })
+        
+        clearTimeout(timeoutId)
 
         const data = await res.json()
 
@@ -128,17 +162,23 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         }
 
         if (mounted) {
+          setResult({ success: true, message: 'Subscription created successfully!' })
           toast.success('Subscription created successfully!')
           onSuccess?.()
         }
       } catch (err) {
         if (mounted) {
           const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+          setResult({ success: false, message: errorMessage })
           toast.error(errorMessage)
         }
       } finally {
         if (mounted) {
           setLoading(false)
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current)
+            loadingTimeoutRef.current = null
+          }
         }
       }
     } else {
