@@ -282,6 +282,13 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
             </Button>
           </Link>
         </CardFooter>
+        
+        {/* Troubleshooting link */}
+        <div className="text-center text-xs text-muted-foreground pb-4">
+          <Link href="/auth-diagnostics" className="hover:underline">
+            Problemas para entrar? Diagnosticar autenticação
+          </Link>
+        </div>
       </Card>
     </div>
   )
