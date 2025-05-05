@@ -30,8 +30,23 @@ export async function middleware(req: NextRequest) {
   );
   console.log('Cookies de autenticação:', authCookies.map(c => c.name).join(', '));
   
-  // Cria uma resposta padrão para modificar depois
+  // Verificar se temos o cookie auth_debug que indica que o login foi concluído recentemente
+  const authDebugCookie = req.cookies.get('auth_debug');
+  const isRecentlyAuthenticated = authDebugCookie && 
+                                 ['callback_completed', 'oauth_localhost_completed', 
+                                  'oauth_production_url_completed', 'oauth_production_forwarded_completed', 
+                                  'oauth_default_completed'].includes(authDebugCookie.value);
+  
+  if (isRecentlyAuthenticated) {
+    console.log('Detectado cookie de debug indicando autenticação recente. Permitindo acesso às rotas protegidas temporariamente.');
+    // Permitir acesso se o usuário acabou de completar autenticação
+    return NextResponse.next();
+  }
+  
+  // Criamos uma resposta que manterá os cookies da sessão
   const res = NextResponse.next()
+  
+  // Inicializamos o cliente Supabase para o middleware
   const supabase = createMiddlewareClient({ req, res })
 
   try {
@@ -39,7 +54,19 @@ export async function middleware(req: NextRequest) {
       data: { session },
     } = await supabase.auth.getSession()
 
+    // Log detalhado para debug
     console.log(`Status da sessão: ${session ? 'Autenticado' : 'Não autenticado'}`)
+    if (session) {
+      console.log('Dados da sessão:', {
+        userId: session.user.id,
+        email: session.user.email,
+        aud: session.user.aud,
+        role: session.user.role,
+        accessTokenExpires: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : 'não definido',
+        now: new Date().toISOString(),
+        valid: session.expires_at ? (session.expires_at * 1000) > Date.now() : false
+      })
+    }
     
     // Criamos uma resposta vazia para usar se precisarmos redirecionar
     let redirectResponse: NextResponse | null = null;

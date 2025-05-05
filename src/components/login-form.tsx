@@ -30,6 +30,7 @@ import {
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -47,6 +48,30 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [isLoading, setIsLoading] = useState(false)
   const [isEmailLoading, setIsEmailLoading] = useState(false)
   const [redirectTo, setRedirectTo] = useState<string | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
+
+  // Verificar se já está autenticado
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (data?.session?.user && !error) {
+          console.log('Usuário já autenticado, redirecionando...')
+          // Se já autenticado e temos um redirect, vamos para lá
+          if (redirectTo) {
+            router.push(redirectTo)
+          } else {
+            router.push('/')
+          }
+        }
+      } catch (err) {
+        console.error('Erro ao verificar autenticação:', err)
+      }
+    }
+    
+    checkAuth()
+  }, [redirectTo, router, supabase.auth])
 
   // Get redirectTo from URL if available
   useEffect(() => {
