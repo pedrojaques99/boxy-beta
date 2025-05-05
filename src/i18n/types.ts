@@ -16,6 +16,11 @@ export type Dictionary = {
       continue: string
       checkEmail: string
     }
+    accessDenied: {
+      title: string
+      description: string
+      backHome: string
+    }
   }
   labs: {
     title: string

@@ -15,6 +15,11 @@
       "description": "Your account has been successfully created. You can now explore our creative resources.",
       "continue": "Continue to Dashboard",
       "checkEmail": "Please check your email to verify your account."
+    },
+    "accessDenied": {
+      "title": "Access Denied",
+      "description": "You don't have permission to access this page",
+      "backHome": "Back to Home"
     }
   },
   "protected": {

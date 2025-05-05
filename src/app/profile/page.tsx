@@ -44,11 +44,6 @@ export default function ProfilePage() {
         
         if (userError) throw userError;
         
-        if (!user) {
-          router.replace('/auth/login');
-          return;
-        }
-
         // First try to get existing profile
         let { data: existingProfile, error: profileError } = await supabase
           .from('profiles')

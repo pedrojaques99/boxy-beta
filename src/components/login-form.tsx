@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from '@/hooks/use-translations'
 import { Separator } from '@/components/ui/separator'
 import { useForm } from 'react-hook-form'
@@ -46,6 +46,18 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [error, setError] = useState<LoginError | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isEmailLoading, setIsEmailLoading] = useState(false)
+  const [redirectTo, setRedirectTo] = useState<string | null>(null)
+
+  // Get redirectTo from URL if available
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const redirect = params.get('redirectTo')
+      if (redirect) {
+        setRedirectTo(redirect)
+      }
+    }
+  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,10 +74,16 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
     try {
       const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
+      const callbackUrl = `${protocol}://${window.location.host}/auth/callback`
+      
+      // Add redirectTo parameter if available
+      const redirectParams = redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''
+      const fullCallbackUrl = `${callbackUrl}${redirectParams}`
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${protocol}://${window.location.host}/auth/callback`,
+          redirectTo: fullCallbackUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -90,9 +108,13 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
+      // Use redirectUrl if available
+      const options = redirectTo ? { redirectTo: `/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}` } : undefined
+
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
+        ...(options && { options })
       })
 
       if (error) throw error

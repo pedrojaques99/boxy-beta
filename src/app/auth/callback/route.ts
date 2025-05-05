@@ -5,8 +5,8 @@ import { handleError } from '@/lib/error-handler'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // Always redirect to homepage after successful login
-  const next = '/'
+  // Check for redirectTo parameter
+  const redirectTo = searchParams.get('redirectTo') || '/'
   const error = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
 
@@ -99,9 +99,9 @@ export async function GET(request: Request) {
       baseUrl = `https://${host}`
     }
 
-    console.log('Redirecionando para:', `${baseUrl}/`)
-    // Redirect to homepage
-    return NextResponse.redirect(`${baseUrl}/`)
+    console.log('Redirecionando para:', `${baseUrl}${redirectTo}`)
+    // Redirect to the specified path or homepage
+    return NextResponse.redirect(`${baseUrl}${redirectTo}`)
   } catch (error) {
     const { error: errorMessage } = handleError(error, 'Unexpected error in auth callback');
     console.error('Erro inesperado no callback de autenticação:', errorMessage);

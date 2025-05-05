@@ -114,20 +114,6 @@ export default function PaymentMethodPage() {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-10">
-            <AlertCircle className="h-10 w-10 text-destructive mb-4" />
-            <p className="text-center mb-4">Você precisa estar logado para acessar esta página.</p>
-            <Button onClick={() => router.push('/auth/login')}>Fazer Login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">

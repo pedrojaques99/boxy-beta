@@ -57,8 +57,6 @@ export default function SubscriptionPage() {
 
   const isSubscriptionActive = subscription?.status === 'active'
 
-  if (!user) return null
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">

@@ -195,46 +195,15 @@ export function AuthGuard({ children }: AuthGuardProps) {
   }
 
   if (!isAdmin) {
+    // Redirect to access-denied page for consistency with middleware
+    router.push('/auth/access-denied')
+    // Return loading state while redirecting
     return (
-      <div className="p-10">
-        <div className="mb-5 text-red-600 font-bold">{t?.admin?.auth?.error || 'Você não tem permissão para acessar esta página'}</div>
-        
-        <Card className="mb-5">
-          <CardHeader>
-            <CardTitle>Detalhes do usuário</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div><strong>Email:</strong> {user.email}</div>
-            <div><strong>ID:</strong> {user.id}</div>
-            <div><strong>Role:</strong> <span className="text-red-600">{profileData?.role || 'não definido'}</span></div>
-            
-            {error && (
-              <Alert variant="destructive" className="mt-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erro na verificação</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="p-3 bg-yellow-50 rounded border border-yellow-200 mt-4">
-              <p className="text-sm">Para que seu usuário tenha acesso administrativo, execute esta query no Supabase:</p>
-              <pre className="bg-gray-100 p-2 rounded text-xs mt-2 overflow-auto">
-                UPDATE profiles SET role = 'admin' WHERE id = '{user.id}';
-              </pre>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Acesso restrito</AlertTitle>
-          <AlertDescription>
-            Para acessar esta página, seu perfil deve ter a role &quot;admin&quot; na tabela &quot;profiles&quot; do Supabase.
-            Contacte o administrador do sistema para solicitar acesso.
-          </AlertDescription>
-        </Alert>
+      <div className="flex flex-col items-center justify-center p-10 h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <div>{t?.admin?.loading || 'Redirecionando...'}</div>
       </div>
-    );
+    )
   }
 
   if (!auth) {

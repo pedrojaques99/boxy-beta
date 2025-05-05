@@ -15,6 +15,11 @@
       "description": "Sua conta foi criada com sucesso. Agora você pode explorar nossos recursos criativos.",
       "continue": "Continuar para o Dashboard",
       "checkEmail": "Por favor, verifique seu email para confirmar sua conta."
+    },
+    "accessDenied": {
+      "title": "Acesso Negado",
+      "description": "Você não tem permissão para acessar esta página",
+      "backHome": "Voltar para o Início"
     }
   },
   "protected": {

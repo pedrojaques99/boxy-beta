@@ -40,11 +40,8 @@ export default function EditProfilePage() {
     const fetchProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          router.push('/auth/login');
-          return;
-        }
-
+        // Middleware now handles auth redirects, we can assume user exists
+        
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')

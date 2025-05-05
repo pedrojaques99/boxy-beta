@@ -2,8 +2,11 @@
 
 import { LoginForm } from '@/components/login-form'
 import { motion } from 'framer-motion'
+import { useSearchParams } from 'next/navigation'
 
 export default function Page() {
+  const searchParams = useSearchParams()
+  
   return (
     <div className="relative flex min-h-[100vh] w-full items-center justify-center p-6 md:p-10 overflow-hidden">
       {/* Animated Background */}
