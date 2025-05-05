@@ -10,6 +10,12 @@ export type Dictionary = {
       description: string
       backToLogin: string
     }
+    signUpSuccess: {
+      title: string
+      description: string
+      continue: string
+      checkEmail: string
+    }
   }
   labs: {
     title: string

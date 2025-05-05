@@ -9,6 +9,12 @@
       "title": "Erro de Autenticação",
       "description": "Ocorreu um erro ao processar seu login. Por favor, tente novamente.",
       "backToLogin": "Voltar para o Login"
+    },
+    "signUpSuccess": {
+      "title": "Bem-vindo ao BOXY!",
+      "description": "Sua conta foi criada com sucesso. Agora você pode explorar nossos recursos criativos.",
+      "continue": "Continuar para o Dashboard",
+      "checkEmail": "Por favor, verifique seu email para confirmar sua conta."
     }
   },
   "protected": {

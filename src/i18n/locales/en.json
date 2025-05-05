@@ -9,6 +9,12 @@
       "title": "Authentication Error",
       "description": "There was an error processing your sign in. Please try again.",
       "backToLogin": "Back to Login"
+    },
+    "signUpSuccess": {
+      "title": "Welcome to BOXY!",
+      "description": "Your account has been successfully created. You can now explore our creative resources.",
+      "continue": "Continue to Dashboard",
+      "checkEmail": "Please check your email to verify your account."
     }
   },
   "protected": {
