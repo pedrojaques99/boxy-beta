@@ -100,12 +100,12 @@ export default function CookieRepairPage() {
           addLog(`Removido cookie corrompido: ${cookieName}`)
         })
         
-        addLog('Reparo seletivo concluído! A página será recarregada...')
+        addLog('Reparo seletivo concluído! A página será redirecionada para recuperação...')
         setRepairStatus('success')
         
-        // Recarregar a página após 2 segundos
+        // Redirecionar para recuperação após 2 segundos
         setTimeout(() => {
-          window.location.reload()
+          window.location.href = '/auth-recovery'
         }, 2000)
       } else {
         addLog('Nenhum cookie corrompido específico encontrado para reparar.')
@@ -155,12 +155,12 @@ export default function CookieRepairPage() {
         addLog(`Aviso: Não foi possível limpar localStorage: ${e instanceof Error ? e.message : 'Erro desconhecido'}`)
       }
       
-      addLog('Reparo concluído! Você será redirecionado para a página de login...')
+      addLog('Reparo concluído! Você será redirecionado para a página de recuperação...')
       setRepairStatus('success')
       
-      // Redirecionar para login após 3 segundos
+      // Redirecionar para recuperação após 3 segundos
       setTimeout(() => {
-        window.location.href = '/auth/login'
+        window.location.href = '/auth-recovery'
       }, 3000)
     } catch (err) {
       addLog(`Erro ao reparar cookies: ${err instanceof Error ? err.message : 'Erro desconhecido'}`)

@@ -67,6 +67,15 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         }
       } catch (err) {
         console.error('Erro ao verificar autenticação:', err)
+        
+        // Verificar se é um erro de cookie JSON inválido
+        if (err instanceof Error && 
+            (err.message.includes('parse cookie') || 
+             err.message.includes('JSON') || 
+             err.message.includes('token'))) {
+          console.error('Detectado problema com cookie, redirecionando para reparo...')
+          window.location.href = '/cookie-repair'
+        }
       }
     }
     

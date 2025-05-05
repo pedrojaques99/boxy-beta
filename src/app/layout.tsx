@@ -34,6 +34,59 @@ export default function RootLayout({
       <head>
         {/* Script para detecção de versão e limpeza de cache */}
         <script src="/clear-cache/force-refresh.js" />
+        
+        {/* Script para detectar e limpar cookies corrompidos do Supabase */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              try {
+                // Detectar cookies corrompidos do Supabase
+                const cookies = document.cookie.split(';');
+                let hasCleaned = false;
+                
+                cookies.forEach(cookie => {
+                  const [name, value] = cookie.split('=').map(s => s.trim());
+                  
+                  // Verificar se é um cookie do Supabase
+                  if (name && (name.includes('supabase') || name.includes('sb-'))) {
+                    try {
+                      // Tentar validar JSON se começar com {
+                      if (value && value.startsWith('{')) {
+                        JSON.parse(value);
+                      }
+                      // Tentar validar base64 se começar com base64-
+                      else if (value && value.startsWith('base64-')) {
+                        const base64Part = value.substring(7);
+                        atob(base64Part);
+                      }
+                    } catch (e) {
+                      // Cookie corrompido, limpar
+                      console.warn('Removendo cookie corrompido:', name);
+                      document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                      hasCleaned = true;
+                    }
+                  }
+                });
+                
+                // Se limparmos algum cookie, verificar flag para evitar loop de limpeza
+                if (hasCleaned && !window.location.pathname.includes('/cookie-repair') && 
+                    !window.location.pathname.includes('/auth-recovery')) {
+                  const alreadyAttemptedParam = new URLSearchParams(window.location.search).get('cookie_cleaned');
+                  
+                  if (!alreadyAttemptedParam) {
+                    // Apenas redireciona se ainda não tentamos limpar
+                    console.log('Limpeza de cookies realizada, redirecionando para recuperação');
+                    
+                    // Adicionar parâmetro para prevenir loop de redirecionamento
+                    window.location.href = '/auth-recovery?cookie_cleaned=true';
+                  }
+                }
+              } catch (err) {
+                console.error('Erro ao verificar cookies:', err);
+              }
+            })();
+          `
+        }} />
       </head>
       <body
         className={cn(
