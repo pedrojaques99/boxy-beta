@@ -30,7 +30,9 @@ export function PricingSection() {
   const user = useUser()
   const [isAnnualOpen, setIsAnnualOpen] = useState(false)
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const [isDialogLoading, setIsDialogLoading] = useState(false)
+  const [selectedPlanId, setSelectedPlanId] = useState<PlanId | undefined>()
 
   if (!t?.home?.pricing?.plans) return null
 
@@ -56,16 +58,15 @@ export function PricingSection() {
     const features = planTranslations.features || []
     if (!Array.isArray(features)) return null
 
-    const handleDialogOpen = (open: boolean) => {
+    const handleDialogOpen = async (open: boolean) => {
       if (open) {
         setIsDialogLoading(true)
-        // Small delay to ensure loading state is visible
-        setTimeout(() => {
-          setIsDialogLoading(false)
-          setIsOpen(true)
-        }, 100)
-      } else {
-        setIsOpen(false)
+        // Ensure loading state is visible and component is mounted
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+      if (!open) {
+        // Reset loading state when dialog closes
+        setIsDialogLoading(false)
       }
     }
 
@@ -130,13 +131,19 @@ export function PricingSection() {
                   )}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[700px]">
                 {isDialogLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                   </div>
                 ) : (
-                  <CheckoutWizard defaultPlanId={planId}/>
+                  <CheckoutWizard 
+                    defaultPlanId={planId}
+                    onSuccess={() => {
+                      setIsOpen(false)
+                      setIsDialogLoading(false)
+                    }}
+                  />
                 )}
               </DialogContent>
             </Dialog>

@@ -58,12 +58,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [result, setResult] = useState<{ success: boolean, message: string }>({ success: false, message: '' })
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (user !== null) {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
+
+  useEffect(() => {
+    if (user !== null && mounted) {
       setAuthLoading(false)
     }
-  }, [user])
+  }, [user, mounted])
 
   const handleBack = () => {
     if (step > 0) {
@@ -121,13 +127,19 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           throw new Error(data.error || data.message || 'Failed to process payment')
         }
 
-        toast.success('Subscription created successfully!')
-        onSuccess?.()
+        if (mounted) {
+          toast.success('Subscription created successfully!')
+          onSuccess?.()
+        }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
-        toast.error(errorMessage)
+        if (mounted) {
+          const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+          toast.error(errorMessage)
+        }
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     } else {
       setStep(step + 1)
