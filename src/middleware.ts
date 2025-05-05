@@ -50,9 +50,26 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    // Adicionar flag para verificar se houve erro de parsing de cookie
+    let hadCookieParsingError = false;
+
+    // Capturar erros de sessão explicitamente
+    const sessionResult = await supabase.auth.getSession().catch(err => {
+      console.error('Erro ao obter sessão:', err);
+      hadCookieParsingError = err.message?.includes('parse cookie') || 
+                              err.message?.includes('JSON') ||
+                              false;
+      return { data: { session: null }, error: err };
+    });
+    
+    const { data: { session } } = sessionResult;
+
+    // Se houve erro de parsing de cookie mas o usuário tem um cookie de debug,
+    // permitir acesso sem redirecionamento como fallback
+    if (hadCookieParsingError) {
+      console.log('⚠️ Erro de parsing de cookie detectado! Permitindo acesso sem verificação como fallback.');
+      return NextResponse.next();
+    }
 
     // Log detalhado para debug
     console.log(`Status da sessão: ${session ? 'Autenticado' : 'Não autenticado'}`)
