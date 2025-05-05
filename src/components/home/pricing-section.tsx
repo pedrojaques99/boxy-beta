@@ -49,24 +49,56 @@ export function PricingSection() {
   const [selectedPlanId, setSelectedPlanId] = useState<PlanId | undefined>()
   const [userSubscription, setUserSubscription] = useState<Subscription | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [authChecked, setAuthChecked] = useState(false)
   const supabase = createClient()
 
+  // Verificar autenticação primeiro
   useEffect(() => {
-    // Verificar se o usuário tem uma assinatura ativa
-    const checkSubscription = async () => {
-      if (!user) {
+    const checkAuth = async () => {
+      try {
+        // Verificar sessão diretamente com supabase
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Erro ao verificar sessão:', error)
+          setAuthChecked(true)
+          setIsLoading(false)
+          return
+        }
+        
+        if (!session) {
+          console.log('Nenhuma sessão encontrada')
+          setAuthChecked(true)
+          setIsLoading(false)
+          return
+        }
+        
+        console.log('Sessão válida encontrada')
+        setAuthChecked(true)
+        
+        // Continuar com a verificação de assinatura apenas se o usuário estiver autenticado
+        await checkSubscription(session.user.id)
+      } catch (err) {
+        console.error('Erro ao verificar autenticação:', err)
+        setAuthChecked(true)
+        setIsLoading(false)
+      }
+    }
+    
+    const checkSubscription = async (userId: string) => {
+      if (!userId) {
         setIsLoading(false)
         return
       }
-
+      
       try {
-        // Adicionar um pequeno delay para garantir que a UI de carregamento seja exibida
+        console.log('Verificando assinatura para usuário:', userId)
         setIsLoading(true)
         
         const { data, error } = await supabase
           .from('subscriptions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
           .eq('status', 'active')
           .single()
 
@@ -75,6 +107,8 @@ export function PricingSection() {
         } else if (data) {
           setUserSubscription(data as Subscription)
           console.log('Assinatura encontrada:', data)
+        } else {
+          console.log('Nenhuma assinatura ativa encontrada')
         }
       } catch (error) {
         console.error('Erro ao verificar assinatura:', error)
@@ -86,12 +120,51 @@ export function PricingSection() {
       }
     }
 
-    if (user) {
-      checkSubscription()
-    } else {
+    if (!authChecked) {
+      checkAuth()
+    }
+  }, [supabase, authChecked])
+
+  // Fazer nova verificação quando o usuário mudar (login/logout)
+  useEffect(() => {
+    if (authChecked && user?.id) {
+      console.log('Usuário alterado, verificando assinatura novamente')
+      setIsLoading(true)
+      // Tentar buscar a assinatura novamente se o usuário estiver autenticado
+      const checkUserSubscription = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .single()
+  
+          if (error && error.code !== 'PGRST116') {
+            console.error('Erro ao verificar assinatura:', error)
+          } else if (data) {
+            setUserSubscription(data as Subscription)
+            console.log('Assinatura encontrada:', data)
+          } else {
+            // Limpar assinatura caso não encontre
+            setUserSubscription(null)
+          }
+        } catch (error) {
+          console.error('Erro ao verificar assinatura:', error)
+        } finally {
+          setTimeout(() => {
+            setIsLoading(false)
+          }, 300)
+        }
+      }
+      
+      checkUserSubscription()
+    } else if (authChecked && !user) {
+      // Se não houver usuário, limpar dados de assinatura
+      setUserSubscription(null)
       setIsLoading(false)
     }
-  }, [user])
+  }, [user, supabase, authChecked])
 
   if (!t?.home?.pricing?.plans) return null
 
@@ -126,6 +199,19 @@ export function PricingSection() {
       console.log('handleDialogOpen chamado, open:', open, 'planId:', planId)
       
       if (open) {
+        // Verificar sessão antes de abrir o diálogo
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session) {
+            // Redirecionar para login se não houver sessão
+            console.log('Usuário não autenticado, redirecionando para login')
+            window.location.href = '/auth/login'
+            return
+          }
+        } catch (err) {
+          console.error('Erro ao verificar sessão:', err)
+        }
+      
         // Sempre definir o planId selecionado primeiro, independente de outras condições
         setSelectedPlanId(planId)
         
@@ -313,7 +399,7 @@ export function PricingSection() {
   return (
     <section className="py-24 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
-        {isLoading && user ? (
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent mb-4"></div>
             <p className="text-muted-foreground">Verificando seu status de assinatura...</p>

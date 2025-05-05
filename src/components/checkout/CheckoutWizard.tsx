@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
 import { handleError } from '@/lib/error-handler'
 import { Progress } from '@/components/ui/progress'
+import { createClient } from '@/lib/supabase/client'
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
 type Step = typeof STEPS[number]
@@ -37,8 +38,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState<PlanId | undefined>(defaultPlanId)
   const [userData, setUserData] = useState({
-    name: user?.user_metadata?.full_name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     street: '',
     number: '',
     complement: '',
@@ -60,6 +61,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [authLoading, setAuthLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const supabaseClient = createClient()
 
   // Log to help debug initialization
   console.log('CheckoutWizard inicializado', { 
@@ -70,6 +72,41 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     mounted 
   })
 
+  // Populate user data when available
+  useEffect(() => {
+    const getUserProfile = async () => {
+      if (!user?.id) return
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Erro ao buscar perfil:', error)
+          return
+        }
+
+        if (data) {
+          setUserData(prev => ({
+            ...prev,
+            name: data.name || user?.user_metadata?.full_name || '',
+            email: user?.email || '',
+          }))
+        }
+      } catch (err) {
+        console.error('Erro ao buscar dados do usuário:', err)
+      }
+    }
+
+    if (user) {
+      getUserProfile()
+    }
+  }, [user])
+
+  // Initialization effect
   useEffect(() => {
     setMounted(true)
     console.log('CheckoutWizard montado')
@@ -98,12 +135,42 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     }
   }, [defaultPlanId, planId])
 
+  // Auth state effect - make it more reliable
   useEffect(() => {
+    // Check Supabase session directly
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession()
+        
+        if (error) {
+          console.error('Erro ao verificar sessão:', error)
+          setAuthLoading(false)
+          return
+        }
+        
+        if (session) {
+          console.log('Sessão encontrada, usuário autenticado')
+          setAuthLoading(false)
+        } else if (mounted) {
+          console.log('Sem sessão ativa')
+          setAuthLoading(false)
+        }
+      } catch (err) {
+        console.error('Erro ao verificar autenticação:', err)
+        setAuthLoading(false)
+      }
+    }
+
+    if (mounted) {
+      checkAuth()
+    }
+    
+    // Fallback to user hook
     if (user !== null && mounted) {
-      console.log('Usuário autenticado, terminando authLoading')
+      console.log('Usuário autenticado via hook, terminando authLoading')
       setAuthLoading(false)
     }
-  }, [user, mounted])
+  }, [user, mounted, supabaseClient])
 
   const handleBack = () => {
     if (step > 0) {
@@ -128,12 +195,15 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       }, 15000) // 15 seconds maximum for payment processing
       
       try {
-        if (!user) {
-          throw new Error('User not authenticated. Please try logging in again.')
+        // Verificar sessão atual para garantir autenticação
+        const { data: { session } } = await supabaseClient.auth.getSession()
+        
+        if (!session) {
+          throw new Error('Sessão expirada. Por favor, faça login novamente.')
         }
 
-        if (!user.id || !user.email) {
-          throw new Error('User data incomplete. Please try logging in again.')
+        if (!user?.id || !user?.email) {
+          throw new Error('Dados do usuário incompletos. Por favor, faça login novamente.')
         }
 
         const controller = new AbortController()
@@ -243,13 +313,14 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     )
   }
 
+  // Check if user is logged in
   if (!user) {
     return (
       <div className="space-y-4 p-8 text-center">
         <h3 className="text-lg font-semibold">Authentication Required</h3>
         <p>Please log in to continue with your subscription.</p>
-        <Button onClick={() => router.push('/login')}>
-          Go to Login
+        <Button onClick={() => router.push('/auth/login')}>
+          Login
         </Button>
       </div>
     )

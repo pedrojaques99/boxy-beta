@@ -54,14 +54,15 @@ export default function AccessDeniedPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3 sm:flex-row">
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={handleTryAgain}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" /> 
-            Tentar Novamente
-          </Button>
+          <Link href="/admin" className="w-full">
+            <Button 
+              variant="outline" 
+              className="w-full"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> 
+              Tentar Novamente
+            </Button>
+          </Link>
           
           <Link href="/" className="w-full">
             <Button variant="default" className="w-full">
