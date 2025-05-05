@@ -123,30 +123,38 @@ export function PricingSection() {
     const hasActivePaidPlan = userSubscription && planId !== 'free' && userSubscription.plan_id !== planId
 
     const handleDialogOpen = async (open: boolean) => {
-      // Se o usuário já tem este plano ou outro plano pago, não abrir o diálogo
-      if (isCurrentPlan || hasActivePaidPlan) {
-        return
-      }
-
+      console.log('handleDialogOpen chamado, open:', open, 'planId:', planId)
+      
       if (open) {
+        // Sempre definir o planId selecionado primeiro, independente de outras condições
         setSelectedPlanId(planId)
+        
+        // Verificações que limitam funcionalidade, mas não impedem diálogo de abrir
+        if (isCurrentPlan) {
+          console.log('Usuário já possui este plano')
+          return // Não abre o diálogo se já é o plano atual
+        }
+        
+        if (hasActivePaidPlan) {
+          console.log('Usuário já possui outro plano pago')
+          // Ainda vamos abrir o diálogo, mas com opção de ir para perfil
+        }
+        
         setIsDialogLoading(true)
+        console.log('Estado de loading definido, abrindo diálogo')
+        
         // Ensure loading state is visible and component is mounted
         await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // Set a timeout to prevent infinite loading
-        setTimeout(() => {
-          if (isDialogLoading) {
-            setIsDialogLoading(false)
-          }
-        }, 5000) // 5 seconds max loading time
       }
       
+      // Sempre definir o estado do diálogo conforme o parâmetro open
       setIsOpen(open)
+      console.log('Estado do diálogo definido:', open)
       
       if (!open) {
         // Reset loading state when dialog closes
         setIsDialogLoading(false)
+        console.log('Dialog fechado, resetando loading state')
       }
     }
 
@@ -217,8 +225,13 @@ export function PricingSection() {
                 <Button 
                   className="w-full mt-auto"
                   variant={isCurrentPlan ? "outline" : isHighlighted ? "default" : "outline"}
-                  disabled={isDialogLoading || isCurrentPlan || isLoading}
-                  onClick={() => setSelectedPlanId(planId)}
+                  disabled={isCurrentPlan || isLoading}
+                  onClick={() => {
+                    console.log('Botão clicado, planId:', planId)
+                    // Não queremos definir o planId aqui, isso deveria acontecer no diálogo
+                    // mas vamos garantir que ele seja definido
+                    setSelectedPlanId(planId)
+                  }}
                 >
                   {isLoading ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -255,15 +268,39 @@ export function PricingSection() {
                     </Button>
                   </div>
                 ) : (
-                  <CheckoutWizard 
-                    defaultPlanId={selectedPlanId}
-                    onSuccess={() => {
-                      setIsOpen(false)
-                      setIsDialogLoading(false)
-                      // Recarregar a verificação de assinatura após sucesso
-                      window.location.reload()
-                    }}
-                  />
+                  <>
+                    {selectedPlanId && (
+                      <CheckoutWizard 
+                        defaultPlanId={selectedPlanId}
+                        onSuccess={() => {
+                          console.log('Checkout concluído com sucesso')
+                          setIsOpen(false)
+                          setIsDialogLoading(false)
+                          // Recarregar a verificação de assinatura após sucesso
+                          window.location.reload()
+                        }}
+                      />
+                    )}
+                    {!selectedPlanId && (
+                      <div className="p-6 space-y-4 text-center">
+                        <Alert variant="destructive">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Erro ao selecionar plano</AlertTitle>
+                          <AlertDescription>
+                            Não foi possível identificar o plano selecionado. Por favor, tente novamente.
+                          </AlertDescription>
+                        </Alert>
+                        <Button 
+                          className="w-full" 
+                          onClick={() => {
+                            setIsOpen(false)
+                          }}
+                        >
+                          Fechar
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </DialogContent>
             </Dialog>

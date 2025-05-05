@@ -61,27 +61,46 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [mounted, setMounted] = useState(false)
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Log to help debug initialization
+  console.log('CheckoutWizard inicializado', { 
+    defaultPlanId, 
+    planId,
+    user: user ? 'logado' : 'não logado', 
+    authLoading, 
+    mounted 
+  })
+
   useEffect(() => {
     setMounted(true)
+    console.log('CheckoutWizard montado')
+    
+    // Guarantee planId is set from prop
+    if (defaultPlanId && !planId) {
+      console.log('Definindo planId a partir do defaultPlanId:', defaultPlanId)
+      setPlanId(defaultPlanId)
+    }
     
     // Add a timeout to prevent infinite loading
     const authTimeout = setTimeout(() => {
       if (authLoading) {
+        console.log('Timeout de autenticação, forçando continuar')
         setAuthLoading(false)
       }
-    }, 5000) // 5 seconds maximum for auth loading
+    }, 3000) // reduzido para 3 segundos
     
     return () => {
+      console.log('CheckoutWizard desmontado')
       setMounted(false)
       clearTimeout(authTimeout)
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current)
       }
     }
-  }, [])
+  }, [defaultPlanId, planId])
 
   useEffect(() => {
     if (user !== null && mounted) {
+      console.log('Usuário autenticado, terminando authLoading')
       setAuthLoading(false)
     }
   }, [user, mounted])
