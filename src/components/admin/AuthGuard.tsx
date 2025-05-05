@@ -27,13 +27,47 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [profileData, setProfileData] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
+  const [hasCheckedSessionStorage, setHasCheckedSessionStorage] = useState(false)
 
   const supabase = createClient()
   const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
 
-  // First useEffect to handle mounted state
+  // Handle tab visibility changes to force re-auth when tab is focused again
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        // Force re-check when coming back to tab
+        checkAdminStatus(user.id)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user])
+
+  // Initial mount and session storage check
   useEffect(() => {
     setIsMounted(true)
+    
+    if (typeof window !== 'undefined' && !hasCheckedSessionStorage) {
+      // Check if we have the admin status cached in session storage
+      const cachedAdminStatus = sessionStorage.getItem('admin_authenticated')
+      const cachedUserId = sessionStorage.getItem('admin_user_id')
+      
+      if (cachedAdminStatus === 'true' && user && cachedUserId === user.id) {
+        // Use cached admin status to avoid flickering
+        setAuth(true)
+        setIsAdmin(true)
+        setIsLoading(false)
+        setHasCheckedSessionStorage(true)
+      } else {
+        // Clear any stale values
+        sessionStorage.removeItem('admin_authenticated')
+        sessionStorage.removeItem('admin_user_id')
+      }
+    }
     
     // Set a maximum loading time to prevent infinite loading
     const timeoutId = setTimeout(() => {
@@ -43,76 +77,87 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return () => {
       clearTimeout(timeoutId)
     }
-  }, [])
+  }, [user, hasCheckedSessionStorage])
 
+  // Handle admin status check when user changes
   useEffect(() => {
-    if (!isMounted) return
+    if (!isMounted || !user) {
+      if (isMounted && !user) {
+        setIsLoading(false)
+        setError('Usuário não está autenticado')
+      }
+      return
+    }
     
-    let mounted = true
+    // If we already validated from session storage, skip the check
+    if (hasCheckedSessionStorage && auth && isAdmin) {
+      return
+    }
 
-    const checkAdminStatus = async () => {
-      // Add immediate check for user to avoid race conditions
-      if (!user) {
-        if (mounted) {
-          setIsLoading(false)
-          setError('Usuário não está autenticado')
-        }
-        return
-      }
+    // On mount or when user changes, check admin status
+    checkAdminStatus(user.id)
 
-      try {
-        // Create a new AbortController for this request
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
+  }, [user, isMounted, hasCheckedSessionStorage, auth, isAdmin])
+
+  // Function to check admin status
+  const checkAdminStatus = async (userId: string) => {
+    if (!userId) return
+    
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      console.log('Checking admin status for user:', userId)
+      
+      // Force browser to refresh supabase client on each attempt
+      const freshSupabase = createClient()
+      
+      const { data: profile, error: profileError } = await freshSupabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
         
-        // Force browser to refresh supabase client on each attempt
-        const freshSupabase = createClient()
-        
-        const { data: profile, error: profileError } = await freshSupabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-          
-        clearTimeout(timeoutId)
-
-        if (!mounted) return
-
-        if (profileError) {
-          console.error('Profile fetch error:', profileError)
-          setError(`Erro ao buscar perfil: ${profileError.message}`)
-          setIsAdmin(false)
-          setProfileData(null)
-        } else {
-          console.log('Profile data fetched:', profile)
-          setProfileData(profile)
-          setIsAdmin(profile?.role === 'admin')
-          if (profile?.role === 'admin') {
-            setAuth(true)
-          }
-        }
-      } catch (error) {
-        if (!mounted) return
-        console.error('Admin check error:', error)
-        setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      if (profileError) {
+        console.error('Profile fetch error:', profileError)
+        setError(`Erro ao buscar perfil: ${profileError.message}`)
         setIsAdmin(false)
-      } finally {
-        if (mounted) {
-          setIsLoading(false)
+        setProfileData(null)
+        
+        // Clear session storage
+        sessionStorage.removeItem('admin_authenticated')
+        sessionStorage.removeItem('admin_user_id')
+      } else {
+        console.log('Profile data fetched:', profile)
+        setProfileData(profile)
+        const isUserAdmin = profile?.role === 'admin'
+        setIsAdmin(isUserAdmin)
+        
+        if (isUserAdmin) {
+          setAuth(true)
+          
+          // Store in session storage
+          sessionStorage.setItem('admin_authenticated', 'true')
+          sessionStorage.setItem('admin_user_id', userId)
+        } else {
+          // Clear session storage
+          sessionStorage.removeItem('admin_authenticated')
+          sessionStorage.removeItem('admin_user_id')
         }
       }
+    } catch (error) {
+      console.error('Admin check error:', error)
+      setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      setIsAdmin(false)
+      
+      // Clear session storage
+      sessionStorage.removeItem('admin_authenticated')
+      sessionStorage.removeItem('admin_user_id')
+    } finally {
+      setIsLoading(false)
+      setHasCheckedSessionStorage(true)
     }
-
-    // Enforce a brief delay to ensure Supabase auth is fully initialized
-    const initTimer = setTimeout(() => {
-      checkAdminStatus()
-    }, 300)
-
-    return () => {
-      mounted = false
-      clearTimeout(initTimer)
-    }
-  }, [user, supabase, isMounted])
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

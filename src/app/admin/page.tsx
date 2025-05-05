@@ -50,10 +50,48 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 export default function AdminPage() {
   const { t } = useTranslations()
   const [isMounted, setIsMounted] = useState(false)
+  const [isFocused, setIsFocused] = useState(true)
   
+  // Handle focus/blur events to detect tab switching
   useEffect(() => {
-    setIsMounted(true)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setIsFocused(true)
+        // Force remount of page components when coming back to tab
+        setIsMounted(false)
+        setTimeout(() => setIsMounted(true), 100)
+      } else {
+        setIsFocused(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Initial mount
+    const timer = setTimeout(() => {
+      setIsMounted(true)
+    }, 500) // Give enough time for auth to initialize
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearTimeout(timer)
+    }
   }, [])
+
+  // Check if we've loaded the page previously in this session
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasVisitedBefore = sessionStorage.getItem('admin_page_loaded') === 'true'
+      
+      if (!hasVisitedBefore) {
+        // First time visit in this session, mark it
+        sessionStorage.setItem('admin_page_loaded', 'true')
+      } else if (!isMounted) {
+        // Already visited before, immediately set mounted
+        setIsMounted(true)
+      }
+    }
+  }, [isMounted])
 
   if (!isMounted) {
     return (
