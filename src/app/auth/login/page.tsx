@@ -3,8 +3,9 @@
 import { LoginForm } from '@/components/login-form'
 import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function Page() {
+function LoginContent() {
   const searchParams = useSearchParams()
   
   return (
@@ -54,5 +55,17 @@ export default function Page() {
         <LoginForm />
       </motion.div>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[100vh] w-full items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm text-center">Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
