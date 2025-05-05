@@ -51,6 +51,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     let mounted = true
 
     const checkAdminStatus = async () => {
+      // Add immediate check for user to avoid race conditions
       if (!user) {
         if (mounted) {
           setIsLoading(false)
@@ -60,10 +61,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
       }
 
       try {
+        // Create a new AbortController for this request
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 second timeout
         
-        const { data: profile, error: profileError } = await supabase
+        // Force browser to refresh supabase client on each attempt
+        const freshSupabase = createClient()
+        
+        const { data: profile, error: profileError } = await freshSupabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -74,10 +79,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
         if (!mounted) return
 
         if (profileError) {
+          console.error('Profile fetch error:', profileError)
           setError(`Erro ao buscar perfil: ${profileError.message}`)
           setIsAdmin(false)
           setProfileData(null)
         } else {
+          console.log('Profile data fetched:', profile)
           setProfileData(profile)
           setIsAdmin(profile?.role === 'admin')
           if (profile?.role === 'admin') {
@@ -86,6 +93,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
         }
       } catch (error) {
         if (!mounted) return
+        console.error('Admin check error:', error)
         setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
         setIsAdmin(false)
       } finally {
@@ -95,10 +103,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
       }
     }
 
-    checkAdminStatus()
+    // Enforce a brief delay to ensure Supabase auth is fully initialized
+    const initTimer = setTimeout(() => {
+      checkAdminStatus()
+    }, 300)
 
     return () => {
       mounted = false
+      clearTimeout(initTimer)
     }
   }, [user, supabase, isMounted])
 
