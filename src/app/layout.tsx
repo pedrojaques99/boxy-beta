@@ -15,7 +15,13 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Boxy",
-  description: "The only need-to-have toolbox for creators and designers"
+  description: "The only need-to-have toolbox for creators and designers",
+  other: {
+    // Prevenir cache excessivo
+    "cache-control": "no-cache, no-store, must-revalidate, max-age=0",
+    "pragma": "no-cache",
+    "expires": "0"
+  }
 }
 
 export default function RootLayout({
@@ -25,6 +31,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="dark">
+      <head>
+        {/* Script para detecção de versão e limpeza de cache */}
+        <script src="/clear-cache/force-refresh.js" />
+      </head>
       <body
         className={cn(
           GeistSans.className,
