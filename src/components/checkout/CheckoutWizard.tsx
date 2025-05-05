@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
 import { handleError } from '@/lib/error-handler'
 import { Progress } from '@/components/ui/progress'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { createClient } from '@/lib/supabase/client'
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
@@ -61,6 +62,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [authLoading, setAuthLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const authService = getAuthService()
   const supabaseClient = createClient()
 
   // Log to help debug initialization
@@ -170,7 +172,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       console.log('Usuário autenticado via hook, terminando authLoading')
       setAuthLoading(false)
     }
-  }, [user, mounted, supabaseClient])
+  }, [user, mounted])
 
   const handleBack = () => {
     if (step > 0) {

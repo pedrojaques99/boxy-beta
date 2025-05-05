@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
-import { useUser } from '@supabase/auth-helpers-react'
 import { handleError } from '@/lib/error-handler'
 import { toast } from 'sonner'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 type Props = {
   plan_id: string // ID do plano no Pagar.me
@@ -12,8 +12,27 @@ type Props = {
 }
 
 export function SubscribeButton({ plan_id, variant = 'default' }: Props) {
-  const user = useUser()
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
+  const authService = getAuthService()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data, error } = await authService.getUser()
+        if (!error && data.user) {
+          setUser(data.user)
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+
+    fetchUser()
+  }, [authService])
 
   const handleSubscribe = async () => {
     if (!user) {
@@ -54,6 +73,7 @@ export function SubscribeButton({ plan_id, variant = 'default' }: Props) {
     }
   }
 
+  if (isInitializing) return null
   if (!user) return null
 
   return (

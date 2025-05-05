@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { formatPrice, getPlanById, PlanId } from '@/lib/plans'
 import { Subscription } from '@/types/subscription'
 import { AlertCircle, ArrowLeft, AlertTriangle, Check, Loader2 } from 'lucide-react'
@@ -22,7 +22,7 @@ export default function CancelSubscriptionPage() {
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState(false)
   const [cancelled, setCancelled] = useState(false)
-  const supabase = createClient()
+  const authService = getAuthService()
   const router = useRouter()
 
   useEffect(() => {

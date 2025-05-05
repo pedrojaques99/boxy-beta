@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@supabase/auth-helpers-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -20,6 +20,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter()
   const { t } = useTranslations()
   const user = useUser()
+  const authService = getAuthService()
+  
   const [auth, setAuth] = useState(false)
   const [password, setPassword] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
@@ -27,76 +29,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [profileData, setProfileData] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
-  const [hasCheckedSessionStorage, setHasCheckedSessionStorage] = useState(false)
-
-  // Use ref para evitar recriação da instância do cliente a cada render
-  const supabaseRef = useRef(createClient())
-  const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
-
-  // Função para verificar o status de admin com useCallback para evitar recriações
-  const checkAdminStatus = useCallback(async (userId: string) => {
-    if (!userId) return
-    
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      console.log('AuthGuard - Verificando status de admin para usuário:', userId)
-      
-      // Usar a referência armazenada
-      const { data: profile, error: profileError } = await supabaseRef.current
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-        
-      if (profileError) {
-        console.error('AuthGuard - Erro ao buscar perfil:', profileError)
-        setError(`Erro ao buscar perfil: ${profileError.message}`)
-        setIsAdmin(false)
-        setProfileData(null)
-        
-        // Clear session storage
-        sessionStorage.removeItem('admin_authenticated')
-        sessionStorage.removeItem('admin_user_id')
-      } else {
-        console.log('AuthGuard - Perfil obtido:', profile)
-        setProfileData(profile)
-        const isUserAdmin = profile?.role === 'admin'
-        setIsAdmin(isUserAdmin)
-        
-        if (isUserAdmin) {
-          setAuth(true)
-          
-          // Store in session storage
-          sessionStorage.setItem('admin_authenticated', 'true')
-          sessionStorage.setItem('admin_user_id', userId)
-        } else {
-          // Clear session storage
-          sessionStorage.removeItem('admin_authenticated')
-          sessionStorage.removeItem('admin_user_id')
-        }
-      }
-    } catch (error) {
-      console.error('AuthGuard - Erro ao verificar status admin:', error)
-      setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
-      setIsAdmin(false)
-      
-      // Clear session storage
-      sessionStorage.removeItem('admin_authenticated')
-      sessionStorage.removeItem('admin_user_id')
-    } finally {
-      setIsLoading(false)
-      setHasCheckedSessionStorage(true)
-    }
-  }, [])
 
   // Handle tab visibility changes to force re-auth when tab is focused again
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && user) {
-        // Force re-check when coming back to tab
-        checkAdminStatus(user.id)
+      if (document.visibilityState === 'visible' && user?.id) {
+        checkAdminAccess(user.id)
       }
     }
 
@@ -104,63 +42,75 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user, checkAdminStatus])
+  }, [user])
 
-  // Initial mount and session storage check
+  // Check for cached admin status on mount
   useEffect(() => {
     setIsMounted(true)
     
-    if (typeof window !== 'undefined' && !hasCheckedSessionStorage) {
-      // Check if we have the admin status cached in session storage
-      const cachedAdminStatus = sessionStorage.getItem('admin_authenticated')
-      const cachedUserId = sessionStorage.getItem('admin_user_id')
-      
-      if (cachedAdminStatus === 'true' && user && cachedUserId === user.id) {
-        // Use cached admin status to avoid flickering
+    // First try to recover from any potential cookie issues
+    authService.checkAndRepairAuthCookies()
+    
+    if (user?.id) {
+      // First check cached status for quicker initial render
+      if (authService.getCachedAdminStatus(user.id)) {
         setAuth(true)
         setIsAdmin(true)
         setIsLoading(false)
-        setHasCheckedSessionStorage(true)
       } else {
-        // Clear any stale values
-        sessionStorage.removeItem('admin_authenticated')
-        sessionStorage.removeItem('admin_user_id')
+        // Then verify with server
+        checkAdminAccess(user.id)
       }
+    } else if (isMounted) {
+      // If we're mounted but have no user, stop loading
+      setIsLoading(false)
     }
     
     // Set a maximum loading time to prevent infinite loading
     const timeoutId = setTimeout(() => {
       setIsLoading(false)
-    }, 10000) // 10 seconds maximum loading time
+    }, 5000) // 5 seconds maximum loading time
     
     return () => {
       clearTimeout(timeoutId)
     }
-  }, [user, hasCheckedSessionStorage])
+  }, [user, isMounted, authService])
 
-  // Handle admin status check when user changes
-  useEffect(() => {
-    if (!isMounted || !user) {
-      if (isMounted && !user) {
-        setIsLoading(false)
-        setError('Usuário não está autenticado')
-      }
-      return
-    }
+  // Core function to check admin access
+  const checkAdminAccess = async (userId: string) => {
+    if (!userId) return
     
-    // If we already validated from session storage, skip the check
-    if (hasCheckedSessionStorage && auth && isAdmin) {
-      return
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // Use AuthService to check admin status
+      const result = await authService.checkAdminStatus(userId)
+      
+      setProfileData(result.profile)
+      setIsAdmin(result.isAdmin)
+      setError(result.error)
+      
+      if (result.isAdmin) {
+        setAuth(true)
+        authService.saveCachedAdminStatus(userId, true)
+      } else {
+        authService.clearCachedAdminStatus()
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error)
+      setError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsAdmin(false)
+      authService.clearCachedAdminStatus()
+    } finally {
+      setIsLoading(false)
     }
-
-    // On mount or when user changes, check admin status
-    checkAdminStatus(user.id)
-
-  }, [user, isMounted, hasCheckedSessionStorage, auth, isAdmin, checkAdminStatus])
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === SECRET) {
+    
+    if (authService.verifyAdminPassword(password)) {
       setAuth(true)
       toast.success(t?.admin?.auth?.success || 'Successfully authenticated!')
     } else {

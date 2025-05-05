@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
+import { getAuthService } from '@/lib/auth/auth-service';
 import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@supabase/auth-helpers-react';
 import { toast } from 'sonner';
+import { getAuthService } from '@/lib/auth/auth-service';
 
 interface UserProfile {
   id: string;
@@ -32,30 +33,35 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [cpf, setCpf] = useState(user?.user_metadata?.cpf || '');
-  const supabase = createClient();
+  const authService = getAuthService();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const authService = getAuthService();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { data, error: userError } = await authService.getUser();
         
         if (userError) throw userError;
+        
+        if (!data.user) {
+          throw new Error('User not found');
+        }
         
         // First try to get existing profile
         let { data: existingProfile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('id', data.user.id)
           .single();
 
         // If no profile exists, create one
         if (!existingProfile && !profileError) {
           const newProfile = {
-            id: user.id,
-            name: user.email?.split('@')[0] || 'User',
+            id: data.user.id,
+            name: data.user.email?.split('@')[0] || 'User',
             role: 'user',
             bio: '',
             avatar_url: '',
@@ -87,7 +93,7 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [router, supabase]);
+  }, [router, supabase, authService]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -159,7 +165,7 @@ export default function ProfilePage() {
     if (!user) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await authService.updateUser({
         data: { cpf }
       });
       if (error) throw error;

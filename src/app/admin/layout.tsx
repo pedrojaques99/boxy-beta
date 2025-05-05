@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { AuthGuard } from '@/components/admin/AuthGuard'
 
 export default function AdminLayout({
@@ -16,8 +16,8 @@ export default function AdminLayout({
     const checkCookieErrors = async () => {
       try {
         // Chamar diretamente para testar se a leitura de cookies funciona
-        const supabase = createClient()
-        await supabase.auth.getSession()
+        const authService = getAuthService()
+        await authService.getSession()
       } catch (err) {
         // Se o erro for específico de cookies JSON corrompidos
         if (err instanceof Error && 

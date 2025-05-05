@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { Subscription } from '@/types/subscription'
 import { AlertCircle, ArrowLeft, CreditCard, Check, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -24,7 +24,7 @@ export default function PaymentMethodPage() {
     cvv: '',
     cpf: ''
   })
-  const supabase = createClient()
+  const authService = getAuthService()
   const router = useRouter()
 
   useEffect(() => {

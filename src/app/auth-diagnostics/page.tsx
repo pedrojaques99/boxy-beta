@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -23,7 +23,7 @@ export default function AuthDiagnosticsPage() {
   }>>([])
   const [isFixing, setIsFixing] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
+  const authService = getAuthService()
 
   // Run initial diagnostics
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function AuthDiagnosticsPage() {
     }])
 
     try {
-      const { data, error } = await supabase.auth.getSession()
+      const { data, error } = await authService.getSession()
       
       if (error) {
         setSessionStatus('error')
@@ -326,7 +326,7 @@ export default function AuthDiagnosticsPage() {
       if (!isDev) {
         // In production, we'll run simplified checks
         // Check if we can access the session
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await authService.getSession();
         
         // Set results based on if we can access the session without errors
         setTests(prev => {
@@ -418,7 +418,7 @@ export default function AuthDiagnosticsPage() {
       }
       
       // 2. Sign out to clear any lingering session state
-      await supabase.auth.signOut()
+      await authService.signOut()
       
       // 3. Run diagnostics again
       setTimeout(() => {
@@ -436,7 +436,7 @@ export default function AuthDiagnosticsPage() {
   }
 
   const logout = async () => {
-    await supabase.auth.signOut()
+    await authService.signOut()
     router.refresh()
   }
 

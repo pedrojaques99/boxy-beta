@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { useEffect, useState } from 'react'
 
 export const useCurrentUserImage = () => {

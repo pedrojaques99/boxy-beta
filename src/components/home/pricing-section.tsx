@@ -17,8 +17,9 @@ import {
 import { useState, useEffect } from 'react'
 import { PLANS, formatPrice, getPlanInterval, PlanId } from '@/lib/plans'
 import type { Plan } from '@/types/subscription'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 type PlanTranslation = {
   name: string
@@ -40,8 +41,8 @@ type Subscription = {
 }
 
 export function PricingSection() {
-  const { t } = useTranslations()
-  const user = useUser()
+  const { t, locale } = useTranslations()
+  const [user, setUser] = useState<any>(null)
   const [isAnnualOpen, setIsAnnualOpen] = useState(false)
   const [isMonthlyOpen, setIsMonthlyOpen] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -50,14 +51,15 @@ export function PricingSection() {
   const [userSubscription, setUserSubscription] = useState<Subscription | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
-  const supabase = createClient()
+  const authService = getAuthService()
+  const authService = getAuthService()
 
   // Verificar autenticação primeiro
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Verificar sessão diretamente com supabase
-        const { data: { session }, error } = await supabase.auth.getSession()
+        // Verificar sessão usando AuthService
+        const { data, error } = await authService.getSession()
         
         if (error) {
           console.error('Erro ao verificar sessão:', error)
@@ -66,7 +68,7 @@ export function PricingSection() {
           return
         }
         
-        if (!session) {
+        if (!data.session) {
           console.log('Nenhuma sessão encontrada')
           setAuthChecked(true)
           setIsLoading(false)
@@ -74,10 +76,11 @@ export function PricingSection() {
         }
         
         console.log('Sessão válida encontrada')
+        setUser(data.session.user)
         setAuthChecked(true)
         
         // Continuar com a verificação de assinatura apenas se o usuário estiver autenticado
-        await checkSubscription(session.user.id)
+        await checkSubscription(data.session.user.id)
       } catch (err) {
         console.error('Erro ao verificar autenticação:', err)
         setAuthChecked(true)
@@ -92,21 +95,11 @@ export function PricingSection() {
       }
       
       try {
-        console.log('Verificando assinatura para usuário:', userId)
-        setIsLoading(true)
-        
-        const { data, error } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('status', 'active')
-          .single()
-
-        if (error && error.code !== 'PGRST116') { // Ignorar erro "não encontrado"
-          console.error('Erro ao verificar assinatura:', error)
-        } else if (data) {
-          setUserSubscription(data as Subscription)
-          console.log('Assinatura encontrada:', data)
+        // Verificar assinatura usando AuthService
+        const subscription = await authService.getUserSubscription(userId)
+        if (subscription) {
+          setUserSubscription(subscription as Subscription)
+          console.log('Assinatura encontrada:', subscription)
         } else {
           console.log('Nenhuma assinatura ativa encontrada')
         }
@@ -123,7 +116,7 @@ export function PricingSection() {
     if (!authChecked) {
       checkAuth()
     }
-  }, [supabase, authChecked])
+  }, [authService, authChecked])
 
   // Fazer nova verificação quando o usuário mudar (login/logout)
   useEffect(() => {
@@ -133,18 +126,10 @@ export function PricingSection() {
       // Tentar buscar a assinatura novamente se o usuário estiver autenticado
       const checkUserSubscription = async () => {
         try {
-          const { data, error } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('status', 'active')
-            .single()
-  
-          if (error && error.code !== 'PGRST116') {
-            console.error('Erro ao verificar assinatura:', error)
-          } else if (data) {
-            setUserSubscription(data as Subscription)
-            console.log('Assinatura encontrada:', data)
+          const subscription = await authService.getUserSubscription(user.id)
+          if (subscription) {
+            setUserSubscription(subscription as Subscription)
+            console.log('Assinatura encontrada:', subscription)
           } else {
             // Limpar assinatura caso não encontre
             setUserSubscription(null)
@@ -164,7 +149,7 @@ export function PricingSection() {
       setUserSubscription(null)
       setIsLoading(false)
     }
-  }, [user, supabase, authChecked])
+  }, [user, authService, authChecked])
 
   if (!t?.home?.pricing?.plans) return null
 
@@ -197,8 +182,8 @@ export function PricingSection() {
 
       // Check for session first
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
+        const isAuthenticated = await authService.isAuthenticated()
+        if (!isAuthenticated) {
           // Redirect to login if no session
           window.location.href = '/auth/login?redirect=/checkout/' + planId
           return

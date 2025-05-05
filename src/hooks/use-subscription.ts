@@ -1,49 +1,42 @@
-import { createClient } from '../lib/supabase/client'
-import { useEffect, useState } from 'react'
-import { handleError } from '@/lib/error-handler'
+'use client'
 
-export type SubscriptionType = 'free' | 'premium'
+import { useEffect, useState } from 'react'
+import { useUser } from '@supabase/auth-helpers-react'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 export function useSubscription() {
-  const [subscriptionType, setSubscriptionType] = useState<SubscriptionType>('free')
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const user = useUser()
+  const authService = getAuthService()
+  const [subscription, setSubscription] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchSubscription = async () => {
+      if (!user?.id) {
+        setSubscription(null)
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('subscription_type')
-          .eq('id', user.id)
-          .single()
-
-        if (profile?.subscription_type) {
-          setSubscriptionType(profile.subscription_type as SubscriptionType)
-        }
+        const data = await authService.getUserSubscription(user.id)
+        setSubscription(data)
       } catch (error) {
-        const { error: errorMessage } = handleError(error, 'Error fetching subscription');
-        console.error(errorMessage);
+        console.error('Error fetching subscription:', error)
+        setSubscription(null)
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
     fetchSubscription()
-  }, [])
+  }, [user, authService])
 
-  const canAccessProduct = (productType: string) => {
-    if (subscriptionType === 'premium') return true
-    return productType === 'free'
-  }
+  // Determine subscription type based on subscription data
+  const subscriptionType = subscription?.plan_id === 'premium' || 
+                          subscription?.plan_id === 'annual' ? 
+                          'premium' : 'free'
 
-  return {
-    subscriptionType,
-    loading,
-    canAccessProduct,
-    isPremium: subscriptionType === 'premium'
-  }
+  return { subscription, isLoading, subscriptionType }
 } 

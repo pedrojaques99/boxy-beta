@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
 import { handleError } from '@/lib/error-handler'
@@ -49,7 +49,7 @@ export function ProductsCRUD() {
     thumb: ''
   })
 
-  const supabase = createClient()
+  const authService = getAuthService()
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })

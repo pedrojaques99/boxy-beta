@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
+import { getAuthService } from '@/lib/auth/auth-service';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -34,7 +34,7 @@ export default function HomePage() {
   const [latestProducts, setLatestProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const authService = getAuthService();
   const { t } = useTranslations();
 
   useEffect(() => {

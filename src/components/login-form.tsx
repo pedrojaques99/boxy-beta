@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -31,6 +31,7 @@ import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -49,14 +50,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [isEmailLoading, setIsEmailLoading] = useState(false)
   const [redirectTo, setRedirectTo] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
+  const authService = getAuthService()
 
   // Verificar se já está autenticado
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession()
-        if (data?.session?.user && !error) {
+        const isAuthenticated = await authService.isAuthenticated()
+        if (isAuthenticated) {
           console.log('Usuário já autenticado, redirecionando...')
           // Se já autenticado e temos um redirect, vamos para lá
           if (redirectTo) {
@@ -80,7 +81,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     }
     
     checkAuth()
-  }, [redirectTo, router, supabase.auth])
+  }, [redirectTo, router, authService])
 
   // Get redirectTo from URL if available
   useEffect(() => {
@@ -102,23 +103,12 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   })
 
   const handleSocialLogin = async (provider: 'github' | 'google') => {
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      })
-
-      if (error) throw error
+      const { error } = await authService.signInWithOAuth(provider);
+      if (error) throw error;
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Authentication failed. Please try again.'
       setError({ message: errorMessage, code: 'oauth_error' })
@@ -127,17 +117,12 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const supabase = createClient()
     setIsEmailLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      })
-
-      if (error) throw error
+      const { error } = await authService.signInWithPassword(values.email, values.password);
+      if (error) throw error;
       
       // Redirect will be handled by Supabase's sign-in mechanism
     } catch (error: unknown) {

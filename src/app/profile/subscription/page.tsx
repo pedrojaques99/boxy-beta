@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { formatPrice, getPlanById, PlanId } from '@/lib/plans'
 import { Subscription } from '@/types/subscription'
 import { CheckoutWizard } from '@/components/checkout/CheckoutWizard'
@@ -28,7 +28,7 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
-  const supabase = createClient()
+  const authService = getAuthService()
   const router = useRouter()
 
   useEffect(() => {

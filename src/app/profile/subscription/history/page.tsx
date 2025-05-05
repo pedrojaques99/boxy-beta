@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { formatPrice, getPlanById, PlanId } from '@/lib/plans'
 import { Subscription } from '@/types/subscription'
 import { ArrowLeft, Calendar, CreditCard, Download, Search, FileText, Loader2, AlertCircle } from 'lucide-react'
@@ -50,7 +50,7 @@ export default function PaymentHistoryPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const supabase = createClient()
+  const authService = getAuthService()
   const router = useRouter()
 
   useEffect(() => {

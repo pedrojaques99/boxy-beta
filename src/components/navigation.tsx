@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme-context';
-import { createClient } from '@/lib/supabase/client';
 import { LogOut, User, Sun, Moon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -15,10 +14,14 @@ import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { handleError } from '@/lib/error-handler';
+import { getAuthService } from '@/lib/auth/auth-service';
+
+type UserStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
 export function Navigation() {
   const { theme, setTheme } = useTheme();
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [userStatus, setUserStatus] = useState<UserStatus>('loading');
+  const [userName, setUserName] = useState<string | null>(null);
   const [isLanguageChanging, setIsLanguageChanging] = useState(false);
   const [themeState, setThemeState] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') {
@@ -29,27 +32,35 @@ export function Navigation() {
     }
     return theme;
   });
-  const supabase = createClient();
+  const authService = getAuthService();
   const pathname = usePathname();
   const router = useRouter();
   const { t, locale } = useTranslations();
 
+  const isActive = (path: string) => {
+    return pathname === path;
+  };
+
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    const checkAuth = async () => {
+      try {
+        const isAuthenticated = await authService.isAuthenticated();
+        
+        if (isAuthenticated) {
+          const { data } = await authService.getUser();
+          setUserName(data.user?.email?.split('@')[0] || 'User');
+          setUserStatus('authenticated');
+        } else {
+          setUserStatus('unauthenticated');
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setUserStatus('unauthenticated');
+      }
     };
 
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: string, session: { user: SupabaseUser } | null) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
+    checkAuth();
+  }, [authService]);
 
   useEffect(() => {
     if (theme === 'system') {
@@ -61,7 +72,7 @@ export function Navigation() {
   }, [theme]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authService.signOut();
     router.push('/');
   };
 
@@ -215,7 +226,7 @@ export function Navigation() {
           </div>
 
           <nav className="flex items-center space-x-3">
-            {user ? (
+            {userStatus === 'authenticated' ? (
               <>
                 <Link
                   href="/profile"

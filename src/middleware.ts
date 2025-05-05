@@ -68,7 +68,7 @@ export async function middleware(req: NextRequest) {
 
   try {
     // Get the session - this refresh the session if needed
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await authService.getSession()
 
     // Handle protected routes
     const isAuthRoute = req.nextUrl.pathname.startsWith('/auth')

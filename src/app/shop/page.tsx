@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { useEffect, useState, Suspense } from 'react'
 import { getDictionary } from '@/i18n'
 import { i18n } from '@/i18n/settings'
@@ -31,7 +31,7 @@ function ShopPageContent() {
   const [loading, setLoading] = useState(true)
   const [t, setT] = useState<Dictionary | null>(null)
   const [page, setPage] = useState(1)
-  const supabase = createClient()
+  const authService = getAuthService()
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
   const isFree = searchParams.get('free') === 'true'

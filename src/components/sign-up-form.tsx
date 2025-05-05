@@ -1,7 +1,6 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,6 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -44,6 +44,7 @@ export function SignUpForm() {
   const [isSocialLoading, setIsSocialLoading] = useState(false)
   const [isSubmitSuccessful, setIsSubmitSuccessful] = useState(false)
   const router = useRouter()
+  const authService = getAuthService()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,17 +56,10 @@ export function SignUpForm() {
   })
 
   const handleSignUp = async (values: z.infer<typeof formSchema>) => {
-    const supabase = createClient()
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
+      const { error } = await authService.signUp(values.email, values.password);
       
       if (error) throw error
       setIsSubmitSuccessful(true)
@@ -80,16 +74,10 @@ export function SignUpForm() {
   }
 
   const handleSocialSignUp = async (provider: 'github' | 'google') => {
-    const supabase = createClient()
     setIsSocialLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
+      const { error } = await authService.signInWithOAuth(provider);
       if (error) throw error
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Social sign-up failed'

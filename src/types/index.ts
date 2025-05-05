@@ -9,4 +9,5 @@ export type Product = {
   software: string | null
   tags: string[] | null
   created_at: string
+  images?: string[] | null
 } 

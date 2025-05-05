@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Check, X, AlertCircle, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { getAuthService } from '@/lib/auth/auth-service'
 
 export default function AuthTestPage() {
   const [sessionInfo, setSessionInfo] = useState<any>(null)
@@ -15,7 +15,7 @@ export default function AuthTestPage() {
   const [authCookies, setAuthCookies] = useState<string[]>([])
   const [testResults, setTestResults] = useState<Array<{name: string, status: 'success' | 'error' | 'loading', message: string}>>([])
   const router = useRouter()
-  const supabase = createClient()
+  const authService = getAuthService()
 
   // Verifica o status da sessão
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function AuthTestPage() {
       }])
 
       try {
-        const { data, error } = await supabase.auth.getSession()
+        const { data, error } = await authService.getSession()
         
         if (error) {
           setSessionStatus('error')
@@ -82,7 +82,7 @@ export default function AuthTestPage() {
     }
 
     checkSession()
-  }, [supabase.auth])
+  }, [authService])
 
   // Verifica cookies
   useEffect(() => {
@@ -201,7 +201,7 @@ export default function AuthTestPage() {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut()
+      await authService.signOut()
       window.location.reload()
     } catch (error) {
       console.error('Erro ao fazer logout:', error)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { getAuthService } from '@/lib/auth/auth-service'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { useThrottleCallback } from './use-throttle-callback'
 
@@ -60,7 +60,7 @@ export const useRealtimeCursors = ({
   const [cursors, setCursors] = useState<Record<string, CursorEventPayload>>({})
 
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const supabase = createClient()
+  const authService = getAuthService()
 
   const callback = useCallback(
     (event: MouseEvent) => {

@@ -4,11 +4,11 @@ import { CheckoutWizard } from '@/components/checkout/CheckoutWizard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PlanId, PLANS } from '@/lib/plans';
-import { createClient } from '@/lib/supabase/client';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import AuthService from '@/lib/auth/auth-service';
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -16,20 +16,20 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [planId, setPlanId] = useState<PlanId | null>(null);
-  const supabase = createClient();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
         
-        // Verify session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Verify authentication using AuthService
+        const isAuthenticated = await AuthService.isAuthenticated();
         
-        if (error || !session) {
-          console.error('Erro na verificação de sessão:', error);
-          // Redirect to login if not authenticated
-          router.push('/auth/login');
+        if (!isAuthenticated) {
+          console.error('Usuário não autenticado');
+          // Redirect to login with return URL
+          const currentPath = window.location.pathname;
+          AuthService.redirectToLogin(router, currentPath);
           return;
         }
         
@@ -45,15 +45,19 @@ export default function CheckoutPage() {
         
         setPlanId(plan as PlanId);
         
+        // Get user data to check subscription
+        const { data: { user } } = await AuthService.getUser();
+        
+        if (!user?.id) {
+          console.error('Dados do usuário não disponíveis');
+          router.push('/auth/login');
+          return;
+        }
+        
         // Check if user already has a subscription
-        const { data: subscription, error: subError } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .eq('status', 'active')
-          .single();
-          
-        if (subscription && !subError) {
+        const subscription = await AuthService.getUserSubscription(user.id);
+        
+        if (subscription) {
           console.log('Usuário já possui assinatura ativa:', subscription);
           router.push('/profile');
           return;
@@ -61,13 +65,14 @@ export default function CheckoutPage() {
         
       } catch (err) {
         console.error('Erro ao verificar autenticação:', err);
+        router.push('/auth/login');
       } finally {
         setIsLoading(false);
       }
     };
     
     checkAuth();
-  }, [params.plan, router, supabase]);
+  }, [params.plan, router]);
 
   if (isLoading) {
     return (

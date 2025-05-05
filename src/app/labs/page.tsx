@@ -1,6 +1,6 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
+import { getAuthService } from '@/lib/auth/auth-service';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
@@ -33,7 +33,7 @@ export default function LabsPage() {
   const [hasMore, setHasMore] = useState(true);
   const { t } = useTranslations();
   
-  const supabase = createClient();
+  const authService = getAuthService();
 
   const fetchLabs = useCallback(async (pageNum: number, reset: boolean = false) => {
     setLoading(true);
