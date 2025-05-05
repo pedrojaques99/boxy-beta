@@ -107,17 +107,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
-      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
-      const callbackUrl = `${protocol}://${window.location.host}/auth/callback`
-      
-      // Add redirectTo parameter if available
-      const redirectParams = redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''
-      const fullCallbackUrl = `${callbackUrl}${redirectParams}`
-      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: fullCallbackUrl,
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -125,10 +118,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         },
       })
 
-      if (error) {
-        console.error('OAuth error:', error)
-        throw error
-      }
+      if (error) throw error
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Authentication failed. Please try again.'
       setError({ message: errorMessage, code: 'oauth_error' })
@@ -142,20 +132,17 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
-      // Use redirectUrl if available
-      const options = redirectTo ? { redirectTo: `/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}` } : undefined
-
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
-        ...(options && { options })
       })
 
       if (error) throw error
+      
+      // Redirect will be handled by Supabase's sign-in mechanism
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Invalid email or password'
       setError({ message: errorMessage, code: 'auth_error' })
-    } finally {
       setIsEmailLoading(false)
     }
   }

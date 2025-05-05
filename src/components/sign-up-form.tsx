@@ -42,6 +42,7 @@ const formSchema = z.object({
 export function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSocialLoading, setIsSocialLoading] = useState(false)
+  const [isSubmitSuccessful, setIsSubmitSuccessful] = useState(false)
   const router = useRouter()
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -53,51 +54,26 @@ export function SignUpForm() {
     },
   })
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleSignUp = async (values: z.infer<typeof formSchema>) => {
     const supabase = createClient()
     setIsLoading(true)
 
     try {
-      console.log('Iniciando registro com email:', values.email)
-      
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            full_name: values.email.split('@')[0], // Inicialmente usamoss o nome do email
-          }
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
-
-      console.log('Resposta do registro:', { data, error })
-
+      
       if (error) throw error
-      
-      // Verificar se precisamos confirmar o email
-      if (data?.user?.identities?.length === 0) {
-        toast.error('Este email já está registrado. Por favor, faça login.')
-        router.push('/auth/login')
-        return
-      }
-      
+      setIsSubmitSuccessful(true)
       toast.success('Check your email to confirm your account')
       router.push('/auth/sign-up-success')
     } catch (error: unknown) {
-      console.error('Erro detalhado no registro:', error)
-      
-      // Tratamento especial para erros de email já em uso
-      if (error instanceof Error && 
-         (error.message.includes('already registered') || 
-          error.message.includes('already in use'))) {
-        toast.error('Este email já está registrado. Por favor, faça login.')
-        router.push('/auth/login')
-        return
-      }
-      
-      const { error: errorMessage } = handleError(error, 'Error during sign up');
-      toast.error(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Sign up failed. Please try again.'
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -116,8 +92,9 @@ export function SignUpForm() {
       })
       if (error) throw error
     } catch (error: unknown) {
-      const { error: errorMessage } = handleError(error, 'Error during social sign up');
-      toast.error(errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Social sign-up failed'
+      toast.error(errorMessage)
+    } finally {
       setIsSocialLoading(false)
     }
   }
@@ -132,7 +109,7 @@ export function SignUpForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSignUp)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"

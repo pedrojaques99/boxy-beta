@@ -1,111 +1,53 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { getSupabaseEnv } from './env'
 
-// Manter uma única instância global do cliente
-let supabaseClientInstance: ReturnType<typeof createBrowserClient> | null = null
-
-// Função para sanitizar cookies
-const sanitizeSupabaseCookies = () => {
-  if (typeof document === 'undefined') return;
-  
-  try {
-    const cookies = document.cookie.split(';');
-    let hasInvalidCookies = false;
-    
-    cookies.forEach(cookie => {
-      const [name, value] = cookie.split('=').map(s => s.trim());
-      
-      // Verificar se é um cookie do Supabase
-      if (name && (name.includes('supabase') || name.includes('sb-'))) {
-        try {
-          // Tentar validar JSON se começar com {
-          if (value && value.startsWith('{')) {
-            JSON.parse(value);
-          }
-          // Tentar validar base64 se começar com base64-
-          else if (value && value.startsWith('base64-')) {
-            const base64Part = value.substring(7);
-            try {
-              atob(base64Part);
-            } catch (e) {
-              // Base64 inválido, remover cookie
-              console.warn(`Removendo cookie corrupto ${name} (base64 inválido)`);
-              document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-              hasInvalidCookies = true;
-            }
-          }
-        } catch (e) {
-          // JSON ou parsing inválido, remover cookie
-          console.warn(`Removendo cookie corrupto ${name}`);
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-          hasInvalidCookies = true;
-        }
-      }
-    });
-    
-    return hasInvalidCookies;
-  } catch (err) {
-    console.error('Erro ao sanitizar cookies:', err);
-    return false;
-  }
-};
+// Store a single instance of the Supabase client
+let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
 
 export function createClient() {
-  // Verificar se estamos no ambiente do navegador
+  // Check if we're in a browser environment
   const isBrowser = typeof window !== 'undefined'
   
-  // Se não estamos no navegador, retorna um objeto mock para evitar erros
+  // If not in browser, return a mock to avoid errors
   if (!isBrowser) {
-    console.log('Tentativa de criar cliente Supabase no servidor, retornando mock')
-    // @ts-ignore - retornando um mock simplificado para evitar erros
     return {
       auth: {
         getSession: () => Promise.resolve({ data: { session: null }, error: null }),
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
       },
-      from: () => ({
-        select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) }),
-      }),
-    }
+    } as any
   }
   
-  // Sanitizar cookies para prevenir erros de parsing
-  const hadInvalidCookies = sanitizeSupabaseCookies();
-  if (hadInvalidCookies) {
-    console.log('Alguns cookies inválidos foram removidos. Recarregando a instância do cliente Supabase.');
-    supabaseClientInstance = null;
-  }
+  // Return existing instance if available
+  if (supabaseClient) return supabaseClient
   
-  // Se já temos uma instância, retorná-la em vez de criar uma nova
-  if (supabaseClientInstance) {
-    return supabaseClientInstance
-  }
+  // Get environment variables
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   
-  // Criar nova instância se ainda não existe
-  const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv()
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
   
   try {
-    supabaseClientInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    // Create a new client
+    supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    return supabaseClient
+  } catch (error) {
+    console.error('Error creating Supabase client:', error)
     
-    // Debugging para verificar criação
-    console.log('Nova instância do Supabase Client criada')
-    
-    return supabaseClientInstance
-  } catch (err) {
-    console.error('Erro ao criar cliente Supabase:', err);
-    
-    // Limpar todos os cookies relacionados ao Supabase e tentar novamente
+    // Clear any corrupted cookies as a fallback
     if (typeof document !== 'undefined') {
-      const cookies = document.cookie.split(';');
+      const cookies = document.cookie.split(';')
       cookies.forEach(cookie => {
-        const name = cookie.split('=')[0].trim();
+        const name = cookie.split('=')[0].trim()
         if (name.includes('supabase') || name.includes('sb-')) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
         }
-      });
+      })
     }
     
-    // Retornar cliente em último caso
-    return createBrowserClient(supabaseUrl, supabaseAnonKey);
+    // Create a new client after clearing cookies
+    supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    return supabaseClient
   }
 }
