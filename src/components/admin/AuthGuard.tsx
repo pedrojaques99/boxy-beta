@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@supabase/auth-helpers-react'
 import { Button } from '@/components/ui/button'
@@ -29,8 +29,67 @@ export function AuthGuard({ children }: AuthGuardProps) {
   const [isMounted, setIsMounted] = useState(false)
   const [hasCheckedSessionStorage, setHasCheckedSessionStorage] = useState(false)
 
-  const supabase = createClient()
+  // Use ref para evitar recriação da instância do cliente a cada render
+  const supabaseRef = useRef(createClient())
   const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123'
+
+  // Função para verificar o status de admin com useCallback para evitar recriações
+  const checkAdminStatus = useCallback(async (userId: string) => {
+    if (!userId) return
+    
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      console.log('AuthGuard - Verificando status de admin para usuário:', userId)
+      
+      // Usar a referência armazenada
+      const { data: profile, error: profileError } = await supabaseRef.current
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+        
+      if (profileError) {
+        console.error('AuthGuard - Erro ao buscar perfil:', profileError)
+        setError(`Erro ao buscar perfil: ${profileError.message}`)
+        setIsAdmin(false)
+        setProfileData(null)
+        
+        // Clear session storage
+        sessionStorage.removeItem('admin_authenticated')
+        sessionStorage.removeItem('admin_user_id')
+      } else {
+        console.log('AuthGuard - Perfil obtido:', profile)
+        setProfileData(profile)
+        const isUserAdmin = profile?.role === 'admin'
+        setIsAdmin(isUserAdmin)
+        
+        if (isUserAdmin) {
+          setAuth(true)
+          
+          // Store in session storage
+          sessionStorage.setItem('admin_authenticated', 'true')
+          sessionStorage.setItem('admin_user_id', userId)
+        } else {
+          // Clear session storage
+          sessionStorage.removeItem('admin_authenticated')
+          sessionStorage.removeItem('admin_user_id')
+        }
+      }
+    } catch (error) {
+      console.error('AuthGuard - Erro ao verificar status admin:', error)
+      setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      setIsAdmin(false)
+      
+      // Clear session storage
+      sessionStorage.removeItem('admin_authenticated')
+      sessionStorage.removeItem('admin_user_id')
+    } finally {
+      setIsLoading(false)
+      setHasCheckedSessionStorage(true)
+    }
+  }, [])
 
   // Handle tab visibility changes to force re-auth when tab is focused again
   useEffect(() => {
@@ -45,7 +104,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user])
+  }, [user, checkAdminStatus])
 
   // Initial mount and session storage check
   useEffect(() => {
@@ -97,67 +156,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     // On mount or when user changes, check admin status
     checkAdminStatus(user.id)
 
-  }, [user, isMounted, hasCheckedSessionStorage, auth, isAdmin])
-
-  // Function to check admin status
-  const checkAdminStatus = async (userId: string) => {
-    if (!userId) return
-    
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      console.log('Checking admin status for user:', userId)
-      
-      // Force browser to refresh supabase client on each attempt
-      const freshSupabase = createClient()
-      
-      const { data: profile, error: profileError } = await freshSupabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-        
-      if (profileError) {
-        console.error('Profile fetch error:', profileError)
-        setError(`Erro ao buscar perfil: ${profileError.message}`)
-        setIsAdmin(false)
-        setProfileData(null)
-        
-        // Clear session storage
-        sessionStorage.removeItem('admin_authenticated')
-        sessionStorage.removeItem('admin_user_id')
-      } else {
-        console.log('Profile data fetched:', profile)
-        setProfileData(profile)
-        const isUserAdmin = profile?.role === 'admin'
-        setIsAdmin(isUserAdmin)
-        
-        if (isUserAdmin) {
-          setAuth(true)
-          
-          // Store in session storage
-          sessionStorage.setItem('admin_authenticated', 'true')
-          sessionStorage.setItem('admin_user_id', userId)
-        } else {
-          // Clear session storage
-          sessionStorage.removeItem('admin_authenticated')
-          sessionStorage.removeItem('admin_user_id')
-        }
-      }
-    } catch (error) {
-      console.error('Admin check error:', error)
-      setError(`Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
-      setIsAdmin(false)
-      
-      // Clear session storage
-      sessionStorage.removeItem('admin_authenticated')
-      sessionStorage.removeItem('admin_user_id')
-    } finally {
-      setIsLoading(false)
-      setHasCheckedSessionStorage(true)
-    }
-  }
+  }, [user, isMounted, hasCheckedSessionStorage, auth, isAdmin, checkAdminStatus])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
