@@ -60,7 +60,7 @@ export default async function ResourcesPage() {
 
     if (resourcesError) throw resourcesError
 
-    if (!resourcesData || resourcesData.length === 0) {
+    if (!resourcesData || !Array.isArray(resourcesData) || resourcesData.length === 0) {
       return (
         <div className="min-h-screen bg-background flex items-center justify-center">
           <p className="text-muted-foreground text-center">No approved resources available.</p>
@@ -68,23 +68,35 @@ export default async function ResourcesPage() {
       )
     }
 
-    // Transform database resources to component resources
-    resources = resourcesData.map((resource: DbResource) => ({
-      id: String(resource.id),
-      title: String(resource.title),
-      url: String(resource.url),
-      thumbnail_url: resource.thumbnail_url,
-      tags: resource.tags || [],
-      category: String(resource.category),
-      subcategory: String(resource.subcategory),
-      software: resource.software,
-      created_at: resource.created_at || new Date().toISOString(),
-      description: resource.description || '',
-      description_en: resource.description_en,
-      price_model: resource.price_model,
-      featured: resource.featured || false,
-      approved: true // Since we're only fetching approved resources
-    }))
+    // Transform database resources to component resources with validation
+    resources = resourcesData
+      .filter((resource): resource is DbResource => {
+        return (
+          resource !== null &&
+          typeof resource === 'object' &&
+          typeof resource.id === 'string' &&
+          typeof resource.title === 'string' &&
+          typeof resource.url === 'string' &&
+          typeof resource.category === 'string' &&
+          typeof resource.subcategory === 'string'
+        )
+      })
+      .map((resource: DbResource) => ({
+        id: String(resource.id),
+        title: String(resource.title),
+        url: String(resource.url),
+        thumbnail_url: resource.thumbnail_url || null,
+        tags: Array.isArray(resource.tags) ? resource.tags : [],
+        category: String(resource.category),
+        subcategory: String(resource.subcategory),
+        software: resource.software || null,
+        created_at: resource.created_at || new Date().toISOString(),
+        description: resource.description || '',
+        description_en: resource.description_en || null,
+        price_model: resource.price_model || null,
+        featured: Boolean(resource.featured),
+        approved: true // Since we're only fetching approved resources
+      }))
 
     // Fetch filter options with error handling
     const fetchUniqueValues = async (column: keyof Pick<DbResource, 'category' | 'subcategory' | 'software'>): Promise<string[]> => {
@@ -97,9 +109,14 @@ export default async function ResourcesPage() {
         
         if (error) throw error
         
-        return [...new Set((data || [])
-          .map((item: any) => String(item[column]))
-          .filter(Boolean)
+        if (!data || !Array.isArray(data)) return []
+
+        return [...new Set(data
+          .map((item: any) => {
+            const value = item?.[column]
+            return value ? String(value) : null
+          })
+          .filter((value): value is string => value !== null)
         )]
       } catch (err) {
         console.error(`Error fetching ${column}:`, err)

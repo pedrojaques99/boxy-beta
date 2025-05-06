@@ -41,7 +41,7 @@ interface ResourcesClientProps {
 
 const ITEMS_PER_PAGE = 9
 
-export function ResourcesClient({ resources, filterOptions }: ResourcesClientProps) {
+export function ResourcesClient({ resources = [], filterOptions = { category: [], subcategory: [], software: [] } }: ResourcesClientProps) {
   const t = useTranslations('mindy')
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -70,9 +70,12 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
     return searchParams.get(key) === value
   }
 
-  // Memoize filtered resources
+  // Memoize filtered resources with null checks
   const filteredResources = useMemo(() => {
+    if (!Array.isArray(resources)) return []
+    
     return resources.filter(resource => {
+      if (!resource) return false
       if (currentCategory && resource.category !== currentCategory) return false
       if (currentSubcategory && resource.subcategory !== currentSubcategory) return false
       if (currentSoftware && resource.software !== currentSoftware) return false
@@ -84,32 +87,39 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
 
   const handleImageLoad = (id: string) => {
+    if (!id) return
     setLoadedImages(prev => new Set(prev).add(id))
   }
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
+    if (!observerTarget.current) return
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !isLoading && visibleItems < filteredResources.length) {
+        if (entries[0]?.isIntersecting && !isLoading && visibleItems < filteredResources.length) {
           setIsLoading(true)
           setTimeout(() => {
             setVisibleItems(prev => Math.min(prev + ITEMS_PER_PAGE, filteredResources.length))
             setIsLoading(false)
-          }, 500) // Small delay for smooth loading
+          }, 500)
         }
       },
       { threshold: 0.1 }
     )
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
-    }
-
+    observer.observe(observerTarget.current)
     return () => observer.disconnect()
   }, [visibleItems, filteredResources.length, isLoading])
 
   const visibleResources = filteredResources.slice(0, visibleItems)
+
+  // Safe image URL generation
+  const getImageUrl = (resource: Resource) => {
+    if (resource.thumbnail_url) return resource.thumbnail_url
+    if (resource.url) return `https://image.thum.io/get/${resource.url}`
+    return '/images/placeholder.jpg' // Add a placeholder image
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -125,7 +135,7 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
         />
       </div>
 
-      {filteredResources.length === 0 ? (
+      {!filteredResources.length ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('noResults')}</p>
         </div>
@@ -140,8 +150,8 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
                       <Skeleton className="absolute inset-0" />
                     )}
                     <Image
-                      src={resource.thumbnail_url || `https://image.thum.io/get/${resource.url}`}
-                      alt={resource.title}
+                      src={getImageUrl(resource)}
+                      alt={resource.title || 'Resource image'}
                       fill
                       loading="lazy"
                       className={`object-cover rounded-t-lg transition-opacity duration-300 ${
@@ -149,6 +159,11 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
                       }`}
                       onLoad={() => handleImageLoad(resource.id)}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      onError={(e) => {
+                        // Fallback to placeholder on error
+                        const target = e.target as HTMLImageElement
+                        target.src = '/images/placeholder.jpg'
+                      }}
                     />
                     {resource.category && (
                       <motion.button
@@ -169,9 +184,9 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
                     )}
                   </CardHeader>
                   <CardContent className="flex-grow p-6">
-                    <h2 className="text-xl font-semibold mb-2 line-clamp-2">{resource.title}</h2>
+                    <h2 className="text-xl font-semibold mb-2 line-clamp-2">{resource.title || 'Untitled'}</h2>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {resource.description_en || resource.description}
+                      {resource.description_en || resource.description || 'No description available'}
                     </p>
                     <div className="text-sm text-gray-600 flex flex-wrap gap-2">
                       {resource.subcategory && (
