@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Filter, ArrowUpDown, X } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { useSearchParams } from 'next/navigation'
 
 interface FilterMenuProps {
   onFilterChange: (filters: {
@@ -28,9 +29,11 @@ interface FilterMenuProps {
 }
 
 export function FilterMenu({ onFilterChange, categories, software, isFree }: FilterMenuProps) {
+  const searchParams = useSearchParams()
+  
   const [filters, setFilters] = useState({
-    category: null as string | null,
-    software: null as string | null,
+    category: searchParams.get('category') as string | null,
+    software: searchParams.get('software') as string | null,
     sortBy: 'created_at' as 'created_at' | 'name',
     sortOrder: 'desc' as 'asc' | 'desc',
     isFree: isFree
@@ -40,6 +43,20 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
   useEffect(() => {
     setFilters(prev => ({ ...prev, isFree }))
   }, [isFree])
+
+  // Sync URL parameters with local state
+  useEffect(() => {
+    const category = searchParams.get('category')
+    const software = searchParams.get('software')
+    const isFree = searchParams.get('free') === 'true'
+
+    setFilters(prev => ({
+      ...prev,
+      category,
+      software,
+      isFree
+    }))
+  }, [searchParams])
 
   const handleFilterChange = (key: keyof typeof filters, value: string | null | boolean) => {
     const newFilters = { ...filters, [key]: value }

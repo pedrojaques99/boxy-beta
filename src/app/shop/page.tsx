@@ -127,6 +127,30 @@ function ShopPageContent() {
     isFree: boolean
   }) => {
     try {
+      // Update URL with new filter state
+      const params = new URLSearchParams(searchParams.toString())
+      
+      if (filters.category) {
+        params.set('category', filters.category)
+      } else {
+        params.delete('category')
+      }
+      
+      if (filters.software) {
+        params.set('software', filters.software)
+      } else {
+        params.delete('software')
+      }
+      
+      if (filters.isFree) {
+        params.set('free', 'true')
+      } else {
+        params.delete('free')
+      }
+      
+      // Update URL without full page reload
+      window.history.pushState({}, '', `?${params.toString()}`)
+
       // Use direct Supabase client for product filtering
       let query = supabase
         .from('products')
@@ -153,15 +177,6 @@ function ShopPageContent() {
         console.error('Error filtering products:', error)
         return
       }
-
-      // Update URL with new filter state
-      const params = new URLSearchParams(searchParams.toString())
-      if (filters.isFree) {
-        params.set('free', 'true')
-      } else {
-        params.delete('free')
-      }
-      window.history.pushState({}, '', `?${params.toString()}`)
 
       setProducts(data || [])
     } catch (error) {
