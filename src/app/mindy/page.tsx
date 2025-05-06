@@ -1,150 +1,78 @@
-'use client';
-
 import { getDictionary } from '@/i18n'
 import { i18n } from '@/i18n/settings'
 import { ResourcesClient } from './client'
-import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState, Suspense } from 'react'
+import { createClient } from '@/lib/supabase/server'
 import { Dictionary } from '@/i18n/types'
 
-interface Resource {
-  id: string
-  title: string
-  url: string
-  tags: string[]
-  category: string
-  subcategory: string
-  software: string
-  created_at: string
-  description: string
-  description_en: string
-}
+export default async function ResourcesPage() {
+  const supabase = await createClient()
+  let resources: any[] = []
+  let filterOptions: { category: string[]; subcategory: string[]; software: string[] } = { category: [], subcategory: [], software: [] }
+  let error = null
 
-interface FilterOptions {
-  category: string[]
-  subcategory: string[]
-  software: string[]
-}
+  try {
+    // Fetch resources
+    const { data: resourcesData, error: resourcesError } = await supabase
+      .from('resources')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-export default function ResourcesPage() {
-  return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-900 dark:border-white"></div>
-      </div>
-    }>
-      <ResourcesPageContent />
-    </Suspense>
-  )
-}
+    if (resourcesError) throw resourcesError
 
-function ResourcesPageContent() {
-  const [resources, setResources] = useState<Resource[]>([])
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    category: [],
-    subcategory: [],
-    software: []
-  })
-  const [loading, setLoading] = useState(true)
-  const [t, setT] = useState<Dictionary | null>(null)
-  const supabase = createClient()
+    // Defensive mapping
+    resources = (resourcesData || []).map((resource: any) => ({
+      id: String(resource.id),
+      title: String(resource.title || ''),
+      url: String(resource.url || ''),
+      tags: Array.isArray(resource.tags)
+        ? resource.tags.filter(Boolean)
+        : typeof resource.tags === 'string'
+          ? resource.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+          : [],
+      category: String(resource.category || ''),
+      subcategory: String(resource.subcategory || ''),
+      software: String(resource.software || ''),
+      created_at: String(resource.created_at || ''),
+      description: String(resource.description || ''),
+      description_en: String(resource.description_en || ''),
+    }))
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        // Get dictionary
-        const dictionary = await getDictionary(i18n.defaultLocale)
-        setT(dictionary)
-
-        // Get unique values for filters
-        const fetchUniqueValues = async (column: keyof Resource): Promise<string[]> => {
-          const { data, error } = await supabase
-            .from('resources')
-            .select(column)
-            .not(column, 'is', null)
-
-          if (error) {
-            console.error(`Error fetching unique ${column}:`, error)
-            return []
-          }
-
-          if (!data) return []
-          return [...new Set(data.map((item: Record<string, any>) => String(item[column])).filter(Boolean))] as string[]
-        }
-
-        const [categories, subcategories, software] = await Promise.all([
-          fetchUniqueValues('category'),
-          fetchUniqueValues('subcategory'),
-          fetchUniqueValues('software')
-        ])
-
-        setFilterOptions({
-          category: categories,
-          subcategory: subcategories,
-          software: software
-        })
-
-        // Get resources with proper type casting
-        const { data: resourcesData, error: resourcesError } = await supabase
-          .from('resources')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (resourcesError) {
-          console.error('Error fetching resources:', resourcesError)
-          return
-        }
-
-        console.log('Raw resources data:', resourcesData)
-
-        // Ensure the data matches our Resource interface
-        const typedResources = (resourcesData || []).map((resource: Record<string, any>) => {
-          try {
-            const tags = Array.isArray(resource.tags)
-              ? resource.tags.filter(Boolean)
-              : typeof resource.tags === 'string'
-                ? resource.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
-                : [];
-            return {
-              id: String(resource.id),
-              title: String(resource.title || ''),
-              url: String(resource.url || ''),
-              tags,
-              category: String(resource.category || ''),
-              subcategory: String(resource.subcategory || ''),
-              software: String(resource.software || ''),
-              created_at: String(resource.created_at || ''),
-              description: String(resource.description || ''),
-              description_en: String(resource.description_en || ''),
-            }
-          } catch (error) {
-            console.error('Error processing resource:', resource, error)
-            throw error
-          }
-        })
-
-        console.log('Final typed resources:', typedResources)
-        setResources(typedResources)
-      } catch (error) {
-        console.error('Error in fetchData:', error)
-      } finally {
-        setLoading(false)
-      }
+    // Fetch filter options
+    const fetchUniqueValues = async (column: string): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from('resources')
+        .select(column)
+        .not(column, 'is', null)
+      if (error) return []
+      return [...new Set((data || []).map((item: any) => String(item[column])).filter(Boolean))]
     }
 
-    fetchData()
-  }, [supabase])
+    const [categories, subcategories, software] = await Promise.all([
+      fetchUniqueValues('category'),
+      fetchUniqueValues('subcategory'),
+      fetchUniqueValues('software'),
+    ])
 
-  if (loading || !t) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-900 dark:border-white"></div>
-      </div>
-    )
+    filterOptions = {
+      category: categories,
+      subcategory: subcategories,
+      software: software,
+    }
+  } catch (e) {
+    error = 'Failed to load resources.'
   }
 
+  // const t: Dictionary = await getDictionary(i18n.defaultLocale)
+
   return (
-    <ResourcesClient resources={resources} filterOptions={filterOptions} />
+    <div>
+      {error && (
+        <div className="text-red-500 text-center py-4">{error}</div>
+      )}
+      <ResourcesClient
+        resources={Array.isArray(resources) ? resources : []}
+        filterOptions={filterOptions}
+      />
+    </div>
   )
 }
