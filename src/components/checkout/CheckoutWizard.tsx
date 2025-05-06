@@ -37,8 +37,7 @@ interface CheckoutWizardProps {
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
   const user = useUser()
   const router = useRouter()
-  const { t } = useTranslations()
-  const { locale } = useLocale()
+  const { t, locale } = useTranslations()
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState<PlanId | undefined>(defaultPlanId)
   const [userData, setUserData] = useState({
@@ -348,10 +347,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   if (!user) {
     return (
       <div className="space-y-4 p-8 text-center">
-        <h3 className="text-lg font-semibold">Authentication Required</h3>
-        <p>Please log in to continue with your subscription.</p>
+        <h3 className="text-lg font-semibold">{safeT('checkout.authRequired')}</h3>
+        <p>{safeT('checkout.authRequiredDescription')}</p>
         <Button onClick={() => router.push('/auth/login')}>
-          Login
+          {safeT('checkout.login')}
         </Button>
       </div>
     )
@@ -446,96 +445,104 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="user-name">{safeT('profile.subscription.title')}</Label>
+                    <Label htmlFor="user-name">{safeT('checkout.name')}</Label>
                     <Input
                       id="user-name"
-                      placeholder={safeT('profile.subscription.title')}
+                      placeholder={safeT('checkout.namePlaceholder')}
                       value={userData.name}
                       onChange={e => setUserData({ ...userData, name: e.target.value })}
-                      className={cn(userData.name.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.name.length === 0 && 'border-red-500')}
                     />
-                    {userData.name.length === 0 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
+                    {userData.name.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.nameRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-email">{safeT('auth.signInToContinue')}</Label>
+                    <Label htmlFor="user-email">{safeT('checkout.email')}</Label>
                     <Input
                       id="user-email"
-                      placeholder="your@email.com"
+                      placeholder={safeT('checkout.emailPlaceholder')}
                       value={userData.email}
                       onChange={e => setUserData({ ...userData, email: e.target.value })}
-                      className={cn(userData.email.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.email.length === 0 && 'border-red-500')}
                     />
-                    {userData.email.length === 0 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
+                    {userData.email.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.emailRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-street">Street</Label>
+                    <Label htmlFor="user-street">{safeT('checkout.street')}</Label>
                     <Input
                       id="user-street"
+                      placeholder={safeT('checkout.streetPlaceholder')}
                       value={userData.street}
                       onChange={e => setUserData({ ...userData, street: e.target.value })}
-                      className={cn(userData.street.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.street.length === 0 && 'border-red-500')}
                     />
-                    {userData.street.length === 0 && <span className="text-xs text-red-500">Street is required</span>}
+                    {userData.street.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.streetRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-number">Number</Label>
+                    <Label htmlFor="user-number">{safeT('checkout.number')}</Label>
                     <Input
                       id="user-number"
+                      placeholder={safeT('checkout.numberPlaceholder')}
                       value={userData.number}
                       onChange={e => setUserData({ ...userData, number: e.target.value })}
-                      className={cn(userData.number.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.number.length === 0 && 'border-red-500')}
                     />
-                    {userData.number.length === 0 && <span className="text-xs text-red-500">Number is required</span>}
+                    {userData.number.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.numberRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-complement">Complement</Label>
+                    <Label htmlFor="user-complement">{safeT('checkout.complement')}</Label>
                     <Input
                       id="user-complement"
+                      placeholder={safeT('checkout.complementPlaceholder')}
                       value={userData.complement}
                       onChange={e => setUserData({ ...userData, complement: e.target.value })}
+                      className="text-foreground bg-background"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-zip">ZIP Code</Label>
+                    <Label htmlFor="user-zip">{safeT('checkout.zip')}</Label>
                     <Input
                       id="user-zip"
+                      placeholder={safeT('checkout.zipPlaceholder')}
                       value={userData.zip_code}
                       onChange={e => setUserData({ ...userData, zip_code: e.target.value.replace(/\D/g, '') })}
                       maxLength={8}
-                      className={cn(userData.zip_code.length > 0 && userData.zip_code.length < 8 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.zip_code.length > 0 && userData.zip_code.length < 8 && 'border-red-500')}
                     />
-                    {userData.zip_code.length > 0 && userData.zip_code.length < 8 && <span className="text-xs text-red-500">Invalid ZIP code</span>}
+                    {userData.zip_code.length > 0 && userData.zip_code.length < 8 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidZip')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-neighborhood">Neighborhood</Label>
+                    <Label htmlFor="user-neighborhood">{safeT('checkout.neighborhood')}</Label>
                     <Input
                       id="user-neighborhood"
+                      placeholder={safeT('checkout.neighborhoodPlaceholder')}
                       value={userData.neighborhood}
                       onChange={e => setUserData({ ...userData, neighborhood: e.target.value })}
-                      className={cn(userData.neighborhood.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.neighborhood.length === 0 && 'border-red-500')}
                     />
-                    {userData.neighborhood.length === 0 && <span className="text-xs text-red-500">Neighborhood is required</span>}
+                    {userData.neighborhood.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.neighborhoodRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-city">City</Label>
+                    <Label htmlFor="user-city">{safeT('checkout.city')}</Label>
                     <Input
                       id="user-city"
+                      placeholder={safeT('checkout.cityPlaceholder')}
                       value={userData.city}
                       onChange={e => setUserData({ ...userData, city: e.target.value })}
-                      className={cn(userData.city.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.city.length === 0 && 'border-red-500')}
                     />
-                    {userData.city.length === 0 && <span className="text-xs text-red-500">City is required</span>}
+                    {userData.city.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cityRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-state">State</Label>
+                    <Label htmlFor="user-state">{safeT('checkout.state')}</Label>
                     <Input
                       id="user-state"
+                      placeholder={safeT('checkout.statePlaceholder')}
                       value={userData.state}
                       onChange={e => setUserData({ ...userData, state: e.target.value })}
                       maxLength={2}
-                      className={cn(userData.state.length > 0 && userData.state.length < 2 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', userData.state.length > 0 && userData.state.length < 2 && 'border-red-500')}
                     />
-                    {userData.state.length > 0 && userData.state.length < 2 && <span className="text-xs text-red-500">Invalid state</span>}
+                    {userData.state.length > 0 && userData.state.length < 2 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidState')}</span>}
                   </div>
                 </motion.div>
               )}
@@ -550,42 +557,42 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
                     <Input
                       id="card-number"
-                      placeholder="1234 5678 9012 3456"
+                      placeholder={safeT('checkout.cardNumberPlaceholder')}
                       value={card.number}
                       onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
                       maxLength={16}
-                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
                     />
-                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
+                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="card-name">{safeT('checkout.cardName')}</Label>
                     <Input
                       id="card-name"
-                      placeholder="John Doe"
+                      placeholder={safeT('checkout.cardNamePlaceholder')}
                       value={card.name}
                       onChange={(e) => setCard({ ...card, name: e.target.value })}
-                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.name.length === 0 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', card.name.length === 0 && 'border-red-500')}
                     />
-                    {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
+                    {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cardNameRequired')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-cpf">CPF</Label>
+                    <Label htmlFor="card-cpf">{safeT('checkout.cpf')}</Label>
                     <Input
                       id="card-cpf"
-                      placeholder="00000000000"
+                      placeholder={safeT('checkout.cpfPlaceholder')}
                       value={card.cpf}
                       onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
                       maxLength={11}
-                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
                     />
-                    {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">Invalid CPF</span>}
+                    {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCpf')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-expiry">Expiry Date</Label>
+                    <Label htmlFor="card-expiry">{safeT('checkout.expiryDate')}</Label>
                     <Input
                       id="card-expiry"
-                      placeholder="MM/YY"
+                      placeholder={safeT('checkout.expiryDatePlaceholder')}
                       value={card.expiry}
                       onChange={(e) => {
                         const value = e.target.value.replace(/\D/g, '')
@@ -597,21 +604,21 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                         }
                       }}
                       maxLength={5}
-                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
                     />
-                    {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">Invalid expiry date</span>}
+                    {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidExpiry')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-cvv">CVV</Label>
+                    <Label htmlFor="card-cvv">{safeT('checkout.cvv')}</Label>
                     <Input
                       id="card-cvv"
-                      placeholder="123"
+                      placeholder={safeT('checkout.cvvPlaceholder')}
                       value={card.cvv}
                       onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
                       maxLength={4}
-                      className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
+                      className={cn('text-foreground bg-background', card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
                     />
-                    {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">Invalid CVV</span>}
+                    {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCvv')}</span>}
                   </div>
                 </motion.div>
               )}
