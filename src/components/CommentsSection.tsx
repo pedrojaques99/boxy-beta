@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/types/supabase'
 
 interface CommentsSectionProps {
   type: 'resource' | 'product'

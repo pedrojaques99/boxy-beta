@@ -8,6 +8,7 @@ import { LikeButton } from '@/components/LikeButton'
 import { CommentsSection } from '@/components/CommentsSection'
 import { Suspense } from 'react'
 import { ProductSocialClient } from '@/components/shop/ProductSocialClient'
+import { Database } from '@/types/supabase'
 
 async function getProduct(id: string) {
   const supabase = await createClient()

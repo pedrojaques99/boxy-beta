@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { Database } from '@/types/supabase'
 
 export async function createClient() {
   const cookieStore = cookies()
@@ -11,7 +12,7 @@ export async function createClient() {
     throw new Error('Missing Supabase environment variables')
   }
 
-  return createServerClient(
+  return createServerClient<Database>(
     supabaseUrl,
     supabaseAnonKey,
     {
@@ -36,6 +37,33 @@ export async function createClient() {
           }
         },
       },
+    }
+  )
+}
+
+// Helper function for API routes that need service role access
+export async function createServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
+
+  if (!supabaseUrl || !supabaseServiceRole) {
+    throw new Error('Missing Supabase service role environment variables')
+  }
+
+  return createServerClient<Database>(
+    supabaseUrl,
+    supabaseServiceRole,
+    {
+      cookies: {
+        get: () => undefined,
+        set: () => {},
+        remove: () => {},
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
     }
   )
 }

@@ -1,9 +1,10 @@
 import { Router } from 'next/router';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { createClient } from '@/lib/supabase/client';
+import { Database } from '@/types/supabase';
 
-// Use the same singleton pattern as in the supabase/client.ts
-let authServiceInstance: typeof AuthService | null = null;
+// Singleton instance
+let authServiceInstance: AuthService | null = null;
 
 type UserProfile = {
   id: string;
@@ -23,74 +24,72 @@ type OAuthProvider = 'github' | 'google';
  * A centralized service for all authentication-related operations
  * This consolidates the repeated auth logic scattered across various components
  */
-export const AuthService = {
+export class AuthService {
+  private supabase = createClient();
+
   /**
    * Get the current authenticated session
    * @returns The Supabase session data
    */
-  getSession: async () => {
-    const supabase = createClient();
-    return await supabase.auth.getSession();
-  },
+  getSession = async () => {
+    return await this.supabase.auth.getSession();
+  };
 
   /**
    * Get the current authenticated user
    * @returns The Supabase user data
    */
-  getUser: async () => {
-    const supabase = createClient();
-    return await supabase.auth.getUser();
-  },
+  getUser = async () => {
+    return await this.supabase.auth.getUser();
+  };
 
   /**
    * Check if user is authenticated
    * @returns Boolean indicating if user is authenticated
    */
-  isAuthenticated: async () => {
+  isAuthenticated = async () => {
     try {
-      const { data, error } = await AuthService.getSession();
+      const { data, error } = await this.getSession();
       return !error && !!data.session;
     } catch (error) {
       console.error('Error checking authentication:', error);
       return false;
     }
-  },
+  };
 
   /**
    * Sign out the current user
    * @returns The result of the sign out operation
    */
-  signOut: async () => {
+  signOut = async () => {
     try {
-      const supabase = createClient();
-      return await supabase.auth.signOut();
+      return await this.supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
     }
-  },
+  };
 
   /**
    * Redirect to login page with an optional redirect URL
    * @param router Next.js router
    * @param redirectTo Optional URL to redirect after login
    */
-  redirectToLogin: (router: AppRouterInstance | Router, redirectTo = '') => {
+  redirectToLogin = (router: AppRouterInstance | Router, redirectTo = '') => {
     const redirectParam = redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : '';
     router.push(`/auth/login${redirectParam}`);
-  },
+  };
 
   /**
    * Get user profile from the database
    * @param userId User ID to fetch profile for
    * @returns User profile data
    */
-  getUserProfile: async (userId: string) => {
+  getUserProfile = async (userId: string) => {
     if (!userId) return null;
     
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
+      const { data, error } = await this.supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -102,21 +101,19 @@ export const AuthService = {
       console.error('Error fetching user profile:', error);
       throw error;
     }
-  },
+  };
   
   /**
    * Create or update a user profile
    * @param profile Profile data to save
    * @returns The saved profile data
    */
-  saveUserProfile: async (profile: UserProfile) => {
+  saveUserProfile = async (profile: UserProfile) => {
     if (!profile.id) throw new Error('User ID is required');
     
     try {
-      const supabase = createClient();
-      
       // Check if profile exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile } = await this.supabase
         .from('profiles')
         .select('id')
         .eq('id', profile.id)
@@ -124,7 +121,7 @@ export const AuthService = {
         
       if (existingProfile) {
         // Update existing profile
-        const { data, error } = await supabase
+        const { data, error } = await this.supabase
           .from('profiles')
           .update(profile)
           .eq('id', profile.id)
@@ -135,7 +132,7 @@ export const AuthService = {
         return data;
       } else {
         // Insert new profile
-        const { data, error } = await supabase
+        const { data, error } = await this.supabase
           .from('profiles')
           .insert([profile])
           .select()
@@ -148,19 +145,18 @@ export const AuthService = {
       console.error('Error saving user profile:', error);
       throw error;
     }
-  },
+  };
   
   /**
    * Check if a user has an active subscription
    * @param userId User ID to check subscription for
    * @returns Subscription data if exists
    */
-  getUserSubscription: async (userId: string) => {
+  getUserSubscription = async (userId: string) => {
     if (!userId) return null;
     
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
+      const { data, error } = await this.supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', userId)
@@ -174,13 +170,13 @@ export const AuthService = {
       // Just return null for subscription errors
       return null;
     }
-  },
+  };
   
   /**
    * Check and repair auth cookies if needed
    * @returns Object with status of repair operation
    */
-  checkAndRepairAuthCookies: () => {
+  checkAndRepairAuthCookies = () => {
     if (typeof document === 'undefined') return { fixed: false, message: 'Not in browser environment' };
     
     try {
@@ -207,14 +203,14 @@ export const AuthService = {
       console.error('Error checking cookies:', err);
       return { fixed: false, message: 'Error checking cookies' };
     }
-  },
+  };
 
   /**
    * Check if the user has admin role
    * @param userId The user ID to check
    * @returns Object with admin status, profile data, and potential error
    */
-  checkAdminStatus: async (userId: string): Promise<AdminCheckResult> => {
+  checkAdminStatus = async (userId: string): Promise<AdminCheckResult> => {
     if (!userId) {
       return { isAdmin: false, profile: null, error: 'No user ID provided' };
     }
@@ -222,8 +218,7 @@ export const AuthService = {
     try {
       console.log('AuthService - Verificando status de admin para usuário:', userId);
       
-      const supabase = createClient();
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await this.supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -256,28 +251,28 @@ export const AuthService = {
         error: errorMessage 
       };
     }
-  },
+  };
 
   /**
    * Get admin status from session storage (for caching purposes)
    * @param userId Current user ID to validate against cached value
    * @returns True if user is admin according to session storage
    */
-  getCachedAdminStatus: (userId: string): boolean => {
+  getCachedAdminStatus = (userId: string): boolean => {
     if (typeof window === 'undefined') return false;
     
     const cachedAdminStatus = sessionStorage.getItem('admin_authenticated');
     const cachedUserId = sessionStorage.getItem('admin_user_id');
     
     return cachedAdminStatus === 'true' && cachedUserId === userId;
-  },
+  };
 
   /**
    * Save admin status to session storage
    * @param userId User ID to cache
    * @param isAdmin Whether user has admin status
    */
-  saveCachedAdminStatus: (userId: string, isAdmin: boolean): void => {
+  saveCachedAdminStatus = (userId: string, isAdmin: boolean): void => {
     if (typeof window === 'undefined') return;
     
     if (isAdmin) {
@@ -287,27 +282,27 @@ export const AuthService = {
       sessionStorage.removeItem('admin_authenticated');
       sessionStorage.removeItem('admin_user_id');
     }
-  },
+  };
 
   /**
    * Clear admin status from session storage
    */
-  clearCachedAdminStatus: (): void => {
+  clearCachedAdminStatus = (): void => {
     if (typeof window === 'undefined') return;
     
     sessionStorage.removeItem('admin_authenticated');
     sessionStorage.removeItem('admin_user_id');
-  },
+  };
 
   /**
    * Verify admin password
    * @param password Password to verify
    * @returns Whether password is correct
    */
-  verifyAdminPassword: (password: string): boolean => {
+  verifyAdminPassword = (password: string): boolean => {
     const SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'boxy123';
     return password === SECRET;
-  },
+  };
 
   /**
    * Sign in with password
@@ -315,10 +310,9 @@ export const AuthService = {
    * @param password User password
    * @returns The result of the sign in operation
    */
-  signInWithPassword: async (email: string, password: string) => {
+  signInWithPassword = async (email: string, password: string) => {
     try {
-      const supabase = createClient();
-      return await supabase.auth.signInWithPassword({
+      return await this.supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -326,7 +320,7 @@ export const AuthService = {
       console.error('Error signing in with password:', error);
       throw error;
     }
-  },
+  };
   
   /**
    * Sign in with OAuth provider
@@ -334,10 +328,9 @@ export const AuthService = {
    * @param redirectTo Optional URL to redirect after login
    * @returns The result of the sign in operation
    */
-  signInWithOAuth: async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
+  signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
-      const supabase = createClient();
-      return await supabase.auth.signInWithOAuth({
+      return await this.supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
@@ -351,7 +344,7 @@ export const AuthService = {
       console.error(`Error signing in with ${provider}:`, error);
       throw error;
     }
-  },
+  };
   
   /**
    * Sign up with email and password
@@ -360,10 +353,9 @@ export const AuthService = {
    * @param redirectTo Optional URL to redirect after sign up
    * @returns The result of the sign up operation
    */
-  signUp: async (email: string, password: string, redirectTo = `${window.location.origin}/auth/callback`) => {
+  signUp = async (email: string, password: string, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
-      const supabase = createClient();
-      return await supabase.auth.signUp({
+      return await this.supabase.auth.signUp({
         email,
         password,
         options: {
@@ -374,7 +366,7 @@ export const AuthService = {
       console.error('Error signing up:', error);
       throw error;
     }
-  },
+  };
   
   /**
    * Reset password for email
@@ -382,38 +374,36 @@ export const AuthService = {
    * @param redirectTo URL to redirect after password reset
    * @returns The result of the reset password operation
    */
-  resetPasswordForEmail: async (email: string, redirectTo = `${window.location.origin}/auth/update-password`) => {
+  resetPasswordForEmail = async (email: string, redirectTo = `${window.location.origin}/auth/update-password`) => {
     try {
-      const supabase = createClient();
-      return await supabase.auth.resetPasswordForEmail(email, {
+      return await this.supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
     } catch (error) {
       console.error('Error resetting password:', error);
       throw error;
     }
-  },
+  };
   
   /**
    * Update user data
    * @param userData User data to update
    * @returns The result of the update operation
    */
-  updateUser: async (userData: { password?: string; email?: string; data?: object }) => {
+  updateUser = async (userData: { password?: string; email?: string; data?: object }) => {
     try {
-      const supabase = createClient();
-      return await supabase.auth.updateUser(userData);
+      return await this.supabase.auth.updateUser(userData);
     } catch (error) {
       console.error('Error updating user:', error);
       throw error;
     }
-  },
-};
+  };
+}
 
 // Export a function to get the AuthService singleton
 export function getAuthService() {
   if (!authServiceInstance) {
-    authServiceInstance = AuthService;
+    authServiceInstance = new AuthService();
   }
   return authServiceInstance;
 }

@@ -1,7 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { Database } from '@/types/supabase'
 
 // Store a single instance of the Supabase client
-let supabaseClient: ReturnType<typeof createBrowserClient> | null = null
+let supabaseClient: ReturnType<typeof createBrowserClient<Database>> | null = null
 
 export function createClient() {
   // Check if we're in a browser environment
@@ -29,8 +30,28 @@ export function createClient() {
   }
   
   try {
-    // Create a new client
-    supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    // Create a new client with proper cookie handling
+    supabaseClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get(name) {
+          const cookie = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith(`${name}=`))
+          return cookie ? cookie.split('=')[1] : undefined
+        },
+        set(name, value, options) {
+          document.cookie = `${name}=${value}; path=/; ${options?.maxAge ? `max-age=${options.maxAge}` : ''}`
+        },
+        remove(name) {
+          document.cookie = `${name}=; path=/; max-age=0`
+        },
+      },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
     return supabaseClient
   } catch (error) {
     console.error('Error creating Supabase client:', error)
@@ -47,7 +68,27 @@ export function createClient() {
     }
     
     // Create a new client after clearing cookies
-    supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey)
+    supabaseClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get(name) {
+          const cookie = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith(`${name}=`))
+          return cookie ? cookie.split('=')[1] : undefined
+        },
+        set(name, value, options) {
+          document.cookie = `${name}=${value}; path=/; ${options?.maxAge ? `max-age=${options.maxAge}` : ''}`
+        },
+        remove(name) {
+          document.cookie = `${name}=; path=/; max-age=0`
+        },
+      },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    })
     return supabaseClient
   }
 }

@@ -25,6 +25,7 @@ import { getAuthService } from '@/lib/auth/auth-service'
 import { createClient } from '@/lib/supabase/client'
 import { useLocale } from '@/hooks/use-locale'
 import type { Dictionary } from '@/i18n/types'
+import { Database } from '@/types/supabase'
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
 type Step = typeof STEPS[number]

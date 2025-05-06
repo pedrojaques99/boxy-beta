@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
-import { createClient } from '@supabase/supabase-js'
+import { createServiceClient } from '@/lib/supabase/server'
 import { handleError } from '@/lib/error-handler'
 
-const supabaseUrl = process.env.SUPABASE_URL
+// Get environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
 const pagarmeApiKey = process.env.PAGARME_API_KEY
 
-const supabase = supabaseUrl && supabaseServiceRole 
-  ? createClient(supabaseUrl, supabaseServiceRole)
-  : null
-
-export async function PUT(
-  req: NextRequest,
+export async function POST(
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
-    console.error('Missing environment variables')
-    return NextResponse.json({ error: 'Service configuration error' }, { status: 500 })
-  }
-
   try {
+    const supabase = await createServiceClient()
+
+    // Check if all required environment variables are present
+    if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
+      return NextResponse.json(
+        { error: 'Missing required environment variables' },
+        { status: 500 }
+      )
+    }
+
     // Cancel subscription in Pagar.me
     const response = await axios.put(
       `https://api.sandbox.pagar.me/core/v5/subscriptions/${params.id}/cancel`,

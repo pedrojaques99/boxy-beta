@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useSubscription } from '@/hooks/use-subscription'
 import { Dictionary } from '@/i18n/types'
 import { cn } from '@/lib/utils'
+import { Database } from '@/types/supabase'
 
 interface ProductClientProps {
   product: Product
