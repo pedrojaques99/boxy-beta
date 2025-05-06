@@ -12,12 +12,12 @@ interface Resource {
   title: string
   url: string
   tags: string[]
-  description: string
-  description_en: string
   category: string
   subcategory: string
   software: string
   created_at: string
+  description: string
+  description_en: string
 }
 
 interface FilterOptions {
@@ -85,7 +85,7 @@ function ResourcesPageContent() {
           software: software
         })
 
-        // Get resources
+        // Get resources with proper type casting
         const { data: resourcesData, error: resourcesError } = await supabase
           .from('resources')
           .select('*')
@@ -96,7 +96,21 @@ function ResourcesPageContent() {
           return
         }
 
-        setResources(resourcesData || [])
+        // Ensure the data matches our Resource interface
+        const typedResources = (resourcesData || []).map((resource: Record<string, any>) => ({
+          id: String(resource.id),
+          title: String(resource.title),
+          url: String(resource.url),
+          tags: Array.isArray(resource.tags) ? resource.tags : [],
+          category: String(resource.category || ''),
+          subcategory: String(resource.subcategory || ''),
+          software: String(resource.software || ''),
+          created_at: String(resource.created_at),
+          description: String(resource.description || ''),
+          description_en: String(resource.description_en || '')
+        }))
+
+        setResources(typedResources)
       } catch (error) {
         console.error('Error in fetchData:', error)
       } finally {
