@@ -96,20 +96,32 @@ function ResourcesPageContent() {
           return
         }
 
-        // Ensure the data matches our Resource interface
-        const typedResources = (resourcesData || []).map((resource: Record<string, any>) => ({
-          id: String(resource.id),
-          title: String(resource.title),
-          url: String(resource.url),
-          tags: Array.isArray(resource.tags) ? resource.tags : [],
-          category: String(resource.category || ''),
-          subcategory: String(resource.subcategory || ''),
-          software: String(resource.software || ''),
-          created_at: String(resource.created_at),
-          description: String(resource.description || ''),
-          description_en: String(resource.description_en || '')
-        }))
+        console.log('Raw resources data:', resourcesData)
 
+        // Ensure the data matches our Resource interface
+        const typedResources = (resourcesData || []).map((resource: Record<string, any>) => {
+          try {
+            const typed = {
+              id: String(resource.id),
+              title: String(resource.title),
+              url: String(resource.url),
+              tags: Array.isArray(resource.tags) ? resource.tags : [],
+              category: String(resource.category || ''),
+              subcategory: String(resource.subcategory || ''),
+              software: String(resource.software || ''),
+              created_at: String(resource.created_at),
+              description: String(resource.description || ''),
+              description_en: String(resource.description_en || '')
+            }
+            console.log('Processed resource:', typed)
+            return typed
+          } catch (error) {
+            console.error('Error processing resource:', resource, error)
+            throw error
+          }
+        })
+
+        console.log('Final typed resources:', typedResources)
         setResources(typedResources)
       } catch (error) {
         console.error('Error in fetchData:', error)
