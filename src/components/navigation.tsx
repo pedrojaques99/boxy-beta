@@ -157,6 +157,17 @@ export function Navigation() {
               {t.navigation?.labs}
             </Link>
             <Link
+              href="/mindy"
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
+                "text-foreground/60 hover:text-foreground/80",
+                "dark:text-foreground/60 dark:hover:text-foreground/80",
+                pathname === "/mindy" && "text-foreground dark:text-foreground font-medium"
+              )}
+            >
+              {t.navigation?.mindy}
+            </Link>
+            <Link
               href="/price"
               className={cn(
                 "flex items-center gap-2 px-3 py-2 text-sm transition-colors",

@@ -6,6 +6,24 @@ import type { Dictionary } from '@/i18n/types'
 import { getDictionary } from '@/i18n'
 import { i18n } from '@/i18n/settings'
 
+export type Translations = {
+  navigation: {
+    about: string
+    shop: string
+    labs: string
+    mindy: string
+    pricing: string
+    switchToEnglish: string
+    switchToPortuguese: string
+    toggleTheme: string
+    myAccount: string
+    signOut: string
+    signIn: string
+    getStarted: string
+  }
+  // ... existing code ...
+}
+
 export function useTranslations() {
   const [dictionary, setDictionary] = useState<Dictionary | null>(null)
   const [locale, setLocale] = useState<Locale>(() => {
