@@ -24,6 +24,7 @@ import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { createClient } from '@/lib/supabase/client'
 import { useLocale } from '@/hooks/use-locale'
+import type { Dictionary } from '@/i18n/types'
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
 type Step = typeof STEPS[number]
@@ -66,6 +67,21 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const authService = getAuthService()
   const supabaseClient = createClient()
+
+  // Add safe translation function with proper typing
+  const safeT = (key: string): string => {
+    if (!t) return key
+    const keys = key.split('.')
+    let value: any = t
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k]
+      } else {
+        return key
+      }
+    }
+    return typeof value === 'string' ? value : key
+  }
 
   // Log to help debug initialization
   console.log('CheckoutWizard inicializado', { 
@@ -342,11 +358,11 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   const stepTitles: Record<Step, string> = {
-    plan: t('checkout.selectPlan'),
-    user: t('profile.subscription.title'),
-    payment: t('checkout.paymentDetails'),
-    confirm: t('checkout.confirm'),
-    result: result.success ? t('auth.signUpSuccess.title') : t('auth.error.title')
+    plan: safeT('checkout.selectPlan'),
+    user: safeT('profile.subscription.title'),
+    payment: safeT('checkout.paymentDetails'),
+    confirm: safeT('checkout.confirm'),
+    result: result.success ? safeT('auth.signUpSuccess.title') : safeT('auth.error.title')
   }
 
   const stepIcons: Record<Step, JSX.Element> = {
@@ -393,7 +409,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
               </CardTitle>
               {step > 0 && step < 4 && (
                 <div className="text-sm text-muted-foreground mt-2">
-                  {t('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
+                  {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
                 </div>
               )}
             </CardHeader>
@@ -430,18 +446,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="user-name">{t('profile.subscription.title')}</Label>
+                    <Label htmlFor="user-name">{safeT('profile.subscription.title')}</Label>
                     <Input
                       id="user-name"
-                      placeholder={t('profile.subscription.title')}
+                      placeholder={safeT('profile.subscription.title')}
                       value={userData.name}
                       onChange={e => setUserData({ ...userData, name: e.target.value })}
                       className={cn(userData.name.length === 0 && 'border-red-500')}
                     />
-                    {userData.name.length === 0 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
+                    {userData.name.length === 0 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-email">{t('auth.signInToContinue')}</Label>
+                    <Label htmlFor="user-email">{safeT('auth.signInToContinue')}</Label>
                     <Input
                       id="user-email"
                       placeholder="your@email.com"
@@ -449,7 +465,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       onChange={e => setUserData({ ...userData, email: e.target.value })}
                       className={cn(userData.email.length === 0 && 'border-red-500')}
                     />
-                    {userData.email.length === 0 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
+                    {userData.email.length === 0 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="user-street">Street</Label>
@@ -531,7 +547,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="card-number">{t('checkout.cardNumber')}</Label>
+                    <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
                     <Input
                       id="card-number"
                       placeholder="1234 5678 9012 3456"
@@ -540,10 +556,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       maxLength={16}
                       className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
                     />
-                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
+                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-name">{t('checkout.cardName')}</Label>
+                    <Label htmlFor="card-name">{safeT('checkout.cardName')}</Label>
                     <Input
                       id="card-name"
                       placeholder="John Doe"
@@ -551,7 +567,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       onChange={(e) => setCard({ ...card, name: e.target.value })}
                       className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.name.length === 0 && 'border-red-500')}
                     />
-                    {card.name.length === 0 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
+                    {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="card-cpf">CPF</Label>
@@ -608,27 +624,27 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 >
                   <div className="text-center">
                     <Check className="mx-auto mb-4 h-10 w-10 text-green-500" />
-                    <div className="text-xl font-semibold mb-4">{t('checkout.confirm')}</div>
+                    <div className="text-xl font-semibold mb-4">{safeT('checkout.confirm')}</div>
                     <div className="text-sm text-muted-foreground mb-4">
-                      {t('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
+                      {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-4">
                     <div className="flex items-center gap-3">
                       <User className="h-5 w-5" />
-                      <div><b>{t('profile.subscription.title')}:</b> {userData.name}</div>
+                      <div><b>{safeT('profile.subscription.title')}:</b> {userData.name}</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <MapPin className="h-5 w-5" />
-                      <div><b>{t('checkout.paymentDetails')}:</b> {userData.street}, {userData.number} {userData.complement && `- ${userData.complement}`}</div>
+                      <div><b>{safeT('checkout.paymentDetails')}:</b> {userData.street}, {userData.number} {userData.complement && `- ${userData.complement}`}</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <MapPin className="h-5 w-5" />
-                      <div><b>{t('checkout.paymentDetails')}:</b> {userData.neighborhood}, {userData.city} - {userData.state}</div>
+                      <div><b>{safeT('checkout.paymentDetails')}:</b> {userData.neighborhood}, {userData.city} - {userData.state}</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <CreditCard className="h-5 w-5" />
-                      <div><b>{t('checkout.cardNumber')}:</b> **** **** **** {card.number.slice(-4)}</div>
+                      <div><b>{safeT('checkout.cardNumber')}:</b> **** **** **** {card.number.slice(-4)}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -643,14 +659,14 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   {result.success ? (
                     <>
                       <Check className="mx-auto mb-4 h-10 w-10 text-green-500" />
-                      <div className="text-xl font-semibold mb-4">{t('auth.signUpSuccess.title')}</div>
-                      <div className="text-muted-foreground">{t('auth.signUpSuccess.description')}</div>
+                      <div className="text-xl font-semibold mb-4">{safeT('auth.signUpSuccess.title')}</div>
+                      <div className="text-muted-foreground">{safeT('auth.signUpSuccess.description')}</div>
                     </>
                   ) : (
                     <>
                       <AlertCircle className="mx-auto mb-4 h-10 w-10 text-red-500" />
-                      <div className="text-xl font-semibold mb-4">{t('auth.error.title')}</div>
-                      <div className="text-muted-foreground mt-2 break-words max-w-xs mx-auto">{result.message || t('auth.error.description')}</div>
+                      <div className="text-xl font-semibold mb-4">{safeT('auth.error.title')}</div>
+                      <div className="text-muted-foreground mt-2 break-words max-w-xs mx-auto">{result.message || safeT('auth.error.description')}</div>
                     </>
                   )}
                 </motion.div>
@@ -664,7 +680,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                {t('checkout.back')}
+                {safeT('checkout.back')}
               </Button>
               {step < 3 && (
                 <Button
@@ -676,7 +692,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (
                     <>
-                      {t('checkout.next')}
+                      {safeT('checkout.next')}
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
@@ -692,7 +708,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (
                     <>
-                      {t('checkout.confirm')}
+                      {safeT('checkout.confirm')}
                       <Check className="h-4 w-4" />
                     </>
                   )}
