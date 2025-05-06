@@ -19,7 +19,7 @@ interface Resource {
   subcategory: string
   software: string
   created_at: string
-  description_pt: string
+  description: string
   description_en: string
 }
 

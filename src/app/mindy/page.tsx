@@ -9,8 +9,11 @@ import { Dictionary } from '@/i18n/types'
 
 interface Resource {
   id: string
-  name: string
+  title: string
+  url: string
+  tags: string[]
   description: string
+  description_en: string
   category: string
   subcategory: string
   software: string
@@ -67,7 +70,7 @@ function ResourcesPageContent() {
           }
 
           if (!data) return []
-          return [...new Set(data.map((item: any) => String(item[column])).filter(Boolean))]
+          return [...new Set(data.map((item: Record<string, any>) => String(item[column])).filter(Boolean))] as string[]
         }
 
         const [categories, subcategories, software] = await Promise.all([
