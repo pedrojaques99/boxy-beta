@@ -6,8 +6,8 @@ import { i18n } from '@/i18n/settings'
 import { ProductClient } from '@/components/shop/product-client'
 import { LikeButton } from '@/components/LikeButton'
 import { CommentsSection } from '@/components/CommentsSection'
-import { useUserId } from '@/lib/auth/useUserId'
 import { Suspense } from 'react'
+import { ProductSocialClient } from '@/components/shop/ProductSocialClient'
 
 async function getProduct(id: string) {
   const supabase = await createClient()
@@ -22,18 +22,6 @@ async function getProduct(id: string) {
   }
 
   return product
-}
-
-function ProductSocialClient({ productId }: { productId: string }) {
-  const userId = useUserId()
-  return (
-    <>
-      <div className="my-6 flex gap-4 items-center">
-        <LikeButton type="product" id={productId} userId={userId} />
-      </div>
-      <CommentsSection type="product" id={productId} userId={userId} />
-    </>
-  )
 }
 
 export default async function ProductPage({

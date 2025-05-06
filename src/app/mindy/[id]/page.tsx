@@ -6,6 +6,7 @@ import { LikeButton } from '@/components/LikeButton'
 import { CommentsSection } from '@/components/CommentsSection'
 import { useUserId } from '@/lib/auth/useUserId'
 import { Suspense } from 'react'
+import { ResourceSocialClient } from '@/components/mindy/ResourceSocialClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,18 +35,6 @@ interface Comment {
     name: string
     avatar_url: string | null
   }
-}
-
-function ResourceSocialClient({ resourceId }: { resourceId: string }) {
-  const userId = useUserId()
-  return (
-    <>
-      <div className="my-6 flex gap-4 items-center">
-        <LikeButton type="resource" id={resourceId} userId={userId} />
-      </div>
-      <CommentsSection type="resource" id={resourceId} userId={userId} />
-    </>
-  )
 }
 
 export default async function ResourcePage({ params }: { params: { id: string } }) {
