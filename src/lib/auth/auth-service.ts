@@ -20,19 +20,30 @@ type AdminCheckResult = {
 
 type OAuthProvider = 'github' | 'google';
 
+type AuthError = {
+  message: string;
+  code?: string;
+};
+
 /**
  * A centralized service for all authentication-related operations
  * This consolidates the repeated auth logic scattered across various components
  */
 export class AuthService {
   private supabase = createClient();
+  private adminCache: Map<string, boolean> = new Map();
 
   /**
    * Get the current authenticated session
    * @returns The Supabase session data
    */
   getSession = async () => {
-    return await this.supabase.auth.getSession();
+    try {
+      return await this.supabase.auth.getSession();
+    } catch (error) {
+      console.error('Error getting session:', error);
+      throw this.handleError(error, 'Failed to get session');
+    }
   };
 
   /**
@@ -40,7 +51,12 @@ export class AuthService {
    * @returns The Supabase user data
    */
   getUser = async () => {
-    return await this.supabase.auth.getUser();
+    try {
+      return await this.supabase.auth.getUser();
+    } catch (error) {
+      console.error('Error getting user:', error);
+      throw this.handleError(error, 'Failed to get user');
+    }
   };
 
   /**
@@ -50,7 +66,8 @@ export class AuthService {
   isAuthenticated = async () => {
     try {
       const { data, error } = await this.getSession();
-      return !error && !!data.session;
+      if (error) throw error;
+      return !!data.session;
     } catch (error) {
       console.error('Error checking authentication:', error);
       return false;
@@ -63,10 +80,11 @@ export class AuthService {
    */
   signOut = async () => {
     try {
+      this.clearCachedAdminStatus();
       return await this.supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
-      throw error;
+      throw this.handleError(error, 'Failed to sign out');
     }
   };
 
@@ -86,7 +104,7 @@ export class AuthService {
    * @returns User profile data
    */
   getUserProfile = async (userId: string) => {
-    if (!userId) return null;
+    if (!userId) throw new Error('User ID is required');
     
     try {
       const { data, error } = await this.supabase
@@ -99,7 +117,7 @@ export class AuthService {
       return data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      throw error;
+      throw this.handleError(error, 'Failed to fetch user profile');
     }
   };
   
@@ -465,10 +483,31 @@ export class AuthService {
 
     return publicUrl;
   };
+
+  /**
+   * Handle errors consistently across the service
+   * @param error The error to handle
+   * @param defaultMessage Default error message if none provided
+   * @returns Formatted error object
+   */
+  private handleError(error: unknown, defaultMessage: string): AuthError {
+    if (error instanceof Error) {
+      return {
+        message: error.message || defaultMessage,
+        code: (error as any).code
+      };
+    }
+    return {
+      message: defaultMessage
+    };
+  }
 }
 
-// Export a function to get the AuthService singleton
-export function getAuthService() {
+/**
+ * Get the singleton instance of AuthService
+ * @returns The AuthService instance
+ */
+export function getAuthService(): AuthService {
   if (!authServiceInstance) {
     authServiceInstance = new AuthService();
   }
