@@ -101,20 +101,23 @@ function ResourcesPageContent() {
         // Ensure the data matches our Resource interface
         const typedResources = (resourcesData || []).map((resource: Record<string, any>) => {
           try {
-            const typed = {
+            const tags = Array.isArray(resource.tags)
+              ? resource.tags.filter(Boolean)
+              : typeof resource.tags === 'string'
+                ? resource.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
+                : [];
+            return {
               id: String(resource.id),
-              title: String(resource.title),
-              url: String(resource.url),
-              tags: Array.isArray(resource.tags) ? resource.tags : [],
+              title: String(resource.title || ''),
+              url: String(resource.url || ''),
+              tags,
               category: String(resource.category || ''),
               subcategory: String(resource.subcategory || ''),
               software: String(resource.software || ''),
-              created_at: String(resource.created_at),
+              created_at: String(resource.created_at || ''),
               description: String(resource.description || ''),
-              description_en: String(resource.description_en || '')
+              description_en: String(resource.description_en || ''),
             }
-            console.log('Processed resource:', typed)
-            return typed
           } catch (error) {
             console.error('Error processing resource:', resource, error)
             throw error

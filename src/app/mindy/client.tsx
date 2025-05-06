@@ -74,86 +74,91 @@ export function ResourcesClient({ resources, filterOptions }: ResourcesClientPro
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {resources.map((resource) => (
-          <Link key={resource.id} href={`/mindy/${resource.id}`}>
-            <Card className="flex flex-col hover:shadow-lg transition-shadow">
-              <CardHeader className="relative h-48">
-                <Image
-                  src={`https://image.thum.io/get/${resource.url}`}
-                  alt={resource.title}
-                  fill
-                  className="object-cover rounded-t-lg"
-                />
-                {resource.category && (
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 1 }}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleFilterClick('category', resource.category)
-                    }}
-                    className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm transition-all ${
-                      isTagActive('category', resource.category)
-                        ? 'bg-primary/20 text-primary-foreground shadow-md text-xs'
-                        : 'bg-background/20 border border-primary/20 text-primary hover:bg-primary/10 text-xs'
-                    }`}
-                  >
-                    {resource.category}
-                  </motion.button>
-                )}
-              </CardHeader>
-              <CardContent className="flex-grow p-6">
-                <h2 className="text-xl font-semibold mb-2">{resource.title}</h2>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {resource.tags?.map((tag: string) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="text-sm text-gray-600">
-                  {resource.subcategory && (
+        {resources.map((resource) => {
+          console.log('Rendering resource:', resource);
+          return (
+            <Link key={resource.id} href={`/mindy/${resource.id}`}>
+              <Card className="flex flex-col hover:shadow-lg transition-shadow">
+                <CardHeader className="relative h-48">
+                  <Image
+                    src={`https://image.thum.io/get/${resource.url}`}
+                    alt={resource.title}
+                    fill
+                    className="object-cover rounded-t-lg"
+                  />
+                  {resource.category && (
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 1 }}
                       onClick={(e) => {
                         e.preventDefault()
-                        handleFilterClick('subcategory', resource.subcategory)
+                        handleFilterClick('category', resource.category)
                       }}
-                      className={`rounded-full px-2 py-1 text-xs transition-all border border-stone-800 hover:border-stone-600 ${
-                        isTagActive('subcategory', resource.subcategory)
-                          ? 'bg-secondary text-secondary-foreground shadow-md text-xs'
-                          : 'bg-secondary/10 dark:bg-secondary/20 text-secondary-foreground hover:bg-secondary/20 dark:hover:bg-secondary/30 text-xs'
+                      className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm transition-all ${
+                        isTagActive('category', resource.category)
+                          ? 'bg-primary/20 text-primary-foreground shadow-md text-xs'
+                          : 'bg-background/20 border border-primary/20 text-primary hover:bg-primary/10 text-xs'
                       }`}
                     >
-                      {resource.subcategory}
+                      {resource.category}
                     </motion.button>
                   )}
-                  {resource.software && (
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 1 }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleFilterClick('software', resource.software)
-                      }}
-                      className={`rounded-full px-2 py-1 text-xs transition-all border border-stone-800 hover:border-stone-600 ${
-                        isTagActive('software', resource.software)
-                          ? 'bg-secondary text-secondary-foreground shadow-md text-xs'
-                          : 'bg-background border border-secondary text-secondary-foreground hover:bg-secondary/10 text-xs'
-                      }`}
-                    >
-                      {resource.software}
-                    </motion.button>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="p-6 pt-0">
-                <Button className="w-full">{t('details.seeDetails')}</Button>
-              </CardFooter>
-            </Card>
-          </Link>
-        ))}
+                </CardHeader>
+                <CardContent className="flex-grow p-6">
+                  <h2 className="text-xl font-semibold mb-2">{resource.title}</h2>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {Array.isArray(resource.tags) && resource.tags.length > 0 ? (
+                      resource.tags.map((tag: string) => (
+                        <Badge key={tag} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))
+                    ) : null}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {resource.subcategory && (
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 1 }}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleFilterClick('subcategory', resource.subcategory)
+                        }}
+                        className={`rounded-full px-2 py-1 text-xs transition-all border border-stone-800 hover:border-stone-600 ${
+                          isTagActive('subcategory', resource.subcategory)
+                            ? 'bg-secondary text-secondary-foreground shadow-md text-xs'
+                            : 'bg-secondary/10 dark:bg-secondary/20 text-secondary-foreground hover:bg-secondary/20 dark:hover:bg-secondary/30 text-xs'
+                        }`}
+                      >
+                        {resource.subcategory}
+                      </motion.button>
+                    )}
+                    {resource.software && (
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 1 }}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          handleFilterClick('software', resource.software)
+                        }}
+                        className={`rounded-full px-2 py-1 text-xs transition-all border border-stone-800 hover:border-stone-600 ${
+                          isTagActive('software', resource.software)
+                            ? 'bg-secondary text-secondary-foreground shadow-md text-xs'
+                            : 'bg-background border border-secondary text-secondary-foreground hover:bg-secondary/10 text-xs'
+                        }`}
+                      >
+                        {resource.software}
+                      </motion.button>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-6 pt-0">
+                  <Button className="w-full">{t('details.seeDetails')}</Button>
+                </CardFooter>
+              </Card>
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
