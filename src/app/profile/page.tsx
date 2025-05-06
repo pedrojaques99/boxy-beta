@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@supabase/auth-helpers-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { useTranslations } from '@/hooks/use-translations';
 
 interface UserProfile {
   id: string;
@@ -28,6 +29,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const user = useUser();
+  const { t } = useTranslations();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +39,21 @@ export default function ProfilePage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
+
+  // Add safeT function for translation
+  const safeT = (key: string): string => {
+    if (!t) return key;
+    const keys = key.split('.');
+    let value: any = t;
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+    return typeof value === 'string' ? value : key;
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -184,7 +201,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Card className="bg-card border-0 shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold">Profile Information</CardTitle>
+              <CardTitle className="text-xl font-semibold">{safeT('profile.profileInfo')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col space-y-6">
@@ -202,7 +219,7 @@ export default function ProfilePage() {
           </Card>
           <Card className="bg-card border-0 shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold">Account Settings</CardTitle>
+              <CardTitle className="text-xl font-semibold">{safeT('profile.accountSettings')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -224,7 +241,7 @@ export default function ProfilePage() {
           <CardContent className="flex flex-col items-center justify-center py-10">
             <p className="text-destructive text-center mb-4">{error}</p>
             <Button onClick={() => window.location.reload()}>
-              Try Again
+              {safeT('profile.tryAgain')}
             </Button>
           </CardContent>
         </Card>
@@ -242,7 +259,7 @@ export default function ProfilePage() {
         {/* Profile Section */}
         <Card className="bg-card border-0 shadow-sm">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl font-semibold">Profile Information</CardTitle>
+            <CardTitle className="text-xl font-semibold">{safeT('profile.profileInfo')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col space-y-6">
@@ -257,7 +274,7 @@ export default function ProfilePage() {
                     <AvatarFallback className="text-lg">{profile.name?.[0] || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                    <span className="text-white text-sm font-medium">Click to change</span>
+                    <span className="text-white text-sm font-medium flex items-center justify-center">{safeT('profile.clickToChange')}</span>
                   </div>
                   <Input
                     ref={fileInputRef}
@@ -307,16 +324,16 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <Edit2 className="h-4 w-4" />
-                  Bio
+                  {safeT('profile.bio')}
                 </h3>
-                <p className="text-muted-foreground">{profile.bio || 'No bio added yet.'}</p>
+                <p className="text-muted-foreground">{profile.bio || safeT('profile.noBio')}</p>
               </div>
 
               {/* Member Since Section */}
               <div className="space-y-2">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Member Since
+                  {safeT('profile.memberSince')}
                 </h3>
                 <p className="text-muted-foreground">
                   {new Date(profile.created_at).toLocaleDateString('en-US', {
@@ -337,11 +354,11 @@ export default function ProfilePage() {
                   ) : (
                     <Lock className="h-4 w-4" />
                   )}
-                  Subscription
+                  {safeT('profile.subscription')}
                 </h3>
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground">
-                    Current Plan: <span className="font-medium text-foreground capitalize">{profile.subscription_type}</span>
+                    {safeT('profile.currentPlan')}: <span className="font-medium text-foreground capitalize">{profile.subscription_type}</span>
                   </p>
                   {profile.subscription_type === 'free' && (
                     <Button 
@@ -351,7 +368,7 @@ export default function ProfilePage() {
                       className="w-fit"
                     >
                       <Crown className="h-4 w-4 mr-2" />
-                      Upgrade to Premium
+                      {safeT('profile.upgradeToPremium')}
                     </Button>
                   )}
                 </div>
@@ -363,7 +380,7 @@ export default function ProfilePage() {
                 variant="outline"
               >
                 <Edit2 className="h-4 w-4 mr-2" />
-                Edit Profile
+                {safeT('profile.editProfile')}
               </Button>
             </div>
           </CardContent>
@@ -374,7 +391,7 @@ export default function ProfilePage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Account Settings
+              {safeT('profile.accountSettings')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -385,15 +402,7 @@ export default function ProfilePage() {
                 variant="outline"
               >
                 <Crown className="h-4 w-4 mr-2" />
-                Payment Settings
-              </Button>
-              <Button 
-                onClick={() => router.push('/profile/security')}
-                className="w-full justify-start h-12 px-4"
-                variant="outline"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Security Settings
+                {safeT('profile.paymentSettings')}
               </Button>
               <Button 
                 onClick={() => router.push('/profile/notifications')}
@@ -401,7 +410,7 @@ export default function ProfilePage() {
                 variant="outline"
               >
                 <Settings className="h-4 w-4 mr-2" />
-                Notification Preferences
+                {safeT('profile.notificationPreferences')}
               </Button>
               <Button 
                 onClick={() => router.push('/price')}
@@ -409,7 +418,7 @@ export default function ProfilePage() {
                 variant="outline"
               >
                 <Crown className="h-4 w-4 mr-2" />
-                Manage Subscription
+                {safeT('profile.manageSubscription')}
               </Button>
             </div>
           </CardContent>

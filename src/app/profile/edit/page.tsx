@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { handleError } from '@/lib/error-handler';
 import { Loader2, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from '@/hooks/use-translations';
+import { createClient } from '@/lib/supabase/client';
 
 interface UserProfile {
   id: string;
@@ -35,6 +37,22 @@ export default function EditProfilePage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const authService = getAuthService();
   const router = useRouter();
+  const { t } = useTranslations();
+  const supabase = createClient();
+
+  const safeT = (key: string): string => {
+    if (!t) return key;
+    const keys = key.split('.');
+    let value: any = t;
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+    return typeof value === 'string' ? value : key;
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -87,7 +105,7 @@ export default function EditProfilePage() {
 
       if (error) throw error;
       
-      toast.success('Profile updated successfully');
+      toast.success(safeT('profileEdit.updateSuccess'));
       router.push('/profile');
     } catch (error) {
       const { error: errorMessage } = handleError(error, 'Error updating profile');
@@ -153,7 +171,7 @@ export default function EditProfilePage() {
       if (updateError) throw updateError;
 
       setProfile({ ...profile, avatar_url: publicUrl });
-      toast.success('Avatar updated successfully');
+      toast.success(safeT('profileEdit.avatarUpdateSuccess'));
     } catch (error) {
       const { error: errorMessage } = handleError(error, 'Error updating avatar');
       toast.error(errorMessage);
@@ -177,7 +195,7 @@ export default function EditProfilePage() {
           <CardContent className="flex flex-col items-center justify-center py-10">
             <p className="text-destructive text-center mb-4">{error}</p>
             <Button onClick={() => window.location.reload()}>
-              Try Again
+              {safeT('profileEdit.tryAgain')}
             </Button>
           </CardContent>
         </Card>
@@ -193,7 +211,7 @@ export default function EditProfilePage() {
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>Edit Profile</CardTitle>
+          <CardTitle>{safeT('profileEdit.editProfile')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -231,7 +249,7 @@ export default function EditProfilePage() {
             </div>
 
             <div>
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{safeT('profileEdit.name')}</Label>
               <Input
                 id="name"
                 value={profile.name}
@@ -242,24 +260,24 @@ export default function EditProfilePage() {
             </div>
 
             <div>
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{safeT('profileEdit.role')}</Label>
               <Input
                 id="role"
                 value={profile.role}
                 onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                placeholder="e.g. Developer, Designer, etc."
+                placeholder={safeT('profileEdit.rolePlaceholder')}
                 className="dark:bg-stone-900 dark:text-stone-100 dark:border-stone-700 dark:placeholder:text-stone-500"
               />
             </div>
 
             <div>
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="bio">{safeT('profileEdit.bio')}</Label>
               <Textarea
                 id="bio"
                 value={profile.bio}
                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 rows={4}
-                placeholder="Tell us about yourself..."
+                placeholder={safeT('profileEdit.bioPlaceholder')}
                 className="dark:bg-stone-900 dark:text-stone-100 dark:border-stone-700 dark:placeholder:text-stone-500"
               />
             </div>
@@ -269,10 +287,10 @@ export default function EditProfilePage() {
                 {saving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Saving...
+                    {safeT('profileEdit.saving')}
                   </>
                 ) : (
-                  'Save Changes'
+                  safeT('profileEdit.saveChanges')
                 )}
               </Button>
               <Button
@@ -280,7 +298,7 @@ export default function EditProfilePage() {
                 variant="outline"
                 onClick={() => router.push('/profile')}
               >
-                Cancel
+                {safeT('profileEdit.cancel')}
               </Button>
             </div>
           </form>

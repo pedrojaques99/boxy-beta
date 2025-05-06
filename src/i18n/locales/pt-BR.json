@@ -50,7 +50,7 @@
   "navigation": {
     "about": "Sobre",
     "shop": "Loja",
-    "labs": "Laboratórios",
+    "labs": "Labs",
     "pricing": "Preços",
     "switchToEnglish": "Mudar para Inglês",
     "switchToPortuguese": "Mudar para Português",
@@ -70,6 +70,23 @@
       "changePlan": "Alterar Plano",
       "noSubscription": "Nenhuma assinatura ativa",
       "subscribe": "Assinar Agora"
+    },
+    "profileInfo": "Informações do Perfil",
+    "accountSettings": "Configurações da Conta",
+    "bio": "Bio",
+    "noBio": "Nenhuma bio adicionada ainda.",
+    "memberSince": "Membro desde",
+    "currentPlan": "Plano Atual",
+    "upgradeToPremium": "Upgrade para Premium",
+    "editProfile": "Editar Perfil",
+    "paymentSettings": "Configurações de Pagamento",
+    "notificationPreferences": "Preferências de Notificação",
+    "manageSubscription": "Gerenciar Assinatura",
+    "clickToChange": "Clique para alterar",
+    "tryAgain": "Tentar Novamente",
+    "loading": {
+      "profileInfo": "Carregando informações do perfil...",
+      "accountSettings": "Carregando configurações da conta..."
     }
   },
   "checkout": {
@@ -215,7 +232,7 @@
             "Suporte por email",
             "Acesso à comunidade (em breve)"
           ],
-          "button": "Começar"
+          "button": "Explorar"
         },
         "annual": {
           "name": "Anual",
@@ -270,9 +287,9 @@
     "copyright": "© {year} BOXY. Todos os direitos reservados."
   },
   "labs": {
-    "title": "Laboratórios",
+    "title": "Labs",
     "description": "Descubra e experimente aplicações incríveis criadas por nossa comunidade",
-    "noLabs": "Nenhum laboratório encontrado",
+    "noLabs": "Nenhum experimento encontrado",
     "tryIt": "Experimentar →"
   },
   "admin": {
@@ -318,5 +335,19 @@
         "alt": "Miniatura do produto"
       }
     }
+  },
+  "profileEdit": {
+    "editProfile": "Editar Perfil",
+    "name": "Nome *",
+    "role": "Função",
+    "rolePlaceholder": "Ex: Desenvolvedor, Designer, etc.",
+    "bio": "Bio",
+    "bioPlaceholder": "Conte um pouco sobre você...",
+    "saveChanges": "Salvar Alterações",
+    "saving": "Salvando...",
+    "cancel": "Cancelar",
+    "tryAgain": "Tentar Novamente",
+    "updateSuccess": "Perfil atualizado com sucesso",
+    "avatarUpdateSuccess": "Avatar atualizado com sucesso"
   }
 } 

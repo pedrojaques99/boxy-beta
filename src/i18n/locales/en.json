@@ -70,6 +70,22 @@
       "changePlan": "Change Plan",
       "noSubscription": "No active subscription",
       "subscribe": "Subscribe Now"
+    },
+    "profileInfo": "Profile Information",
+    "accountSettings": "Account Settings",
+    "bio": "Bio",
+    "noBio": "No bio added yet.",
+    "memberSince": "Member Since",
+    "upgradeToPremium": "Upgrade to Premium",
+    "editProfile": "Edit Profile",
+    "paymentSettings": "Payment Settings",
+    "notificationPreferences": "Notification Preferences",
+    "manageSubscription": "Manage Subscription",
+    "clickToChange": "Click to change",
+    "tryAgain": "Try Again",
+    "loading": {
+      "profileInfo": "Loading profile information...",
+      "accountSettings": "Loading account settings..."
     }
   },
   "checkout": {
@@ -318,5 +334,19 @@
         "alt": "Product thumbnail"
       }
     }
+  },
+  "profileEdit": {
+    "editProfile": "Edit Profile",
+    "name": "Name *",
+    "role": "Role",
+    "rolePlaceholder": "e.g. Developer, Designer, etc.",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself...",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "tryAgain": "Try Again",
+    "updateSuccess": "Profile updated successfully",
+    "avatarUpdateSuccess": "Avatar updated successfully"
   }
 } 
