@@ -57,6 +57,7 @@ export type Dictionary = {
     about: string
     shop: string
     labs: string
+    mindy: string
     pricing: string
     switchToEnglish: string
     switchToPortuguese: string

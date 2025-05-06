@@ -18,6 +18,23 @@ import { getAuthService } from '@/lib/auth/auth-service';
 
 type UserStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
+type Dictionary = {
+  navigation?: {
+    about: string
+    shop: string
+    labs: string
+    mindy: string
+    pricing: string
+    switchToEnglish: string
+    switchToPortuguese: string
+    toggleTheme: string
+    myAccount: string
+    signOut: string
+    signIn: string
+    getStarted: string
+  }
+}
+
 export function Navigation() {
   const { theme, setTheme } = useTheme();
   const [userStatus, setUserStatus] = useState<UserStatus>('loading');
