@@ -1,8 +1,11 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { ResourcesClient } from './client'
+'use client';
 
-export const dynamic = 'force-dynamic'
+import { useEffect, useState, Suspense } from 'react'
+import { getDictionary } from '@/i18n'
+import { i18n } from '@/i18n/settings'
+import { ResourcesClient } from './client'
+import { createClient } from '@/lib/supabase/client'
+import { Dictionary } from '@/i18n/types'
 
 interface Resource {
   id: string
@@ -11,42 +14,107 @@ interface Resource {
   tags: string[]
   category: string
   subcategory: string
+  software: string
   created_at: string
   description_pt: string
   description_en: string
 }
 
-export default async function ResourcesPage() {
-  const supabase = createServerComponentClient({ cookies })
-  
-  const { data: resources } = await supabase
-    .from('resources')
-    .select('*')
-    .order('created_at', { ascending: false })
+export default function ResourcesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-900 dark:border-white"></div>
+      </div>
+    }>
+      <ResourcesPageContent />
+    </Suspense>
+  )
+}
 
-  const { data: categories } = await supabase
-    .from('resources')
-    .select('category')
-    .not('category', 'is', null)
-    .order('category')
+function ResourcesPageContent() {
+  const [resources, setResources] = useState<Resource[]>([])
+  const [categories, setCategories] = useState<string[]>([])
+  const [subcategories, setSubcategories] = useState<string[]>([])
+  const [software, setSoftware] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [t, setT] = useState<Dictionary | null>(null)
+  const supabase = createClient()
 
-  const { data: subcategories } = await supabase
-    .from('resources')
-    .select('subcategory')
-    .not('subcategory', 'is', null)
-    .order('subcategory')
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // Get dictionary
+        const dictionary = await getDictionary(i18n.defaultLocale)
+        setT(dictionary)
 
-  const { data: software } = await supabase
-    .from('resources')
-    .select('software')
-    .not('software', 'is', null)
-    .order('software')
+        // Get unique values for filters
+        const fetchUniqueValues = async (column: keyof Resource): Promise<string[]> => {
+          const { data, error } = await supabase
+            .from('resources')
+            .select(column)
+            .not(column, 'is', null)
 
-  const filterOptions = {
-    category: [...new Set(categories?.map(c => c.category) || [])],
-    subcategory: [...new Set(subcategories?.map(s => s.subcategory) || [])],
-    software: [...new Set(software?.map(s => s.software) || [])]
+          if (error) {
+            console.error(`Error fetching unique ${column}:`, error)
+            return []
+          }
+
+          if (!data) return []
+          
+          const typedData = data as Array<Record<keyof Resource, any>>
+          return [...new Set(typedData.map(item => {
+            const value = item[column]
+            return value ? String(value) : ''
+          }))].filter(Boolean)
+        }
+
+        const [categoriesData, subcategoriesData, softwareData] = await Promise.all([
+          fetchUniqueValues('category'),
+          fetchUniqueValues('subcategory'),
+          fetchUniqueValues('software')
+        ])
+
+        setCategories(categoriesData)
+        setSubcategories(subcategoriesData)
+        setSoftware(softwareData)
+
+        // Get resources
+        const { data: resourcesData, error: resourcesError } = await supabase
+          .from('resources')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (resourcesError) {
+          console.error('Error fetching resources:', resourcesError)
+          return
+        }
+
+        setResources(resourcesData || [])
+      } catch (error) {
+        console.error('Error in fetchData:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [supabase])
+
+  if (loading || !t) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-900 dark:border-white"></div>
+      </div>
+    )
   }
 
-  return <ResourcesClient resources={resources || []} filterOptions={filterOptions} />
+  const filterOptions = {
+    category: categories,
+    subcategory: subcategories,
+    software: software
+  }
+
+  return <ResourcesClient resources={resources} filterOptions={filterOptions} />
 }

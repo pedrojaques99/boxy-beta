@@ -2,6 +2,10 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { ResourceDetailClient } from './client'
+import { LikeButton } from '@/components/LikeButton'
+import { CommentsSection } from '@/components/CommentsSection'
+import { useUserId } from '@/lib/auth/useUserId'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +34,18 @@ interface Comment {
     name: string
     avatar_url: string | null
   }
+}
+
+function ResourceSocialClient({ resourceId }: { resourceId: string }) {
+  const userId = useUserId()
+  return (
+    <>
+      <div className="my-6 flex gap-4 items-center">
+        <LikeButton type="resource" id={resourceId} userId={userId} />
+      </div>
+      <CommentsSection type="resource" id={resourceId} userId={userId} />
+    </>
+  )
 }
 
 export default async function ResourcePage({ params }: { params: { id: string } }) {
@@ -70,11 +86,16 @@ export default async function ResourcePage({ params }: { params: { id: string } 
     .eq('resource_id', params.id)
 
   return (
-    <ResourceDetailClient
-      resource={resource}
-      relatedResources={relatedResources || []}
-      comments={comments || []}
-      likes={likes || []}
-    />
+    <>
+      <ResourceDetailClient
+        resource={resource}
+        relatedResources={relatedResources || []}
+        comments={comments || []}
+        likes={likes || []}
+      />
+      <Suspense fallback={null}>
+        <ResourceSocialClient resourceId={resource.id} />
+      </Suspense>
+    </>
   )
 } 
