@@ -11,6 +11,7 @@ import { SearchBar } from '@/components/shop/search-bar'
 import { ProductSkeleton } from '@/components/shop/product-skeleton'
 import { useSearchParams } from 'next/navigation'
 import { Dictionary } from '@/i18n/types'
+import { createClient } from '@/lib/supabase/client'
 
 export default function ShopPage() {
   return (
@@ -35,71 +36,88 @@ function ShopPageContent() {
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
   const isFree = searchParams.get('free') === 'true'
+  const supabase = createClient()
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuthenticated = await authService.isAuthenticated()
+      if (!isAuthenticated) {
+        // Handle unauthenticated state if needed
+        console.log('User is not authenticated')
+      }
+    }
+    checkAuth()
+  }, [authService])
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-      // Get dictionary
-      const dictionary = await getDictionary(i18n.defaultLocale)
-      setT(dictionary)
+      try {
+        // Get dictionary
+        const dictionary = await getDictionary(i18n.defaultLocale)
+        setT(dictionary)
 
-      // Get unique values for filters
-      const fetchUniqueValues = async (column: keyof Product): Promise<string[]> => {
-        const { data, error } = await supabase
-          .from('products')
-          .select(column)
-          .not(column, 'is', null)
+        // Get unique values for filters using direct Supabase client
+        const fetchUniqueValues = async (column: keyof Product): Promise<string[]> => {
+          const { data, error } = await supabase
+            .from('products')
+            .select(column)
+            .not(column, 'is', null)
 
-        if (error) {
-          console.error(`Error fetching unique ${column}:`, error)
-          return []
+          if (error) {
+            console.error(`Error fetching unique ${column}:`, error)
+            return []
+          }
+
+          if (!data) return []
+          
+          const typedData = data as Array<Record<keyof Product, any>>
+          return [...new Set(typedData.map(item => {
+            const value = item[column]
+            return value ? String(value) : ''
+          }))].filter(Boolean)
         }
 
-        if (!data) return []
-        
-        // Type assertion to handle Supabase response
-        const typedData = data as Array<Record<keyof Product, any>>
-        return [...new Set(typedData.map(item => {
-          const value = item[column]
-          return value ? String(value) : ''
-        }))].filter(Boolean)
+        const [categoriesData, softwareData] = await Promise.all([
+          fetchUniqueValues('category'),
+          fetchUniqueValues('software')
+        ])
+
+        setCategories(categoriesData)
+        setSoftware(softwareData)
+
+        // Get initial products using direct Supabase client
+        let query = supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (type) {
+          query = query.eq('type', type)
+        }
+
+        if (isFree) {
+          query = query.eq('type', 'free')
+        }
+
+        const { data: productsData, error: productsError } = await query
+
+        if (productsError) {
+          console.error('Error fetching products:', productsError)
+          return
+        }
+
+        setProducts(productsData || [])
+      } catch (error) {
+        console.error('Error in fetchData:', error)
+      } finally {
+        setLoading(false)
       }
-
-      const [categoriesData, softwareData] = await Promise.all([
-        fetchUniqueValues('category'),
-        fetchUniqueValues('software')
-      ])
-
-      setCategories(categoriesData)
-      setSoftware(softwareData)
-
-      // Get initial products
-      let query = supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (type) {
-        query = query.eq('type', type)
-      }
-
-      if (isFree) {
-        query = query.eq('type', 'free')
-      }
-
-      const { data: productsData, error: productsError } = await query
-
-      if (productsError) {
-        console.error('Error fetching products:', productsError)
-        return
-      }
-
-      setProducts(productsData || [])
-      setLoading(false)
     }
 
     fetchData()
-  }, [type, isFree])
+  }, [type, isFree, supabase])
 
   const handleFilterChange = async (filters: {
     category: string | null
@@ -108,46 +126,67 @@ function ShopPageContent() {
     sortOrder: 'asc' | 'desc'
     isFree: boolean
   }) => {
-    let query = supabase
-      .from('products')
-      .select('*')
+    try {
+      // Use direct Supabase client for product filtering
+      let query = supabase
+        .from('products')
+        .select('*')
 
-    if (filters.category) {
-      query = query.eq('category', filters.category)
-    }
-    if (filters.software) {
-      query = query.eq('software', filters.software)
-    }
-    if (type) {
-      query = query.eq('type', type)
-    }
-    if (filters.isFree) {
-      query = query.eq('type', 'free')
-    }
+      if (filters.category) {
+        query = query.eq('category', filters.category)
+      }
+      if (filters.software) {
+        query = query.eq('software', filters.software)
+      }
+      if (type) {
+        query = query.eq('type', type)
+      }
+      if (filters.isFree) {
+        query = query.eq('type', 'free')
+      }
 
-    query = query.order(filters.sortBy, { ascending: filters.sortOrder === 'asc' })
+      query = query.order(filters.sortBy, { ascending: filters.sortOrder === 'asc' })
 
-    const { data, error } = await query
+      const { data, error } = await query
 
-    if (error) {
-      console.error('Error filtering products:', error)
-      return
+      if (error) {
+        console.error('Error filtering products:', error)
+        return
+      }
+
+      // Update URL with new filter state
+      const params = new URLSearchParams(searchParams.toString())
+      if (filters.isFree) {
+        params.set('free', 'true')
+      } else {
+        params.delete('free')
+      }
+      window.history.pushState({}, '', `?${params.toString()}`)
+
+      setProducts(data || [])
+    } catch (error) {
+      console.error('Error in handleFilterChange:', error)
     }
-
-    // Update URL with new filter state
-    const params = new URLSearchParams(searchParams.toString())
-    if (filters.isFree) {
-      params.set('free', 'true')
-    } else {
-      params.delete('free')
-    }
-    window.history.pushState({}, '', `?${params.toString()}`)
-
-    setProducts(data || [])
   }
 
   const handleSearch = async (search: string) => {
-    // Implement search functionality
+    try {
+      // Use direct Supabase client for product search
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error searching products:', error)
+        return
+      }
+
+      setProducts(data || [])
+    } catch (error) {
+      console.error('Error in handleSearch:', error)
+    }
   }
 
   if (loading || !t) {

@@ -10,6 +10,7 @@ import { useTranslations } from '@/hooks/use-translations';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { handleError } from '@/lib/error-handler';
+import { createClient } from '@/lib/supabase/client';
 
 interface Lab {
   id: string;
@@ -34,10 +35,24 @@ export default function LabsPage() {
   const { t } = useTranslations();
   
   const authService = getAuthService();
+  const supabase = createClient();
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuthenticated = await authService.isAuthenticated();
+      if (!isAuthenticated) {
+        // Handle unauthenticated state if needed
+        console.log('User is not authenticated');
+      }
+    };
+    checkAuth();
+  }, [authService]);
 
   const fetchLabs = useCallback(async (pageNum: number, reset: boolean = false) => {
     setLoading(true);
     try {
+      // Use direct Supabase client for labs fetching
       let query = supabase
         .from('labs')
         .select('*', { count: 'exact' })
@@ -71,7 +86,7 @@ export default function LabsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [supabase]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || loading) return;
