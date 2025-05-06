@@ -23,6 +23,7 @@ import { handleError } from '@/lib/error-handler'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { createClient } from '@/lib/supabase/client'
+import { useLocale } from '@/hooks/use-locale'
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
 type Step = typeof STEPS[number]
@@ -36,6 +37,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const user = useUser()
   const router = useRouter()
   const { t } = useTranslations()
+  const { locale } = useLocale()
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState<PlanId | undefined>(defaultPlanId)
   const [userData, setUserData] = useState({
@@ -307,6 +309,17 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     }
   }
 
+  // Format currency based on locale
+  const formatCurrency = (amount: number) => {
+    const formatter = new Intl.NumberFormat(locale === 'pt-BR' ? 'pt-BR' : 'en-US', {
+      style: 'currency',
+      currency: locale === 'pt-BR' ? 'BRL' : 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
+    return formatter.format(amount)
+  }
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -329,11 +342,11 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   const stepTitles: Record<Step, string> = {
-    plan: 'Choose Your Plan',
-    user: 'Personal Information',
-    payment: 'Payment Details',
-    confirm: 'Review & Confirm',
-    result: result.success ? 'Success!' : 'Error'
+    plan: t('checkout.selectPlan'),
+    user: t('profile.subscription.title'),
+    payment: t('checkout.paymentDetails'),
+    confirm: t('checkout.confirm'),
+    result: result.success ? t('auth.signUpSuccess.title') : t('auth.error.title')
   }
 
   const stepIcons: Record<Step, JSX.Element> = {
@@ -345,10 +358,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   return (
-    <div className="max-w-md mx-auto my-8">
-      <div className="mb-8">
+    <div className="max-w-2xl mx-auto my-12 px-4">
+      <div className="mb-10">
         <Progress value={(step / (STEPS.length - 1)) * 100} className="h-2" />
-        <div className="flex justify-between mt-2 text-sm text-muted-foreground">
+        <div className="flex justify-between mt-4 text-sm text-muted-foreground">
           {STEPS.map((stepKey, index) => (
             <div
               key={stepKey}
@@ -373,18 +386,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           transition={{ duration: 0.2 }}
         >
           <Card className="shadow-lg border-2 border-primary/10">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-6">
+              <CardTitle className="flex items-center gap-2 text-xl">
                 {stepIcons[STEPS[step]]}
                 {stepTitles[STEPS[step]]}
               </CardTitle>
               {step > 0 && step < 4 && (
                 <div className="text-sm text-muted-foreground mt-2">
-                  Plan: <b>{planId && PLANS[planId].name}</b> — {planId && PLANS[planId].price}
+                  {t('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
                 </div>
               )}
             </CardHeader>
-            <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
+            <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto px-6">
               {step === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -403,7 +416,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     >
                       <div className="flex flex-col items-start">
                         <span className="font-semibold">{plan.name}</span>
-                        <span className="text-sm text-muted-foreground">{plan.price}</span>
+                        <span className="text-sm text-muted-foreground">{formatCurrency(plan.price)}</span>
                       </div>
                     </Button>
                   ))}
@@ -414,21 +427,21 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="user-name">Full Name</Label>
+                    <Label htmlFor="user-name">{t('profile.subscription.title')}</Label>
                     <Input
                       id="user-name"
-                      placeholder="Your name"
+                      placeholder={t('profile.subscription.title')}
                       value={userData.name}
                       onChange={e => setUserData({ ...userData, name: e.target.value })}
                       className={cn(userData.name.length === 0 && 'border-red-500')}
                     />
-                    {userData.name.length === 0 && <span className="text-xs text-red-500">Name is required</span>}
+                    {userData.name.length === 0 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="user-email">Email</Label>
+                    <Label htmlFor="user-email">{t('auth.signInToContinue')}</Label>
                     <Input
                       id="user-email"
                       placeholder="your@email.com"
@@ -436,7 +449,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       onChange={e => setUserData({ ...userData, email: e.target.value })}
                       className={cn(userData.email.length === 0 && 'border-red-500')}
                     />
-                    {userData.email.length === 0 && <span className="text-xs text-red-500">Email is required</span>}
+                    {userData.email.length === 0 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="user-street">Street</Label>
@@ -515,10 +528,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="card-number">Card Number</Label>
+                    <Label htmlFor="card-number">{t('checkout.cardNumber')}</Label>
                     <Input
                       id="card-number"
                       placeholder="1234 5678 9012 3456"
@@ -527,10 +540,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       maxLength={16}
                       className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
                     />
-                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">Invalid card number</span>}
+                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="card-name">Cardholder Name</Label>
+                    <Label htmlFor="card-name">{t('checkout.cardName')}</Label>
                     <Input
                       id="card-name"
                       placeholder="John Doe"
@@ -538,7 +551,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       onChange={(e) => setCard({ ...card, name: e.target.value })}
                       className={cn("text-foreground bg-background placeholder:text-muted-foreground focus:text-foreground", card.name.length === 0 && 'border-red-500')}
                     />
-                    {card.name.length === 0 && <span className="text-xs text-red-500">Name is required</span>}
+                    {card.name.length === 0 && <span className="text-xs text-red-500">{t('auth.error.description')}</span>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="card-cpf">CPF</Label>
@@ -591,31 +604,31 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
                   <div className="text-center">
-                    <Check className="mx-auto mb-2 h-8 w-8 text-green-500" />
-                    <div className="text-lg font-semibold mb-2">Confirm Your Details</div>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      Plan: <b>{planId && PLANS[planId].name}</b> — {planId && PLANS[planId].price}
+                    <Check className="mx-auto mb-4 h-10 w-10 text-green-500" />
+                    <div className="text-xl font-semibold mb-4">{t('checkout.confirm')}</div>
+                    <div className="text-sm text-muted-foreground mb-4">
+                      {t('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
                     </div>
                   </div>
-                  <div className="text-sm text-muted-foreground space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <div><b>Name:</b> {userData.name}</div>
+                  <div className="text-sm text-muted-foreground space-y-4">
+                    <div className="flex items-center gap-3">
+                      <User className="h-5 w-5" />
+                      <div><b>{t('profile.subscription.title')}:</b> {userData.name}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <div><b>Address:</b> {userData.street}, {userData.number} {userData.complement && `- ${userData.complement}`}</div>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-5 w-5" />
+                      <div><b>{t('checkout.paymentDetails')}:</b> {userData.street}, {userData.number} {userData.complement && `- ${userData.complement}`}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <div><b>Location:</b> {userData.neighborhood}, {userData.city} - {userData.state}</div>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-5 w-5" />
+                      <div><b>{t('checkout.paymentDetails')}:</b> {userData.neighborhood}, {userData.city} - {userData.state}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      <div><b>Card:</b> **** **** **** {card.number.slice(-4)}</div>
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-5 w-5" />
+                      <div><b>{t('checkout.cardNumber')}:</b> **** **** **** {card.number.slice(-4)}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -625,18 +638,19 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4 text-center"
+                  className="space-y-6 text-center"
                 >
                   {result.success ? (
                     <>
-                      <Check className="mx-auto mb-2 h-8 w-8 text-green-500" />
-                      <div className="text-lg font-semibold mb-2">Subscription Created Successfully!</div>
-                      <div className="text-muted-foreground">Welcome to the {planId && PLANS[planId].name} plan.</div>
+                      <Check className="mx-auto mb-4 h-10 w-10 text-green-500" />
+                      <div className="text-xl font-semibold mb-4">{t('auth.signUpSuccess.title')}</div>
+                      <div className="text-muted-foreground">{t('auth.signUpSuccess.description')}</div>
                     </>
                   ) : (
                     <>
-                      <span className="text-red-500 text-2xl">Error</span>
-                      <div className="text-muted-foreground mt-2 break-words max-w-xs mx-auto">{result.message || 'Error processing subscription.'}</div>
+                      <AlertCircle className="mx-auto mb-4 h-10 w-10 text-red-500" />
+                      <div className="text-xl font-semibold mb-4">{t('auth.error.title')}</div>
+                      <div className="text-muted-foreground mt-2 break-words max-w-xs mx-auto">{result.message || t('auth.error.description')}</div>
                     </>
                   )}
                 </motion.div>
@@ -650,7 +664,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back
+                {t('checkout.back')}
               </Button>
               {step < 3 && (
                 <Button
@@ -662,7 +676,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (
                     <>
-                      Next
+                      {t('checkout.next')}
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
@@ -678,7 +692,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   ) : (
                     <>
-                      Confirm
+                      {t('checkout.confirm')}
                       <Check className="h-4 w-4" />
                     </>
                   )}
