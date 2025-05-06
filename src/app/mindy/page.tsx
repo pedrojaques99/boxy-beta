@@ -17,7 +17,8 @@ interface Resource {
 }
 
 export default async function ResourcesPage() {
-  const supabase = createServerComponentClient({ cookies })
+  const cookieStore = cookies()
+  const supabase = createServerComponentClient({ cookies: () => cookieStore })
   
   const { data: resources } = await supabase
     .from('resources')
