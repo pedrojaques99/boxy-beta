@@ -349,5 +349,22 @@
     "tryAgain": "Tentar Novamente",
     "updateSuccess": "Perfil atualizado com sucesso",
     "avatarUpdateSuccess": "Avatar atualizado com sucesso"
+  },
+  "mindy": {
+    "title": "Recursos",
+    "filters": {
+      "category": "Categoria",
+      "subcategory": "Subcategoria",
+      "software": "Software"
+    },
+    "details": {
+      "title": "Detalhes do Recurso",
+      "description": "Descrição",
+      "createdBy": "Criado por",
+      "visitResource": "Visitar Recurso",
+      "comments": "Comentários",
+      "relatedResources": "Recursos Relacionados",
+      "seeDetails": "Ver Detalhes"
+    }
   }
 } 

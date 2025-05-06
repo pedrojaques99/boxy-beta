@@ -348,5 +348,22 @@
     "tryAgain": "Try Again",
     "updateSuccess": "Profile updated successfully",
     "avatarUpdateSuccess": "Avatar updated successfully"
+  },
+  "mindy": {
+    "title": "Resources",
+    "filters": {
+      "category": "Category",
+      "subcategory": "Subcategory",
+      "software": "Software"
+    },
+    "details": {
+      "title": "Resource Details",
+      "description": "Description",
+      "createdBy": "Created by",
+      "visitResource": "Visit Resource",
+      "comments": "Comments",
+      "relatedResources": "Related Resources",
+      "seeDetails": "See Details"
+    }
   }
 } 

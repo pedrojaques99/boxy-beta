@@ -13,11 +13,18 @@ interface FilterOptions {
   software: string[]
 }
 
-interface FilterMenuProps {
-  options: FilterOptions
+interface FilterLabels {
+  category: string
+  subcategory: string
+  software: string
 }
 
-export function FilterMenu({ options }: FilterMenuProps) {
+interface FilterMenuProps {
+  options: FilterOptions
+  labels: FilterLabels
+}
+
+export function FilterMenu({ options, labels }: FilterMenuProps) {
   const [filters, setFilters] = useState<Record<string, string[]>>({
     category: [],
     subcategory: [],
@@ -37,7 +44,7 @@ export function FilterMenu({ options }: FilterMenuProps) {
     <div className="flex gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Category</Button>
+          <Button variant="outline">{labels.category}</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {options.category.map(category => (
@@ -54,7 +61,7 @@ export function FilterMenu({ options }: FilterMenuProps) {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Subcategory</Button>
+          <Button variant="outline">{labels.subcategory}</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {options.subcategory.map(subcategory => (
@@ -71,7 +78,7 @@ export function FilterMenu({ options }: FilterMenuProps) {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">Software</Button>
+          <Button variant="outline">{labels.software}</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {options.software.map(software => (
