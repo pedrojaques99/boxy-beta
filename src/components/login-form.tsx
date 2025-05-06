@@ -31,7 +31,6 @@ import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { getAuthService } from '@/lib/auth/auth-service'
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),

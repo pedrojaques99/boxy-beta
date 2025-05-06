@@ -19,7 +19,6 @@ import { PLANS, formatPrice, getPlanInterval, PlanId } from '@/lib/plans'
 import type { Plan } from '@/types/subscription'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { getAuthService } from '@/lib/auth/auth-service'
 
 type PlanTranslation = {
   name: string
@@ -51,7 +50,6 @@ export function PricingSection() {
   const [userSubscription, setUserSubscription] = useState<Subscription | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authChecked, setAuthChecked] = useState(false)
-  const authService = getAuthService()
   const authService = getAuthService()
 
   // Verificar autenticação primeiro

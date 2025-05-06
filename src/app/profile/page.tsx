@@ -14,7 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@supabase/auth-helpers-react';
 import { toast } from 'sonner';
-import { getAuthService } from '@/lib/auth/auth-service';
+import { createClient } from '@/lib/supabase/client';
 
 interface UserProfile {
   id: string;
@@ -36,7 +36,7 @@ export default function ProfilePage() {
   const authService = getAuthService();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const authService = getAuthService();
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchProfile = async () => {
