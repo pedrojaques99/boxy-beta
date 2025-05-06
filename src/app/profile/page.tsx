@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@supabase/auth-helpers-react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { useTranslations } from '@/hooks/use-translations';
 
 interface UserProfile {
@@ -38,7 +37,6 @@ export default function ProfilePage() {
   const authService = getAuthService();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
 
   // Add safeT function for translation
   const safeT = (key: string): string => {
@@ -67,15 +65,11 @@ export default function ProfilePage() {
           throw new Error('User not found');
         }
         
-        // First try to get existing profile
-        let { data: existingProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        // Get or create user profile using AuthService
+        let existingProfile = await authService.getUserProfile(data.user.id);
 
         // If no profile exists, create one
-        if (!existingProfile && !profileError) {
+        if (!existingProfile) {
           const newProfile = {
             id: data.user.id,
             name: data.user.email?.split('@')[0] || 'User',
@@ -86,17 +80,7 @@ export default function ProfilePage() {
             subscription_type: 'free'
           };
 
-          const { data: createdProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert([newProfile])
-            .select()
-            .single();
-
-          if (createError) throw createError;
-          
-          existingProfile = createdProfile;
-        } else if (profileError) {
-          throw profileError;
+          existingProfile = await authService.saveUserProfile(newProfile);
         }
 
         setProfile(existingProfile);
@@ -110,7 +94,7 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [router, supabase, authService]);
+  }, [router, authService]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -135,40 +119,30 @@ export default function ProfilePage() {
 
     try {
       setUploadProgress(0);
+      if (profile.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').pop();
+        if (oldPath) {
+          await authService.removeFile('avatars', `${profile.id}/${oldPath}`);
+        }
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
       const filePath = `${profile.id}/${fileName}`;
 
-      if (profile.avatar_url) {
-        const oldPath = profile.avatar_url.split('/').pop();
-        if (oldPath) {
-          await supabase.storage
-            .from('avatars')
-            .remove([`${profile.id}/${oldPath}`]);
-        }
-      }
+      // Upload the new avatar
+      const publicUrl = await authService.uploadFile('avatars', filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      // Update profile with new avatar URL
+      const updatedProfile = await authService.saveUserProfile({
+        ...profile,
+        avatar_url: publicUrl
+      });
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', profile.id);
-
-      if (updateError) throw updateError;
-
-      setProfile({ ...profile, avatar_url: publicUrl });
+      setProfile(updatedProfile);
       toast.success('Avatar updated successfully');
     } catch (error) {
       const { error: errorMessage } = handleError(error, 'Error updating avatar');

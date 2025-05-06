@@ -398,6 +398,73 @@ export class AuthService {
       throw error;
     }
   };
+
+  /**
+   * Upload a file to Supabase storage
+   * @param bucket The storage bucket name
+   * @param path The path where the file should be stored
+   * @param file The file to upload
+   * @param options Optional upload options
+   * @returns The public URL of the uploaded file
+   */
+  uploadFile = async (
+    bucket: string,
+    path: string,
+    file: File,
+    options?: { cacheControl?: string; upsert?: boolean }
+  ) => {
+    try {
+      const { error: uploadError } = await this.supabase.storage
+        .from(bucket)
+        .upload(path, file, {
+          cacheControl: options?.cacheControl || '3600',
+          upsert: options?.upsert || false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = this.supabase.storage
+        .from(bucket)
+        .getPublicUrl(path);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Remove a file from Supabase storage
+   * @param bucket The storage bucket name
+   * @param path The path of the file to remove
+   */
+  removeFile = async (bucket: string, path: string) => {
+    try {
+      const { error } = await this.supabase.storage
+        .from(bucket)
+        .remove([path]);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error removing file:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Get the public URL for a file in storage
+   * @param bucket The storage bucket name
+   * @param path The path of the file
+   * @returns The public URL of the file
+   */
+  getPublicUrl = (bucket: string, path: string) => {
+    const { data: { publicUrl } } = this.supabase.storage
+      .from(bucket)
+      .getPublicUrl(path);
+
+    return publicUrl;
+  };
 }
 
 // Export a function to get the AuthService singleton
