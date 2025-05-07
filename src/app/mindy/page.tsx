@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { ResourcesClient } from './client'
-import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { Database } from '@/types/supabase'
 import { ErrorBoundary } from '@/components/error-boundary'
