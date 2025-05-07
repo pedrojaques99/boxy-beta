@@ -28,9 +28,10 @@ export default function ShopClient({ t }: ShopClientProps) {
   const [categories, setCategories] = useState<string[]>([])
   const [software, setSoftware] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(1)
   const [userId, setUserId] = useState<string | null>(null)
-  const authService = getAuthService()
+  const ITEMS_PER_PAGE = 20
   const searchParams = useSearchParams()
   const type = searchParams.get('type')
   const isFree = searchParams.get('free') === 'true'
@@ -49,10 +50,10 @@ export default function ShopClient({ t }: ShopClientProps) {
   }, [supabase])
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       setLoading(true)
       try {
-        // Get unique values for filters using direct Supabase client
+        // Get unique values for filters
         const fetchUniqueValues = async (column: keyof Product): Promise<string[]> => {
           const { data, error } = await supabase
             .from('products')
@@ -81,11 +82,12 @@ export default function ShopClient({ t }: ShopClientProps) {
         setCategories(categoriesData)
         setSoftware(softwareData)
 
-        // Get initial products using direct Supabase client
+        // Get initial products
         let query = supabase
           .from('products')
-          .select('*')
+          .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
+          .range(0, ITEMS_PER_PAGE - 1)
 
         if (type) {
           query = query.eq('type', type)
@@ -95,7 +97,7 @@ export default function ShopClient({ t }: ShopClientProps) {
           query = query.eq('type', 'free')
         }
 
-        const { data: productsData, error: productsError } = await query
+        const { data: productsData, error: productsError, count } = await query
 
         if (productsError) {
           console.error('Error fetching products:', productsError)
@@ -103,6 +105,7 @@ export default function ShopClient({ t }: ShopClientProps) {
         }
 
         setProducts(productsData || [])
+        setHasMore(count ? count > ITEMS_PER_PAGE : false)
       } catch (error) {
         console.error('Error in fetchData:', error)
       } finally {
@@ -110,10 +113,64 @@ export default function ShopClient({ t }: ShopClientProps) {
       }
     }
 
-    fetchData()
+    fetchInitialData()
+    setPage(1) // Reset page when filters change
   }, [type, isFree, supabase])
 
+  // Load more products when scrolling
+  const loadMoreProducts = useCallback(async () => {
+    if (loading || !hasMore) return
+
+    setLoading(true)
+    try {
+      const nextPage = page + 1
+      const start = (nextPage - 1) * ITEMS_PER_PAGE
+      const end = start + ITEMS_PER_PAGE - 1
+
+      let query = supabase
+        .from('products')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(start, end)
+
+      if (type) {
+        query = query.eq('type', type)
+      }
+
+      if (isFree) {
+        query = query.eq('type', 'free')
+      }
+
+      const { data: newProducts, error, count } = await query
+
+      if (error) {
+        console.error('Error loading more products:', error)
+        return
+      }
+
+      if (newProducts && newProducts.length > 0) {
+        setProducts(prev => [...prev, ...newProducts])
+        setPage(nextPage)
+        setHasMore(count ? count > (nextPage * ITEMS_PER_PAGE) : false)
+      } else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error('Error loading more products:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [page, loading, hasMore, type, isFree, supabase])
+
+  // Trigger load more when scrolling
+  useEffect(() => {
+    if (inView && hasMore) {
+      loadMoreProducts()
+    }
+  }, [inView, hasMore, loadMoreProducts])
+
   const handleFilterChange = async (filters: ShopFilters) => {
+    setLoading(true)
     try {
       // Update URL with new filter state
       const params = new URLSearchParams(searchParams.toString())
@@ -139,10 +196,11 @@ export default function ShopClient({ t }: ShopClientProps) {
       // Update URL without full page reload
       window.history.pushState({}, '', `?${params.toString()}`)
 
-      // Use direct Supabase client for product filtering
+      // Use Supabase client for product filtering with pagination
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
+        .range(0, ITEMS_PER_PAGE - 1)
 
       if (filters.category) {
         query = query.eq('category', filters.category)
@@ -157,9 +215,9 @@ export default function ShopClient({ t }: ShopClientProps) {
         query = query.eq('type', 'free')
       }
 
-      query = query.order(filters.sortBy, { ascending: filters.sortOrder === 'asc' })
+      query = query.order('created_at', { ascending: false })
 
-      const { data, error } = await query
+      const { data, error, count } = await query
 
       if (error) {
         console.error('Error filtering products:', error)
@@ -167,19 +225,34 @@ export default function ShopClient({ t }: ShopClientProps) {
       }
 
       setProducts(data || [])
+      setPage(1)
+      setHasMore(count ? count > ITEMS_PER_PAGE : false)
     } catch (error) {
       console.error('Error in handleFilterChange:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleSearch = async (search: string) => {
+    setLoading(true)
     try {
-      // Use direct Supabase client for product search
-      const { data, error } = await supabase
+      let query = supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
         .or(`name.ilike.%${search}%,description.ilike.%${search}%`)
         .order('created_at', { ascending: false })
+        .range(0, ITEMS_PER_PAGE - 1)
+
+      if (type) {
+        query = query.eq('type', type)
+      }
+
+      if (isFree) {
+        query = query.eq('type', 'free')
+      }
+
+      const { data, error, count } = await query
 
       if (error) {
         console.error('Error searching products:', error)
@@ -187,8 +260,12 @@ export default function ShopClient({ t }: ShopClientProps) {
       }
 
       setProducts(data || [])
+      setPage(1)
+      setHasMore(count ? count > ITEMS_PER_PAGE : false)
     } catch (error) {
       console.error('Error in handleSearch:', error)
+    } finally {
+      setLoading(false)
     }
   }
 

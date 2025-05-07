@@ -1,36 +1,40 @@
 'use client'
 import Link from 'next/link'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-
-interface Resource {
-  id: string
-  title: string
-  description: string
-  category?: string | null
-  subcategory?: string | null
-  software?: string | null
-  thumbnail_url?: string | null
-}
+import { useState } from 'react'
+import { ImageOff } from 'lucide-react'
+import { Resource } from '@/types/mindy'
 
 export function ResourceCard({ resource }: { resource: Resource }) {
+  const [imageError, setImageError] = useState(false)
+
+  const handleImageError = () => {
+    setImageError(true)
+  }
+
   return (
     <Link href={`/mindy/${resource.id}`} className="block">
       <Card className="overflow-hidden group h-full">
-        {resource.thumbnail_url && (
-          <div className="relative w-full h-40 bg-muted overflow-hidden">
+        <div className="relative w-full h-40 bg-muted overflow-hidden">
+          {resource.thumbnail_url && !imageError ? (
             <img
               src={resource.thumbnail_url}
               alt={resource.title}
               loading="lazy"
               width={400}
               height={160}
+              onError={handleImageError}
               style={{ objectFit: 'cover', width: '100%', height: '100%' }}
               className="transition-transform duration-300 group-hover:scale-105"
               decoding="async"
               fetchPriority="low"
             />
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <ImageOff className="w-8 h-8 text-muted-foreground opacity-50" />
+            </div>
+          )}
+        </div>
         <CardContent className="p-4">
           <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">
             {resource.title}
