@@ -3,6 +3,7 @@ import { ResourcesClient } from './client'
 import { cookies } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { Database } from '@/types/supabase'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -11,7 +12,6 @@ type ResourceRow = Database['public']['Tables']['resources']['Row']
 
 async function fetchUniqueValues(table: string, column: keyof ResourceRow): Promise<string[]> {
   try {
-    const cookieStore = cookies()
     const supabase = await createClient()
     
     const { data, error } = await supabase
@@ -42,7 +42,6 @@ export default async function ResourcesPage() {
   const t = await getTranslations('mindy')
   
   try {
-    const cookieStore = cookies()
     const supabase = await createClient()
 
     // Fetch resources with error handling
@@ -93,10 +92,12 @@ export default async function ResourcesPage() {
     }
 
     return (
-      <ResourcesClient 
-        resources={resources} 
-        filterOptions={filterOptions}
-      />
+      <ErrorBoundary>
+        <ResourcesClient 
+          resources={resources} 
+          filterOptions={filterOptions}
+        />
+      </ErrorBoundary>
     )
   } catch (error) {
     console.error('Error in ResourcesPage:', error)

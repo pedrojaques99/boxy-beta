@@ -8,9 +8,11 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/client'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AlertCircle } from 'lucide-react'
 
 interface Resource {
   id: string
@@ -48,6 +50,7 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
   const searchParams = useSearchParams()
   const [visibleItems, setVisibleItems] = useState(ITEMS_PER_PAGE)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const observerTarget = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -55,7 +58,7 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
   const currentSubcategory = searchParams.get('subcategory')
   const currentSoftware = searchParams.get('software')
 
-  const handleFilterClick = (key: 'category' | 'subcategory' | 'software', value: string | null) => {
+  const handleFilterClick = useCallback((key: 'category' | 'subcategory' | 'software', value: string | null) => {
     if (!value) return
     const params = new URLSearchParams(searchParams.toString())
     const currentValue = searchParams.get(key)
@@ -66,11 +69,11 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
       params.set(key, value)
     }
     router.push(`/mindy?${params.toString()}`)
-  }
+  }, [searchParams, router])
 
-  const isTagActive = (key: 'category' | 'subcategory' | 'software', value: string) => {
+  const isTagActive = useCallback((key: 'category' | 'subcategory' | 'software', value: string) => {
     return searchParams.get(key) === value
-  }
+  }, [searchParams])
 
   // Memoize filtered resources with null checks
   const filteredResources = useMemo(() => {
@@ -88,10 +91,10 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
   // Loading state for images
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
 
-  const handleImageLoad = (id: string) => {
+  const handleImageLoad = useCallback((id: string) => {
     if (!id) return
     setLoadedImages(prev => new Set(prev).add(id))
-  }
+  }, [])
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -117,10 +120,22 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
   const visibleResources = filteredResources.slice(0, visibleItems)
 
   // Safe image URL generation
-  const getImageUrl = (resource: Resource) => {
+  const getImageUrl = useCallback((resource: Resource) => {
     if (resource.thumbnail_url) return resource.thumbnail_url
     if (resource.url) return `https://image.thum.io/get/${resource.url}`
-    return '/images/placeholder.jpg' // Add a placeholder image
+    return '/images/placeholder.jpg'
+  }, [])
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -162,7 +177,6 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
                       onLoad={() => handleImageLoad(resource.id)}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       onError={(e) => {
-                        // Fallback to placeholder on error
                         const target = e.target as HTMLImageElement
                         target.src = '/images/placeholder.jpg'
                       }}
@@ -248,9 +262,7 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
           )}
           
           {/* Observer target */}
-          {visibleItems < filteredResources.length && (
-            <div ref={observerTarget} className="h-10" />
-          )}
+          <div ref={observerTarget} className="h-10" />
         </>
       )}
     </div>
