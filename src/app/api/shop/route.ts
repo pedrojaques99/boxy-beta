@@ -3,10 +3,6 @@ import { createClient } from '@supabase/supabase-js'
 
 // Mark this route as dynamic
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-// Configure runtime
-export const runtime = 'edge'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

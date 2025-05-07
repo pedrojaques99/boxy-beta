@@ -7,15 +7,18 @@ let supabaseClient: ReturnType<typeof createBrowserClient<Database>> | null = nu
 // Cookie handling utilities
 const cookieHandler = {
   get(name: string) {
+    if (typeof document === 'undefined') return undefined
     const cookie = document.cookie
       .split('; ')
       .find((row) => row.startsWith(`${name}=`))
     return cookie ? cookie.split('=')[1] : undefined
   },
   set(name: string, value: string, options?: { maxAge?: number }) {
+    if (typeof document === 'undefined') return
     document.cookie = `${name}=${value}; path=/; ${options?.maxAge ? `max-age=${options.maxAge}` : ''}`
   },
   remove(name: string) {
+    if (typeof document === 'undefined') return
     document.cookie = `${name}=; path=/; max-age=0`
   }
 }
@@ -37,13 +40,21 @@ export function createClient() {
   // Check if we're in a browser environment
   const isBrowser = typeof window !== 'undefined'
   
-  // If not in browser, return a mock to avoid errors
+  // If not in browser, return a mock that matches the expected interface
   if (!isBrowser) {
     return {
       auth: {
         getSession: () => Promise.resolve({ data: { session: null }, error: null }),
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
       },
+      from: () => ({
+        select: () => ({
+          order: () => Promise.resolve({ data: [], error: null }),
+          eq: () => Promise.resolve({ data: [], error: null }),
+          not: () => Promise.resolve({ data: [], error: null }),
+          or: () => Promise.resolve({ data: [], error: null }),
+        }),
+      }),
     } as any
   }
   
