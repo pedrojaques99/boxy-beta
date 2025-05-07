@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+// Configure runtime
+export const runtime = 'edge'
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -14,6 +21,21 @@ export async function GET(request: Request) {
     const type = searchParams.get('type')
     const category = searchParams.get('category')
     const software = searchParams.get('software')
+
+    // Validate inputs
+    if (isNaN(page) || page < 1) {
+      return NextResponse.json(
+        { error: 'Invalid page number' },
+        { status: 400 }
+      )
+    }
+
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      return NextResponse.json(
+        { error: 'Invalid limit. Must be between 1 and 100' },
+        { status: 400 }
+      )
+    }
 
     // Calculate offset for pagination
     const offset = (page - 1) * limit
@@ -43,7 +65,18 @@ export async function GET(request: Request) {
     const { data: products, error, count } = await query
 
     if (error) {
-      throw error
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: 'Database error occurred' },
+        { status: 500 }
+      )
+    }
+
+    if (!products) {
+      return NextResponse.json(
+        { error: 'No products found' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json({
@@ -56,7 +89,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch products' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
