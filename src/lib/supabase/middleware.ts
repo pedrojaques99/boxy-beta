@@ -43,9 +43,9 @@ export async function updateSession(request: NextRequest) {
             value: '',
             ...options,
           })
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+            supabaseResponse = NextResponse.next({
+              request,
+            })
           supabaseResponse.cookies.set({
             name,
             value: '',

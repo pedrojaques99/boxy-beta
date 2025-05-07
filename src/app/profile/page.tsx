@@ -132,9 +132,9 @@ export default function ProfilePage() {
 
       // Upload the new avatar
       const publicUrl = await authService.uploadFile('avatars', filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
+          cacheControl: '3600',
+          upsert: false
+        });
 
       // Update profile with new avatar URL
       const updatedProfile = await authService.saveUserProfile({

@@ -1,8 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
-import { ResourcesClient } from './client'
-import { getTranslations } from 'next-intl/server'
-import { Database } from '@/types/supabase'
-import { ErrorBoundary } from '@/components/error-boundary'
+// import { createClient } from '@/lib/supabase/server'
+// import { getTranslations } from 'next-intl/server'
+// import { Database } from '@/types/supabase'
 
 console.log('[MINDY] Início do arquivo page.tsx')
 
