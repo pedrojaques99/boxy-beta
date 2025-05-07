@@ -1,5 +1,7 @@
 'use client'
 
+import { ResourceCard } from '@/components/mindy/resource-card'
+
 interface Resource {
   id: string
   title: string
@@ -14,14 +16,11 @@ export function ResourcesClient({ resources = [] }: ResourcesClientProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Recursos</h1>
-      <ul className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {resources.map((resource) => (
-          <li key={resource.id} className="border-b pb-2">
-            <h2 className="text-xl font-semibold">{resource.title}</h2>
-            <p className="text-muted-foreground">{resource.description}</p>
-          </li>
+          <ResourceCard key={resource.id} resource={resource} />
         ))}
-      </ul>
+      </div>
     </div>
   )
 } 
