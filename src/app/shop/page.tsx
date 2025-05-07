@@ -1,14 +1,19 @@
-import { Suspense } from 'react'
-import { ProductSkeleton } from '@/components/shop/product-skeleton'
+import { getDictionary } from '@/i18n'
+import { Locale, i18n } from '@/i18n/settings'
 import ShopClient from './client'
+import { headers } from 'next/headers'
+import { Suspense } from 'react'
 
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
+export default async function ShopPage() {
+  const headersList = headers()
+  const locale = (headersList.get('x-locale') || i18n.defaultLocale) as Locale
+  const t = await getDictionary(locale)
 
-export default function ShopPage() {
   return (
-    <Suspense fallback={<p>Loading shop...</p>}>
-      <ShopClient />
-    </Suspense>
+    <main>
+      <Suspense fallback={<div>Loading...</div>}>
+        <ShopClient t={t} />
+      </Suspense>
+    </main>
   )
 }

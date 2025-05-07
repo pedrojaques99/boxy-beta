@@ -143,57 +143,47 @@ export function Navigation() {
             <Link
               href="/about"
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                "text-foreground/60 hover:text-foreground/80",
-                "dark:text-foreground/60 dark:hover:text-foreground/80",
-                pathname === "/about" && "text-foreground dark:text-foreground font-medium"
+                'text-sm font-medium transition-colors hover:text-primary',
+                isActive('/about') ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {t.navigation?.about}
+              {t?.navigation?.about}
             </Link>
             <Link
               href="/shop"
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                "text-foreground/60 hover:text-foreground/80",
-                "dark:text-foreground/60 dark:hover:text-foreground/80",
-                pathname === "/shop" && "text-foreground dark:text-foreground font-medium"
+                'text-sm font-medium transition-colors hover:text-primary',
+                isActive('/shop') ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {t.navigation?.shop}
+              {t?.navigation?.shop}
             </Link>
             <Link
               href="/labs"
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                "text-foreground/60 hover:text-foreground/80",
-                "dark:text-foreground/60 dark:hover:text-foreground/80",
-                pathname === "/labs" && "text-foreground dark:text-foreground font-medium"
+                'text-sm font-medium transition-colors hover:text-primary',
+                isActive('/labs') ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {t.navigation?.labs}
+              {t?.navigation?.labs}
             </Link>
             <Link
               href="/mindy"
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                "text-foreground/60 hover:text-foreground/80",
-                "dark:text-foreground/60 dark:hover:text-foreground/80",
-                pathname === "/mindy" && "text-foreground dark:text-foreground font-medium"
+                'text-sm font-medium transition-colors hover:text-primary',
+                isActive('/mindy') ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {t.navigation?.mindy}
+              {t?.navigation?.mindy}
             </Link>
             <Link
               href="/price"
               className={cn(
-                "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                "text-foreground/60 hover:text-foreground/80",
-                "dark:text-foreground/60 dark:hover:text-foreground/80",
-                pathname === "/price" && "text-foreground dark:text-foreground font-medium"
+                'text-sm font-medium transition-colors hover:text-primary',
+                isActive('/price') ? 'text-primary' : 'text-muted-foreground'
               )}
             >
-              {t.navigation?.pricing}
+              {t?.navigation?.pricing}
             </Link>
           </nav>
         </div>
@@ -222,13 +212,13 @@ export function Navigation() {
                     className="rounded-sm"
                   />
                   <span className="sr-only">
-                    {locale === 'pt-BR' ? t.navigation?.switchToEnglish : t.navigation?.switchToPortuguese}
+                    {locale === 'pt-BR' ? t?.navigation?.switchToEnglish : t?.navigation?.switchToPortuguese}
                   </span>
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {locale === 'pt-BR' ? t.navigation?.switchToEnglish : t.navigation?.switchToPortuguese}
+                {locale === 'pt-BR' ? t?.navigation?.switchToEnglish : t?.navigation?.switchToPortuguese}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -244,11 +234,11 @@ export function Navigation() {
                   ) : (
                     <Moon className="h-4 w-4" />
                   )}
-                  <span className="sr-only">{t.navigation?.toggleTheme}</span>
+                  <span className="sr-only">{t?.navigation?.toggleTheme}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {t.navigation?.toggleTheme}
+                {t?.navigation?.toggleTheme}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -266,7 +256,7 @@ export function Navigation() {
                   )}
                 >
                   <User className="h-4 w-4" />
-                  {t.navigation?.myAccount}
+                  {t?.navigation?.myAccount}
                 </Link>
                 <Button
                   variant="ghost"
@@ -275,7 +265,7 @@ export function Navigation() {
                   className="text-foreground/60 hover:text-foreground/80"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  {t.navigation?.signOut}
+                  {t?.navigation?.signOut}
                 </Button>
               </>
             ) : (
@@ -288,7 +278,7 @@ export function Navigation() {
                   pathname === "/auth" && "text-foreground dark:text-foreground font-medium"
                 )}
               >
-                {t.navigation?.signIn}
+                {t?.navigation?.signIn}
               </Link>
             )}
           </nav>

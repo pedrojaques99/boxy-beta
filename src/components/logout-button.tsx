@@ -17,5 +17,5 @@ export function LogoutButton() {
 
   if (!t) return null
 
-  return <Button onClick={logout}>{t.protected.logout}</Button>
+  return <Button onClick={logout}>{t?.protected?.logout}</Button>
 }

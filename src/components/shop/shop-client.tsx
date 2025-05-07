@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useTheme } from '@/lib/theme-context'
-import { Product } from '@/types'
+import { Product, ShopTranslations } from '@/types/shop'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -10,6 +10,8 @@ import { Dictionary } from '@/i18n/types'
 import { useEffect, useState, useCallback } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Loader2 } from 'lucide-react'
+import { LikeButton } from '@/components/LikeButton'
+import { createClient } from '@/lib/supabase/client'
 
 /**
  * Props interface for the ShopClient component
@@ -58,6 +60,17 @@ export function ShopClient({ products: initialProducts, t }: ShopClientProps) {
     threshold: 0,
     rootMargin: '100px',
   })
+
+  const [userId, setUserId] = useState<string | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id || null)
+    }
+    getUser()
+  }, [supabase])
 
   /**
    * Fetches more products when scrolling
@@ -132,137 +145,60 @@ export function ShopClient({ products: initialProducts, t }: ShopClientProps) {
   return (
     <div className="container mx-auto py-8">
       {/* Page Title */}
-      <h1 className="mb-8 text-3xl font-bold text-foreground">{t.shop.title}</h1>
+      <h1 className="mb-8 text-3xl font-bold text-foreground">{t?.shop?.title}</h1>
       
       {/* Product Grid */}
-      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <Link
+          <motion.div
             key={product.id}
-            href={`/shop/${product.id}`}
-            className="block break-inside-avoid"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="group relative overflow-hidden rounded-lg border bg-background/50 backdrop-blur-sm hover:bg-background/80 transition-colors"
           >
-            {/* Product Card */}
-            <Card className="overflow-hidden group h-full">
-              {/* Product Image */}
-              {product.thumb && (
-                <div className="relative w-full overflow-hidden bg-muted">
+            <Link href={`/shop/${product.id}`} className="block">
+              <div className="aspect-square overflow-hidden">
                   <img
                     src={product.thumb}
                     alt={product.name}
-                    className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  {/* Type Badge */}
-                  {product.type && (
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 1 }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleFilterClick('type', product.type!)
-                      }}
-                      className={`absolute top-2 right-2 px-2 py-1 rounded-md text-sm transition-all ${
-                        isTagActive('type', product.type)
-                          ? 'bg-primary/20 text-primary-foreground shadow-md text-xs'
-                          : 'bg-background/20 border border-primary/20 text-primary hover:bg-primary/10 text-xs'
-                      }`}
-                    >
-                      {product.type}
-                    </motion.button>
-                  )}
                 </div>
-              )}
-              
-              {/* Product Content */}
-              <CardContent className="p-4">
-                {/* Product Name */}
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">
+              <div className="p-4">
+                <h3 className="font-medium text-lg text-foreground group-hover:text-primary transition-colors">
                     {product.name}
-                  </h2>
-                </div>
-                {/* Product Description */}
-                {product.description && (
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                </h3>
+                <p className="text-sm text-muted-foreground line-clamp-2">
                     {product.description}
                   </p>
-                )}
-                {/* Category and Software Tags */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {/* Category Tag */}
-                  {product.category && (
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 1 }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleFilterClick('category', product.category!)
-                      }}
-                      className={`rounded-full px-2 py-1 text-xs transition-all border border-stone-800 hover:border-stone-600 ${
-                        isTagActive('category', product.category)
-                          ? 'bg-secondary text-secondary-foreground shadow-md text-xs'
-                          : 'bg-secondary/10 dark:bg-secondary/20 text-secondary-foreground hover:bg-secondary/20 dark:hover:bg-secondary/30 text-xs'
-                      }`}
-                    >
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">
                       {product.category}
-                    </motion.button>
-                  )}
-                  {/* Software Tag */}
+                    </span>
                   {product.software && (
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 1 }}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleFilterClick('software', product.software!)
-                      }}
-                      className={`rounded-full px-2 py-1 text-xs transition-all border border-stone-800 hover:border-stone-600 ${
-                        isTagActive('software', product.software)
-                          ? 'bg-secondary text-secondary-foreground shadow-md text-xs'
-                          : 'bg-background border border-secondary text-secondary-foreground hover:bg-secondary/10 text-xs'
-                      }`}
-                    >
-                      {product.software}
-                    </motion.button>
-                  )}
-                </div>
-                
-                {/* Additional Tags */}
-                {product.tags && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {product.tags.map((tag) => (
-                      <motion.button
-                        key={tag}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleFilterClick('category', tag)
-                        }}
-                        className={`rounded-full px-2 py-1 text-xs transition-all ${
-                          isTagActive('category', tag)
-                            ? 'bg-muted text-foreground shadow-md'
-                            : 'bg-muted/50 text-muted-foreground hover:bg-muted/80'
-                        }`}
-                      >
-                        #{tag}
-                      </motion.button>
-                    ))}
+                      <span className="text-xs font-medium text-muted-foreground">
+                        • {product.software}
+                      </span>
+                    )}
                   </div>
-                )}
-              </CardContent>
-
-              {/* View Details Link */}
-              <CardFooter className="p-4 pt-0">
-                <span className="text-sm font-medium text-primary group-hover:underline text-xs hover:pl-1 transition-all">
-                  {t.shop.viewDetails}
+                  <LikeButton type="product" id={product.id} userId={userId} />
+                </div>
+                <div className="mt-4">
+                  <span className="text-sm text-primary group-hover:underline">
+                    {t?.shop?.viewDetails}
                 </span>
-              </CardFooter>
-            </Card>
+                </div>
+              </div>
           </Link>
+          </motion.div>
         ))}
+        {products.length === 0 && (
+          <div className="col-span-full text-center py-8 text-muted-foreground">
+            {t?.shop?.noProducts}
+          </div>
+        )}
       </div>
 
       {/* Loading Indicator */}

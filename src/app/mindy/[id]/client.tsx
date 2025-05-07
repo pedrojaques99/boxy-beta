@@ -7,24 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
-import { useLocale } from 'next-intl'
-
-interface Resource {
-  id: string
-  title: string
-  url: string
-  tags: string[]
-  category: string
-  subcategory: string
-  description_pt: string
-  description_en: string
-  created_by: string
-  profiles?: {
-    name: string
-    avatar_url: string | null
-  }
-}
+import { useTranslations } from '@/hooks/use-translations'
+import { Resource } from '@/types/mindy'
 
 interface Comment {
   id: string
@@ -50,9 +34,20 @@ export function ResourceDetailClient({
   comments,
   likes,
 }: ResourceDetailClientProps) {
-  const t = useTranslations('mindy')
-  const locale = useLocale()
+  const { t, locale } = useTranslations()
   const description = locale === 'pt-BR' ? resource.description_pt : resource.description_en
+
+  if (!t?.mindy) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -79,7 +74,7 @@ export function ResourceDetailClient({
               </div>
 
               <div className="prose max-w-none mb-8">
-                <h2 className="text-xl font-semibold mb-2">{t('details.description')}</h2>
+                <h2 className="text-xl font-semibold mb-2">{t.mindy.details.description}</h2>
                 <p className="mb-6">{description}</p>
               </div>
 
@@ -89,17 +84,17 @@ export function ResourceDetailClient({
                     <AvatarImage src={resource.profiles?.avatar_url || undefined} />
                     <AvatarFallback>{resource.profiles?.name?.[0] || 'U'}</AvatarFallback>
                   </Avatar>
-                  <span>{t('details.createdBy')} {resource.profiles?.name}</span>
+                  <span>{t.mindy.details.createdBy} {resource.profiles?.name}</span>
                 </div>
                 <Button asChild>
                   <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                    {t('details.visitResource')}
+                    {t.mindy.details.visitResource}
                   </a>
                 </Button>
               </div>
 
               <div className="border-t pt-6">
-                <h2 className="text-xl font-semibold mb-4">{t('details.comments')}</h2>
+                <h2 className="text-xl font-semibold mb-4">{t.mindy.details.comments}</h2>
                 <div className="space-y-4">
                   {comments?.map((comment: Comment) => (
                     <div key={comment.id} className="flex gap-4">
@@ -122,7 +117,7 @@ export function ResourceDetailClient({
         <div>
           <Card className="mb-6">
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">{t('details.relatedResources')}</h2>
+              <h2 className="text-xl font-semibold mb-4">{t.mindy.details.relatedResources}</h2>
               <div className="space-y-4">
                 {relatedResources?.map((related: Resource) => (
                   <Link key={related.id} href={`/mindy/${related.id}`}>

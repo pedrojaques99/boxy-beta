@@ -11,10 +11,10 @@ export async function GET(
   
   // If this is a mindy or shop route, handle it dynamically
   if (path === 'mindy' || path === 'shop') {
-    // Just pass through to the actual page
-    return NextResponse.next()
+    // Redirect to the actual page
+    return NextResponse.redirect(new URL(`/${path}`, request.url))
   }
   
-  // For other routes, continue normal processing
-  return NextResponse.next()
+  // For other routes, return a 404 response
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
 } 

@@ -14,11 +14,20 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import createIntlMiddleware from 'next-intl/middleware';
+import { i18n } from './src/i18n/settings';
+
+// Create the next-intl middleware
+const intlMiddleware = createIntlMiddleware({
+  locales: i18n.locales,
+  defaultLocale: i18n.defaultLocale,
+  localePrefix: 'as-needed'
+});
 
 export async function middleware(req: NextRequest) {
-  // Create a response object that we can modify
-  let res = NextResponse.next()
-
+  // Handle internationalization first
+  const response = intlMiddleware(req);
+  
   // Create the Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,12 +43,7 @@ export async function middleware(req: NextRequest) {
             value,
             ...options,
           })
-          res = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          })
-          res.cookies.set({
+          response.cookies.set({
             name,
             value,
             ...options,
@@ -51,12 +55,7 @@ export async function middleware(req: NextRequest) {
             value: '',
             ...options,
           })
-          res = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          })
-          res.cookies.set({
+          response.cookies.set({
             name,
             value: '',
             ...options,
@@ -123,27 +122,23 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/profile', req.url))
     }
 
-    return res
+    return response
   } catch (error) {
     console.error('Middleware error:', error)
-    return res
+    return response
   }
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all protected routes and auth routes:
-     * - /profile/*
-     * - /checkout/*
-     * - /price/*
-     * - /admin/*
-     * - /auth/*
+     * Match all routes except for:
+     * - API routes
+     * - /_next (Next.js internals)
+     * - /_vercel (Vercel internals)
+     * - /_static (static files)
+     * - /favicon.ico, /sitemap.xml, /robots.txt (static files)
      */
-    '/profile/:path*',
-    '/checkout/:path*',
-    '/price/:path*',
-    '/admin/:path*',
-    '/auth/:path*',
+    '/((?!api|_next|_vercel|_static|favicon.ico|sitemap.xml|robots.txt).*)'
   ],
-}
+} 

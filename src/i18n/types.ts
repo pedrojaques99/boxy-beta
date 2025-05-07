@@ -1,4 +1,51 @@
-export type Dictionary = {
+import type { Locale } from './settings'
+
+export interface MindyTranslations {
+  title: string
+  filters: {
+    category: string
+    subcategory: string
+    software: string
+  }
+  search: {
+    placeholder: string
+    noResults: string
+    recentSearches: string
+  }
+  details: {
+    title: string
+    description: string
+    createdBy: string
+    visitResource: string
+    comments: string
+    relatedResources: string
+    seeDetails: string
+  }
+}
+
+export interface ShopTranslations {
+  title: string
+  viewDetails: string
+  noProducts: string
+  search: {
+    placeholder: string
+    noResults: string
+    recentSearches: string
+  }
+  filters: {
+    all: string
+    category: string
+    software: string
+    type: string
+    textures: string
+    models: string
+    materials: string
+    hdris: string
+    plugins: string
+  }
+}
+
+export interface Dictionary {
   auth: {
     welcome: string
     signInToContinue: string
@@ -32,27 +79,7 @@ export type Dictionary = {
     hello: string
     logout: string
   }
-  shop: {
-    title: string
-    viewDetails: string
-    noProducts: string
-    search: {
-      placeholder: string
-      noResults: string
-      recentSearches: string
-    }
-    filters: {
-      all: string
-      category: string
-      software: string
-      type: string
-      textures: string
-      models: string
-      materials: string
-      hdris: string
-      plugins: string
-    }
-  }
+  shop: ShopTranslations
   navigation: {
     about: string
     shop: string
@@ -67,6 +94,7 @@ export type Dictionary = {
     signIn: string
     getStarted: string
   }
+  mindy: MindyTranslations
   admin: {
     loading: string
     title: string
@@ -263,26 +291,8 @@ export type Dictionary = {
     }
     copyright: string
   }
-  mindy: {
-    title: string
-    filters: {
-      category: string
-      subcategory: string
-      software: string
-    }
-    search: {
-      placeholder: string
-      noResults: string
-      recentSearches: string
-    }
-    details: {
-      title: string
-      description: string
-      createdBy: string
-      visitResource: string
-      comments: string
-      relatedResources: string
-      seeDetails: string
-    }
-  }
+}
+
+export type TranslationResponse = {
+  [key in Locale]: Dictionary
 } 

@@ -3,26 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { Locale } from '@/i18n/settings'
 import type { Dictionary } from '@/i18n/types'
-import { getDictionary } from '@/i18n'
 import { i18n } from '@/i18n/settings'
-
-export type Translations = {
-  navigation: {
-    about: string
-    shop: string
-    labs: string
-    mindy: string
-    pricing: string
-    switchToEnglish: string
-    switchToPortuguese: string
-    toggleTheme: string
-    myAccount: string
-    signOut: string
-    signIn: string
-    getStarted: string
-  }
-  // ... existing code ...
-}
 
 export function useTranslations() {
   const [dictionary, setDictionary] = useState<Dictionary | null>(null)
@@ -51,7 +32,21 @@ export function useTranslations() {
     }
 
     // Load dictionary
-    getDictionary(locale).then(setDictionary)
+    const loadDictionary = async () => {
+      try {
+        const module = await import(`@/i18n/locales/${locale}.json`)
+        setDictionary(module.default)
+      } catch (error) {
+        console.error(`Failed to load dictionary for locale: ${locale}`, error)
+        // Fallback to English if the requested locale fails to load
+        if (locale !== 'en') {
+          const enModule = await import('@/i18n/locales/en.json')
+          setDictionary(enModule.default)
+        }
+      }
+    }
+
+    loadDictionary()
   }, [locale])
 
   // Listen for localStorage changes from other components
@@ -66,7 +61,6 @@ export function useTranslations() {
             document.documentElement.lang = newLocale
           }
           setLocale(newLocale)
-          getDictionary(newLocale).then(setDictionary)
         }
       }
     }
@@ -75,5 +69,5 @@ export function useTranslations() {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
-  return { t: dictionary, locale }
+  return { t: dictionary, locale, setLocale }
 } 
