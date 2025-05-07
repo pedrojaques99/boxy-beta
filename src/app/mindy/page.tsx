@@ -112,14 +112,15 @@ export default async function ResourcesPage() {
     }
 
     console.log('[MINDY] Antes de retornar ResourcesClient')
-    return (
-      <ErrorBoundary>
-        <ResourcesClient 
-          resources={resources} 
-          filterOptions={filterOptions}
-        />
-      </ErrorBoundary>
-    )
+    // return (
+    //   <ErrorBoundary>
+    //     <ResourcesClient 
+    //       resources={resources} 
+    //       filterOptions={filterOptions}
+    //     />
+    //   </ErrorBoundary>
+    // )
+    return <div>Testando Mindy</div>
   } catch (error) {
     console.error('[MINDY] Erro no ResourcesPage:', error)
     return (
