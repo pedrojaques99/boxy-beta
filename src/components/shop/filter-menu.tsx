@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -13,58 +12,39 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Filter, ArrowUpDown, X } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface FilterMenuProps {
-  onFilterChange: (filters: {
-    category: string | null
-    software: string | null
-    sortBy: 'created_at' | 'name'
-    sortOrder: 'asc' | 'desc'
-    isFree: boolean
-  }) => void
   categories: string[]
   software: string[]
-  isFree: boolean
 }
 
-export function FilterMenu({ onFilterChange, categories, software, isFree }: FilterMenuProps) {
+export function FilterMenu({ categories, software }: FilterMenuProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
-  
-  const [filters, setFilters] = useState({
-    category: searchParams.get('category') as string | null,
-    software: searchParams.get('software') as string | null,
-    sortBy: 'created_at' as 'created_at' | 'name',
-    sortOrder: 'desc' as 'asc' | 'desc',
-    isFree: isFree
-  })
 
-  // Sync isFree prop with local state
-  useEffect(() => {
-    setFilters(prev => ({ ...prev, isFree }))
-  }, [isFree])
+  // Derive filtros diretamente da URL
+  const category = searchParams.get('category') || 'all'
+  const softwareValue = searchParams.get('software') || 'all'
+  const isFree = searchParams.get('free') === 'true'
+  const sortBy = searchParams.get('sortBy') || 'created_at'
+  const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-  // Sync URL parameters with local state
-  useEffect(() => {
-    const category = searchParams.get('category')
-    const software = searchParams.get('software')
-    const isFree = searchParams.get('free') === 'true'
-
-    setFilters(prev => ({
-      ...prev,
-      category,
-      software,
-      isFree
-    }))
-  }, [searchParams])
-
-  const handleFilterChange = (key: keyof typeof filters, value: string | null | boolean) => {
-    const newFilters = { ...filters, [key]: value }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+  const handleFilterChange = (key: string, value: string | boolean) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (key === 'isFree') {
+      if (value) params.set('free', 'true')
+      else params.delete('free')
+    } else if (key === 'category' || key === 'software') {
+      if (value === 'all' || value === null) params.delete(key)
+      else params.set(key, value as string)
+    } else if (key === 'sortBy' || key === 'sortOrder') {
+      params.set(key, value as string)
+    }
+    router.push(`/shop?${params.toString()}`)
   }
 
-  const hasActiveFilters = filters.category || filters.software || filters.sortBy !== 'created_at' || filters.isFree
+  const hasActiveFilters = category !== 'all' || softwareValue !== 'all' || isFree || sortBy !== 'created_at'
 
   return (
     <motion.div 
@@ -81,7 +61,7 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
         <div className="flex items-center space-x-2">
           <Checkbox
             id="free-filter"
-            checked={filters.isFree}
+            checked={isFree}
             onCheckedChange={(checked) => handleFilterChange('isFree', checked === true)}
             className="border-border/50"
           />
@@ -91,8 +71,8 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
         </div>
 
         <Select
-          value={filters.category || 'all'}
-          onValueChange={(value: string) => handleFilterChange('category', value === 'all' ? null : value)}
+          value={category}
+          onValueChange={(value: string) => handleFilterChange('category', value)}
         >
           <SelectTrigger 
             className="w-[160px] bg-background border-border/50 hover:bg-accent/5 transition-colors"
@@ -116,8 +96,8 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
         </Select>
 
         <Select
-          value={filters.software || 'all'}
-          onValueChange={(value: string) => handleFilterChange('software', value === 'all' ? null : value)}
+          value={softwareValue}
+          onValueChange={(value: string) => handleFilterChange('software', value)}
         >
           <SelectTrigger 
             className="w-[160px] bg-background border-border/50 hover:bg-accent/5 transition-colors"
@@ -142,7 +122,7 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
 
         <div className="flex items-center gap-2">
           <Select
-            value={filters.sortBy}
+            value={sortBy}
             onValueChange={(value: 'created_at' | 'name') => handleFilterChange('sortBy', value)}
           >
             <SelectTrigger 
@@ -165,11 +145,11 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
           <Button
             variant="outline"
             size="icon"
-            onClick={() => handleFilterChange('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')}
+            onClick={() => handleFilterChange('sortOrder', sortOrder === 'asc' ? 'desc' : 'asc')}
             className="bg-background border-border/50 hover:bg-accent/5 transition-all"
           >
             <motion.div
-              animate={{ rotate: filters.sortOrder === 'asc' ? 0 : 180 }}
+              animate={{ rotate: sortOrder === 'asc' ? 0 : 180 }}
               transition={{ duration: 0.2 }}
             >
               <ArrowUpDown className="h-4 w-4" />
@@ -189,20 +169,7 @@ export function FilterMenu({ onFilterChange, categories, software, isFree }: Fil
                 variant="outline"
                 size="icon"
                 onClick={() => {
-                  setFilters({
-                    category: null,
-                    software: null,
-                    sortBy: 'created_at',
-                    sortOrder: 'desc',
-                    isFree: false
-                  })
-                  onFilterChange({
-                    category: null,
-                    software: null,
-                    sortBy: 'created_at',
-                    sortOrder: 'desc',
-                    isFree: false
-                  })
+                  router.push('/shop')
                 }}
                 className="h-8 w-8 text-muted-foreground hover:text-foreground transition-colors"
               >

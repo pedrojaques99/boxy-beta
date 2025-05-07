@@ -9,12 +9,28 @@ interface Resource {
   category?: string | null
   subcategory?: string | null
   software?: string | null
+  thumbnail_url?: string | null
 }
 
 export function ResourceCard({ resource }: { resource: Resource }) {
   return (
     <Link href={`/mindy/${resource.id}`} className="block">
       <Card className="overflow-hidden group h-full">
+        {resource.thumbnail_url && (
+          <div className="relative w-full h-40 bg-muted overflow-hidden">
+            <img
+              src={resource.thumbnail_url}
+              alt={resource.title}
+              loading="lazy"
+              width={400}
+              height={160}
+              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+              className="transition-transform duration-300 group-hover:scale-105"
+              decoding="async"
+              fetchPriority="low"
+            />
+          </div>
+        )}
         <CardContent className="p-4">
           <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">
             {resource.title}

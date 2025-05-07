@@ -1,30 +1,52 @@
-import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/types/supabase'
-import { ResourcesClient } from './client'
+'use client'
 
-console.log('[MINDY] Início do arquivo page.tsx')
+import { SearchBar } from '@/components/shop/search-bar'
+import { useTranslations } from 'next-intl'
+import { useState } from 'react'
+import { Dictionary } from '@/i18n/types'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+type Resource = {
+  id: string
+  title: string
+  url: string
+  thumbnail_url: string
+  description: string
+  category: string
+  subcategory: string
+  software: string
+}
 
-type ResourceRow = Pick<Database['public']['Tables']['resources']['Row'], 'id' | 'title' | 'description'>
+export default function MindyPage() {
+  const t = useTranslations()
+  const [resources, setResources] = useState<Resource[]>([])
 
-export default async function ResourcesPage() {
-  const supabase = await createClient()
-  const { data: resourcesData, error } = await supabase
-    .from('resources')
-    .select('id, title, description')
-    .eq('approved', true)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('[MINDY] Erro ao buscar resources:', error)
-    return <div className="container mx-auto px-4 py-8">Erro ao carregar recursos.</div>
+  const handleSearch = async (query: string) => {
+    try {
+      const response = await fetch(`/api/mindy/search?q=${encodeURIComponent(query)}`)
+      if (!response.ok) throw new Error('Search failed')
+      const data = await response.json()
+      setResources(data.resources)
+    } catch (error) {
+      console.error('Search error:', error)
+    }
   }
 
-  if (!resourcesData || !Array.isArray(resourcesData)) {
-    return <div className="container mx-auto px-4 py-8">Nenhum recurso encontrado.</div>
-  }
-
-  return <ResourcesClient resources={resourcesData} />
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">{t('mindy.title')}</h1>
+      <SearchBar 
+        onSearch={handleSearch} 
+        t={t as unknown as Dictionary} 
+        context="resources" 
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {resources.map((resource) => (
+          <div key={resource.id} className="p-4 border rounded-lg">
+            <h3 className="font-semibold">{resource.title}</h3>
+            <p className="text-sm text-muted-foreground">{resource.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }

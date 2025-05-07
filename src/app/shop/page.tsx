@@ -12,16 +12,40 @@ import { ProductSkeleton } from '@/components/shop/product-skeleton'
 import { useSearchParams } from 'next/navigation'
 import { Dictionary } from '@/i18n/types'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslations } from 'next-intl'
 
 export default function ShopPage() {
+  const t = useTranslations()
+  const [products, setProducts] = useState<Product[]>([])
+
+  const handleSearch = async (query: string) => {
+    try {
+      const response = await fetch(`/api/shop/search?q=${encodeURIComponent(query)}`)
+      if (!response.ok) throw new Error('Search failed')
+      const data = await response.json()
+      setProducts(data.products)
+    } catch (error) {
+      console.error('Search error:', error)
+    }
+  }
+
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-900 dark:border-white"></div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">{t('shop.title')}</h1>
+      <SearchBar 
+        onSearch={handleSearch} 
+        t={t as unknown as Dictionary} 
+        context="products" 
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {products.map((product) => (
+          <div key={product.id} className="p-4 border rounded-lg">
+            <h3 className="font-semibold">{product.name}</h3>
+            <p className="text-sm text-muted-foreground">{product.description}</p>
+          </div>
+        ))}
       </div>
-    }>
-      <ShopPageContent />
-    </Suspense>
+    </div>
   )
 }
 
@@ -217,10 +241,8 @@ function ShopPageContent() {
       <div className="flex flex-col gap-4 mb-8">
         <SearchBar onSearch={handleSearch} t={t} />
         <FilterMenu 
-          onFilterChange={handleFilterChange}
           categories={categories}
           software={software}
-          isFree={isFree}
         />
       </div>
       {loading ? (

@@ -358,6 +358,11 @@
       "subcategory": "Subcategoria",
       "software": "Software"
     },
+    "search": {
+      "placeholder": "Buscar recursos...",
+      "noResults": "Nenhum recurso encontrado",
+      "recentSearches": "Buscas recentes"
+    },
     "details": {
       "title": "Detalhes do Recurso",
       "description": "Descrição",
