@@ -75,16 +75,19 @@ export default async function ResourcePage({ params }: { params: { id: string } 
     .eq('resource_id', params.id)
 
   return (
-    <>
+    <div className="container mx-auto px-4 py-8">
       <ResourceDetailClient
         resource={resource}
         relatedResources={relatedResources || []}
         comments={comments || []}
         likes={likes || []}
       />
+      <div className="mt-8">
+        <CommentsSection type="resource" id={resource.id} />
+      </div>
       <Suspense fallback={null}>
         <ResourceSocialClient resourceId={resource.id} />
       </Suspense>
-    </>
+    </div>
   )
 } 

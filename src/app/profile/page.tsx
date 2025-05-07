@@ -24,6 +24,12 @@ interface UserProfile {
   bio: string;
   created_at: string;
   subscription_type: 'free' | 'premium';
+  liked_resources?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    image_url: string;
+  }>;
 }
 
 export default function ProfilePage() {
@@ -97,7 +103,9 @@ export default function ProfilePage() {
   }, [router, authService]);
 
   const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,7 +258,7 @@ export default function ProfilePage() {
                   <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                     <span className="text-white text-sm font-medium flex items-center justify-center">{safeT('profile.clickToChange')}</span>
                   </div>
-                  <Input
+                  <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
@@ -395,6 +403,48 @@ export default function ProfilePage() {
                 {safeT('profile.manageSubscription')}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Liked Resources Section */}
+        <Card className="bg-card border-0 shadow-sm md:col-span-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              {safeT('profile.likedResources')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profile.liked_resources && profile.liked_resources.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {profile.liked_resources.map((resource) => (
+                  <Card key={resource.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="aspect-video relative">
+                      <img
+                        src={resource.image_url}
+                        alt={resource.title}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{resource.title}</h3>
+                      <p className="text-muted-foreground text-sm line-clamp-2">{resource.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">{safeT('profile.noLikedResources')}</p>
+                <Button
+                  onClick={() => router.push('/resources')}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  {safeT('profile.browseResources')}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

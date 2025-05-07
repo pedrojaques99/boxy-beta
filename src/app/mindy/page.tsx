@@ -2,8 +2,11 @@
 
 import { SearchBar } from '@/components/shop/search-bar'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dictionary } from '@/i18n/types'
+import { LikeButton } from '@/components/LikeButton'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 type Resource = {
   id: string
@@ -19,6 +22,16 @@ type Resource = {
 export default function MindyPage() {
   const t = useTranslations()
   const [resources, setResources] = useState<Resource[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id || null)
+    }
+    getUser()
+  }, [supabase])
 
   const handleSearch = async (query: string) => {
     try {
@@ -42,8 +55,19 @@ export default function MindyPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
         {resources.map((resource) => (
           <div key={resource.id} className="p-4 border rounded-lg">
-            <h3 className="font-semibold">{resource.title}</h3>
+            <Link href={`/mindy/${resource.id}`}>
+              <h3 className="font-semibold hover:text-primary transition-colors">{resource.title}</h3>
+            </Link>
             <p className="text-sm text-muted-foreground">{resource.description}</p>
+            <div className="mt-4 flex items-center gap-4">
+              <LikeButton type="resource" id={resource.id} userId={userId} />
+              <Link 
+                href={`/mindy/${resource.id}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {t('mindy.details.seeDetails')}
+              </Link>
+            </div>
           </div>
         ))}
       </div>
