@@ -7,6 +7,9 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Dictionary } from '@/i18n/types'
+import { useEffect, useState, useCallback } from 'react'
+import { useInView } from 'react-intersection-observer'
+import { Loader2 } from 'lucide-react'
 
 /**
  * Props interface for the ShopClient component
@@ -28,8 +31,9 @@ interface ShopClientProps {
  * - Hover animations
  * - Interactive tags
  * - Image optimization
+ * - Lazy loading with infinite scroll
  */
-export function ShopClient({ products, t }: ShopClientProps) {
+export function ShopClient({ products: initialProducts, t }: ShopClientProps) {
   // Theme context for dark/light mode
   const { theme } = useTheme()
   
@@ -41,6 +45,55 @@ export function ShopClient({ products, t }: ShopClientProps) {
   const currentType = searchParams.get('type')
   const currentCategory = searchParams.get('category')
   const currentSoftware = searchParams.get('software')
+
+  // State for pagination and loading
+  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const ITEMS_PER_PAGE = 20
+
+  // Intersection Observer for infinite scroll
+  const { ref, inView } = useInView({
+    threshold: 0,
+    rootMargin: '100px',
+  })
+
+  /**
+   * Fetches more products when scrolling
+   */
+  const fetchMoreProducts = useCallback(async () => {
+    if (loading || !hasMore) return
+
+    setLoading(true)
+    try {
+      const nextPage = page + 1
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('page', nextPage.toString())
+      params.set('limit', ITEMS_PER_PAGE.toString())
+
+      const response = await fetch(`/api/products?${params.toString()}`)
+      const data = await response.json()
+
+      if (data.products.length < ITEMS_PER_PAGE) {
+        setHasMore(false)
+      }
+
+      setProducts(prev => [...prev, ...data.products])
+      setPage(nextPage)
+    } catch (error) {
+      console.error('Error fetching more products:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [page, loading, hasMore, searchParams])
+
+  // Effect to load more products when scrolling
+  useEffect(() => {
+    if (inView) {
+      fetchMoreProducts()
+    }
+  }, [inView, fetchMoreProducts])
 
   /**
    * Handles filter button clicks
@@ -58,6 +111,11 @@ export function ShopClient({ products, t }: ShopClientProps) {
     } else {
       params.set(key, value)
     }
+    
+    // Reset pagination when filters change
+    params.set('page', '1')
+    params.set('limit', ITEMS_PER_PAGE.toString())
+    
     router.push(`/shop?${params.toString()}`)
   }
 
@@ -93,6 +151,8 @@ export function ShopClient({ products, t }: ShopClientProps) {
                     src={product.thumb}
                     alt={product.name}
                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
                   />
                   {/* Type Badge */}
                   {product.type && (
@@ -203,6 +263,16 @@ export function ShopClient({ products, t }: ShopClientProps) {
             </Card>
           </Link>
         ))}
+      </div>
+
+      {/* Loading Indicator */}
+      <div ref={ref} className="w-full flex justify-center py-8">
+        {loading && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Loading more products...</span>
+          </div>
+        )}
       </div>
     </div>
   )
