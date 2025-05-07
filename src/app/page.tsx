@@ -16,6 +16,7 @@ import { LatestProductsSection } from '@/components/home/latest-products-section
 import { useTranslations } from '@/hooks/use-translations';
 import { AboutSection } from '@/components/home/about-section';
 import { FaqSection } from '@/components/home/faq-section';
+import { createClient } from '@/lib/supabase/client';
 
 interface Product {
   id: string;
@@ -36,31 +37,46 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const authService = getAuthService();
   const { t } = useTranslations();
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: products } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6);
+      try {
+        const { data: products, error: productsError } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(6);
 
-      const { data: categoriesData } = await supabase
-        .from('products')
-        .select('category')
-        .not('category', 'is', null);
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
+          return;
+        }
 
-      if (products) setLatestProducts(products);
-      if (categoriesData) {
-        const uniqueCategories = [...new Set(categoriesData.map(item => item.category))];
-        setCategories(uniqueCategories);
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('products')
+          .select('category')
+          .not('category', 'is', null);
+
+        if (categoriesError) {
+          console.error('Error fetching categories:', categoriesError);
+          return;
+        }
+
+        if (products) setLatestProducts(products);
+        if (categoriesData) {
+          const uniqueCategories = [...new Set(categoriesData.map((item: { category: string }) => item.category))] as string[];
+          setCategories(uniqueCategories);
+        }
+      } catch (error) {
+        console.error('Error in fetchData:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     fetchData();
-  }, []);
+  }, [supabase]);
 
   if (!t) return null;
 

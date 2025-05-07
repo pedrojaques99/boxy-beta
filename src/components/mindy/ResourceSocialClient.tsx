@@ -4,7 +4,7 @@ import { CommentsSection } from '@/components/CommentsSection'
 import { useUserId } from '@/lib/auth/useUserId'
 
 export function ResourceSocialClient({ resourceId }: { resourceId: string }) {
-  const userId = useUserId()
+  const { userId } = useUserId()
   return (
     <>
       <div className="my-6 flex gap-4 items-center">

@@ -10,7 +10,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import { createClient } from '@/lib/supabase/client'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 
@@ -52,7 +51,6 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const observerTarget = useRef<HTMLDivElement>(null)
-  const supabase = createClient()
 
   const currentCategory = searchParams.get('category')
   const currentSubcategory = searchParams.get('subcategory')

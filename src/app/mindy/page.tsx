@@ -30,7 +30,7 @@ async function fetchUniqueValues(table: string, column: keyof ResourceRow): Prom
     
     // Type assertion to ensure we're working with the correct type
     const typedData = data as Array<Pick<ResourceRow, typeof column>>
-    return [...new Set(typedData.map(item => String(item[column])))].filter(Boolean)
+    return [...new Set(typedData.map(item => String(item[column])))] as string[]
   } catch (error) {
     console.error(`Error in fetchUniqueValues for ${column}:`, error)
     return []
