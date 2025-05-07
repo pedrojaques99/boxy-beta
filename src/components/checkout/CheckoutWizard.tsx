@@ -7,7 +7,7 @@
 'use client'
 
 import { useUser } from '@supabase/auth-helpers-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -30,9 +30,93 @@ import { Database } from '@/types/supabase'
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
 type Step = typeof STEPS[number]
 
+interface UserData {
+  name: string
+  email: string
+  street: string
+  number: string
+  complement: string
+  zip_code: string
+  neighborhood: string
+  city: string
+  state: string
+  country: string
+}
+
+interface CardData {
+  number: string
+  name: string
+  expiry: string
+  cvv: string
+  cpf: string
+}
+
 interface CheckoutWizardProps {
   defaultPlanId?: PlanId
   onSuccess?: () => void
+}
+
+// Utility functions
+const luhnCheck = (num: string): boolean => {
+  let arr = (num + '')
+    .split('')
+    .reverse()
+    .map(x => parseInt(x))
+  let lastDigit = arr.splice(0, 1)[0]
+  let sum = arr.reduce((acc, val, i) => (i % 2 !== 0 ? acc + val : acc + ((val * 2) % 9) || 9), 0)
+  sum += lastDigit
+  return sum % 10 === 0
+}
+
+const validateCPF = (cpf: string): boolean => {
+  cpf = cpf.replace(/[^\d]/g, '')
+  if (cpf.length !== 11) return false
+  if (/^(\d)\1{10}$/.test(cpf)) return false
+
+  let sum = 0
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf.charAt(i)) * (10 - i)
+  }
+  let rev = 11 - (sum % 11)
+  if (rev === 10 || rev === 11) rev = 0
+  if (rev !== parseInt(cpf.charAt(9))) return false
+
+  sum = 0
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf.charAt(i)) * (11 - i)
+  }
+  rev = 11 - (sum % 11)
+  if (rev === 10 || rev === 11) rev = 0
+  if (rev !== parseInt(cpf.charAt(10))) return false
+
+  return true
+}
+
+const validateExpiryDate = (expiry: string): boolean => {
+  const [month, year] = expiry.split('/')
+  const currentDate = new Date()
+  const currentYear = currentDate.getFullYear() % 100
+  const currentMonth = currentDate.getMonth() + 1
+
+  const expMonth = parseInt(month)
+  const expYear = parseInt(year)
+
+  if (expMonth < 1 || expMonth > 12) return false
+  if (expYear < currentYear) return false
+  if (expYear === currentYear && expMonth < currentMonth) return false
+
+  return true
+}
+
+// Format currency based on locale
+const formatCurrency = (amount: number, locale: string) => {
+  const formatter = new Intl.NumberFormat(locale === 'pt-BR' ? 'pt-BR' : 'en-US', {
+    style: 'currency',
+    currency: locale === 'pt-BR' ? 'BRL' : 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+  return formatter.format(amount)
 }
 
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
@@ -41,7 +125,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const { t, locale } = useTranslations()
   const [step, setStep] = useState(0)
   const [planId, setPlanId] = useState<PlanId | undefined>(defaultPlanId)
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     name: '',
     email: '',
     street: '',
@@ -53,7 +137,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     state: '',
     country: 'BR'
   })
-  const [card, setCard] = useState({
+  const [card, setCard] = useState<CardData>({
     number: '',
     name: '',
     expiry: '',
@@ -68,20 +152,22 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const authService = getAuthService()
   const supabaseClient = createClient()
 
-  // Add safe translation function with proper typing
-  const safeT = (key: string): string => {
-    if (!t) return key
-    const keys = key.split('.')
-    let value: any = t
-    for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k]
-      } else {
-        return key
+  // Memoize safeT function
+  const safeT = useMemo(() => {
+    return (key: string): string => {
+      if (!t) return key
+      const keys = key.split('.')
+      let value: any = t
+      for (const k of keys) {
+        if (value && typeof value === 'object' && k in value) {
+          value = value[k]
+        } else {
+          return key
+        }
       }
+      return typeof value === 'string' ? value : key
     }
-    return typeof value === 'string' ? value : key
-  }
+  }, [t])
 
   // Log to help debug initialization
   console.log('CheckoutWizard inicializado', { 
@@ -202,7 +288,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     if (step === STEPS.length - 1) {
       setLoading(true)
       
-      // Set a timeout to prevent infinite loading
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current)
       }
@@ -210,24 +295,23 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       loadingTimeoutRef.current = setTimeout(() => {
         if (mounted && loading) {
           setLoading(false)
-          toast.error("Request timed out. Please try again later.")
+          toast.error(safeT('checkout.error.timeout'))
         }
-      }, 15000) // 15 seconds maximum for payment processing
+      }, 15000)
       
       try {
-        // Verificar sessão atual para garantir autenticação
         const { data: { session } } = await supabaseClient.auth.getSession()
         
         if (!session) {
-          throw new Error('Sessão expirada. Por favor, faça login novamente.')
+          throw new Error(safeT('checkout.error.sessionExpired'))
         }
 
         if (!user?.id || !user?.email) {
-          throw new Error('Dados do usuário incompletos. Por favor, faça login novamente.')
+          throw new Error(safeT('checkout.error.incompleteUserData'))
         }
 
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 12000) // 12 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 12000)
         
         const res = await fetch('/api/pagarme/subscribe', {
           method: 'POST',
@@ -264,20 +348,21 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         
         clearTimeout(timeoutId)
 
-        const data = await res.json()
-
         if (!res.ok) {
-          throw new Error(data.error || data.message || 'Failed to process payment')
+          const error = await res.json()
+          throw new Error(error.message || safeT('checkout.error.paymentFailed'))
         }
 
+        const data = await res.json()
+
         if (mounted) {
-          setResult({ success: true, message: 'Subscription created successfully!' })
-          toast.success('Subscription created successfully!')
+          setResult({ success: true, message: safeT('checkout.success') })
+          toast.success(safeT('checkout.success'))
           onSuccess?.()
         }
       } catch (err) {
         if (mounted) {
-          const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+          const errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
           setResult({ success: false, message: errorMessage })
           toast.error(errorMessage)
         }
@@ -313,27 +398,19 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       case 2:
         return (
           card.number.length === 16 &&
+          luhnCheck(card.number) &&
           card.name.length > 0 &&
           card.expiry.length === 5 &&
+          validateExpiryDate(card.expiry) &&
           card.cvv.length >= 3 &&
-          card.cpf.length === 11
+          card.cpf.length === 11 &&
+          validateCPF(card.cpf)
         )
       case 3:
         return true
       default:
         return false
     }
-  }
-
-  // Format currency based on locale
-  const formatCurrency = (amount: number) => {
-    const formatter = new Intl.NumberFormat(locale === 'pt-BR' ? 'pt-BR' : 'en-US', {
-      style: 'currency',
-      currency: locale === 'pt-BR' ? 'BRL' : 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })
-    return formatter.format(amount)
   }
 
   if (authLoading) {
@@ -409,7 +486,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
               </CardTitle>
               {step > 0 && step < 4 && (
                 <div className="text-sm text-muted-foreground mt-2">
-                  {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
+                  {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price, locale)}
                 </div>
               )}
             </CardHeader>
@@ -432,7 +509,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     >
                       <div className="flex flex-col items-start">
                         <span className="font-semibold">{plan.name}</span>
-                        <span className="text-sm text-muted-foreground">{formatCurrency(plan.price)}</span>
+                        <span className="text-sm text-muted-foreground">{formatCurrency(plan.price, locale)}</span>
                       </div>
                     </Button>
                   ))}
@@ -634,7 +711,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     <Check className="mx-auto mb-4 h-10 w-10 text-green-500" />
                     <div className="text-xl font-semibold mb-4">{safeT('checkout.confirm')}</div>
                     <div className="text-sm text-muted-foreground mb-4">
-                      {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price)}
+                      {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price, locale)}
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-4">

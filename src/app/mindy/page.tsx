@@ -1,156 +1,114 @@
-import { ResourcesClient } from './client'
 import { createClient } from '@/lib/supabase/server'
+import { ResourcesClient } from './client'
+import { cookies } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { Database } from '@/types/supabase'
 
-type DbResource = {
-  id: string
-  title: string
-  category: string
-  subcategory: string
-  software: string | null
-  description: string | null
-  description_en: string | null
-  url: string
-  thumbnail_url: string | null
-  created_at: string | null
-  updated_at: string | null
-  price_model: string | null
-  featured: boolean | null
-  created_by: string | null
-  tags: string[] | null
-  approved: boolean | null
-}
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-interface Resource {
-  id: string
-  title: string
-  url: string
-  thumbnail_url: string | null
-  tags: string[]
-  category: string
-  subcategory: string
-  software: string | null
-  created_at: string
-  description: string
-  description_en: string | null
-  price_model: string | null
-  featured: boolean
-  approved: boolean
-}
+type ResourceRow = Database['public']['Tables']['resources']['Row']
 
-interface FilterOptions {
-  category: string[]
-  subcategory: string[]
-  software: string[]
+async function fetchUniqueValues(table: string, column: keyof ResourceRow): Promise<string[]> {
+  try {
+    const cookieStore = cookies()
+    const supabase = await createClient()
+    
+    const { data, error } = await supabase
+      .from(table)
+      .select(column)
+      .not(column, 'is', null)
+      .eq('approved', true)
+    
+    if (error) {
+      console.error(`Error fetching unique ${column} values:`, error)
+      return []
+    }
+    
+    if (!data || !Array.isArray(data)) {
+      return []
+    }
+    
+    // Type assertion to ensure we're working with the correct type
+    const typedData = data as Array<Pick<ResourceRow, typeof column>>
+    return [...new Set(typedData.map(item => String(item[column])))].filter(Boolean)
+  } catch (error) {
+    console.error(`Error in fetchUniqueValues for ${column}:`, error)
+    return []
+  }
 }
 
 export default async function ResourcesPage() {
-  const supabase = await createClient()
-  let resources: Resource[] = []
-  let filterOptions: FilterOptions = { category: [], subcategory: [], software: [] }
-  let error = null
-
+  const t = await getTranslations('mindy')
+  
   try {
-    // Fetch only approved resources
+    const cookieStore = cookies()
+    const supabase = await createClient()
+
+    // Fetch resources with error handling
     const { data: resourcesData, error: resourcesError } = await supabase
       .from('resources')
       .select('*')
       .eq('approved', true)
       .order('created_at', { ascending: false })
 
-    if (resourcesError) throw resourcesError
-
-    if (!resourcesData || !Array.isArray(resourcesData) || resourcesData.length === 0) {
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <p className="text-muted-foreground text-center">No approved resources available.</p>
-        </div>
-      )
+    if (resourcesError) {
+      console.error('Error fetching resources:', resourcesError)
+      throw new Error('Failed to fetch resources')
     }
 
-    // Transform database resources to component resources with validation
-    resources = resourcesData
-      .filter((resource): resource is DbResource => {
-        return (
-          resource !== null &&
-          typeof resource === 'object' &&
-          typeof resource.id === 'string' &&
-          typeof resource.title === 'string' &&
-          typeof resource.url === 'string' &&
-          typeof resource.category === 'string' &&
-          typeof resource.subcategory === 'string'
-        )
-      })
-      .map((resource: DbResource) => ({
-        id: String(resource.id),
-        title: String(resource.title),
-        url: String(resource.url),
-        thumbnail_url: resource.thumbnail_url || null,
-        tags: Array.isArray(resource.tags) ? resource.tags : [],
-        category: String(resource.category),
-        subcategory: String(resource.subcategory),
-        software: resource.software || null,
-        created_at: resource.created_at || new Date().toISOString(),
-        description: resource.description || '',
-        description_en: resource.description_en || null,
-        price_model: resource.price_model || null,
-        featured: Boolean(resource.featured),
-        approved: true // Since we're only fetching approved resources
-      }))
+    if (!resourcesData || !Array.isArray(resourcesData)) {
+      throw new Error('Invalid resources data received')
+    }
+
+    // Transform and validate resources data
+    const resources = resourcesData.map(resource => ({
+      id: resource.id,
+      title: resource.title,
+      url: resource.url,
+      thumbnail_url: resource.thumbnail_url,
+      tags: resource.tags || [],
+      category: resource.category,
+      subcategory: resource.subcategory,
+      software: resource.software,
+      created_at: resource.created_at,
+      description: resource.description,
+      description_en: resource.description_en,
+      price_model: resource.price_model,
+      featured: resource.featured,
+      approved: resource.approved
+    }))
 
     // Fetch filter options with error handling
-    const fetchUniqueValues = async (column: keyof Pick<DbResource, 'category' | 'subcategory' | 'software'>): Promise<string[]> => {
-      try {
-        const { data, error } = await supabase
-          .from('resources')
-          .select(column)
-          .eq('approved', true) // Only get options from approved resources
-          .not(column, 'is', null)
-        
-        if (error) throw error
-        
-        if (!data || !Array.isArray(data)) return []
-
-        return [...new Set(data
-          .map((item: any) => {
-            const value = item?.[column]
-            return value ? String(value) : null
-          })
-          .filter((value): value is string => value !== null)
-        )]
-      } catch (err) {
-        console.error(`Error fetching ${column}:`, err)
-        return []
-      }
-    }
-
     const [categories, subcategories, software] = await Promise.all([
-      fetchUniqueValues('category'),
-      fetchUniqueValues('subcategory'),
-      fetchUniqueValues('software'),
+      fetchUniqueValues('resources', 'category'),
+      fetchUniqueValues('resources', 'subcategory'),
+      fetchUniqueValues('resources', 'software')
     ])
 
-    filterOptions = {
+    const filterOptions = {
       category: categories,
       subcategory: subcategories,
-      software: software,
+      software: software
     }
-  } catch (e) {
-    console.error('Error loading resources:', e)
-    error = 'Failed to load resources. Please try again later.'
-  }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {error && (
-        <div className="text-destructive text-center py-4 px-4 bg-destructive/10 rounded-lg mx-4 my-4">
-          {error}
-        </div>
-      )}
-      <ResourcesClient
-        resources={resources}
+    return (
+      <ResourcesClient 
+        resources={resources} 
         filterOptions={filterOptions}
       />
-    </div>
-  )
+    )
+  } catch (error) {
+    console.error('Error in ResourcesPage:', error)
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold mb-4">Error</h1>
+          <p className="text-muted-foreground">
+            {t('errors.loadingError')}
+          </p>
+        </div>
+      </div>
+    )
+  }
 }

@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { createClient } from '@/lib/supabase/client'
 
 interface Resource {
   id: string
@@ -48,6 +49,7 @@ export function ResourcesClient({ resources = [], filterOptions = { category: []
   const [visibleItems, setVisibleItems] = useState(ITEMS_PER_PAGE)
   const [isLoading, setIsLoading] = useState(false)
   const observerTarget = useRef<HTMLDivElement>(null)
+  const supabase = createClient()
 
   const currentCategory = searchParams.get('category')
   const currentSubcategory = searchParams.get('subcategory')

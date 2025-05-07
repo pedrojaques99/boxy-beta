@@ -19,6 +19,7 @@ import { PLANS, formatPrice, getPlanInterval, PlanId } from '@/lib/plans'
 import type { Plan } from '@/types/subscription'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useRouter } from 'next/navigation'
 
 type PlanTranslation = {
   name: string
@@ -40,6 +41,7 @@ type Subscription = {
 }
 
 export function PricingSection() {
+  const router = useRouter()
   const { t, locale } = useTranslations()
   const [user, setUser] = useState<any>(null)
   const [isAnnualOpen, setIsAnnualOpen] = useState(false)
@@ -178,26 +180,25 @@ export function PricingSection() {
       // If free plan, do nothing
       if (planId === 'free') return
 
-      // Check for session first
       try {
         const isAuthenticated = await authService.isAuthenticated()
         if (!isAuthenticated) {
-          // Redirect to login if no session
-          window.location.href = '/auth/login?redirect=/checkout/' + planId
+          // Use router for navigation with correct path
+          router.push(`/auth/login?redirect=/checkout/${planId}`)
           return
         }
         
         // If user has an active paid plan, redirect to profile
         if (hasActivePaidPlan) {
-          window.location.href = '/profile'
+          router.push('/profile')
           return
         }
         
         // Otherwise redirect to the checkout page for this plan
-        window.location.href = '/checkout/' + planId
+        router.push(`/checkout/${planId}`)
       } catch (err) {
         console.error('Erro ao verificar sessão:', err)
-        window.location.href = '/auth/login?redirect=/checkout/' + planId
+        router.push(`/auth/login?redirect=/checkout/${planId}`)
       }
     }
 

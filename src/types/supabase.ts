@@ -40,37 +40,52 @@ export interface Database {
           id: string
           title: string
           description: string
+          description_en: string | null
           category: string
           subcategory: string
-          software: string
-          file_url: string
-          thumb: string
+          software: string | null
+          url: string
+          thumbnail_url: string | null
+          tags: string[] | null
           created_at: string
           updated_at: string
+          price_model: string | null
+          featured: boolean
+          approved: boolean
         }
         Insert: {
           id?: string
           title: string
           description: string
+          description_en?: string | null
           category: string
           subcategory: string
-          software: string
-          file_url: string
-          thumb: string
+          software?: string | null
+          url: string
+          thumbnail_url?: string | null
+          tags?: string[] | null
           created_at?: string
           updated_at?: string
+          price_model?: string | null
+          featured?: boolean
+          approved?: boolean
         }
         Update: {
           id?: string
           title?: string
           description?: string
+          description_en?: string | null
           category?: string
           subcategory?: string
-          software?: string
-          file_url?: string
-          thumb?: string
+          software?: string | null
+          url?: string
+          thumbnail_url?: string | null
+          tags?: string[] | null
           created_at?: string
           updated_at?: string
+          price_model?: string | null
+          featured?: boolean
+          approved?: boolean
         }
       }
     }

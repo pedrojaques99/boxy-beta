@@ -8,7 +8,8 @@ import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import AuthService from '@/lib/auth/auth-service';
+import { getAuthService } from '@/lib/auth/auth-service';
+import { toast } from 'sonner';
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -16,6 +17,7 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [planId, setPlanId] = useState<PlanId | null>(null);
+  const authService = getAuthService();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,13 +25,12 @@ export default function CheckoutPage() {
         setIsLoading(true);
         
         // Verify authentication using AuthService
-        const isAuthenticated = await AuthService.isAuthenticated();
+        const { data: { session }, error: sessionError } = await authService.getSession();
         
-        if (!isAuthenticated) {
-          console.error('Usuário não autenticado');
-          // Redirect to login with return URL
-          const currentPath = window.location.pathname;
-          AuthService.redirectToLogin(router, currentPath);
+        if (sessionError || !session) {
+          console.error('Erro de autenticação:', sessionError);
+          toast.error('Por favor, faça login para continuar');
+          router.push(`/auth/login?redirect=/checkout/${params.plan}`);
           return;
         }
         
@@ -39,6 +40,7 @@ export default function CheckoutPage() {
         const plan = params.plan as string;
         if (!plan || !Object.keys(PLANS).includes(plan)) {
           console.error('Plano inválido:', plan);
+          toast.error('Plano inválido');
           router.push('/price');
           return;
         }
@@ -46,25 +48,28 @@ export default function CheckoutPage() {
         setPlanId(plan as PlanId);
         
         // Get user data to check subscription
-        const { data: { user } } = await AuthService.getUser();
+        const { data: { user }, error: userError } = await authService.getUser();
         
-        if (!user?.id) {
-          console.error('Dados do usuário não disponíveis');
+        if (userError || !user?.id) {
+          console.error('Erro ao buscar dados do usuário:', userError);
+          toast.error('Erro ao carregar dados do usuário');
           router.push('/auth/login');
           return;
         }
         
         // Check if user already has a subscription
-        const subscription = await AuthService.getUserSubscription(user.id);
+        const subscription = await authService.getUserSubscription(user.id);
         
         if (subscription) {
           console.log('Usuário já possui assinatura ativa:', subscription);
+          toast.info('Você já possui uma assinatura ativa');
           router.push('/profile');
           return;
         }
         
       } catch (err) {
         console.error('Erro ao verificar autenticação:', err);
+        toast.error('Erro ao verificar autenticação');
         router.push('/auth/login');
       } finally {
         setIsLoading(false);
@@ -72,7 +77,7 @@ export default function CheckoutPage() {
     };
     
     checkAuth();
-  }, [params.plan, router]);
+  }, [params.plan, router, authService]);
 
   if (isLoading) {
     return (
@@ -100,6 +105,7 @@ export default function CheckoutPage() {
         <CheckoutWizard 
           defaultPlanId={planId} 
           onSuccess={() => {
+            toast.success('Assinatura criada com sucesso!');
             router.push('/dashboard?subscription=success');
           }} 
         />
