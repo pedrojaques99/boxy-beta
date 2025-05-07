@@ -239,7 +239,7 @@ function ShopPageContent() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col gap-4 mb-8">
-        <SearchBar onSearch={handleSearch} t={t} />
+        <SearchBar onSearch={handleSearch} t={t} context="products" />
         <FilterMenu 
           categories={categories}
           software={software}

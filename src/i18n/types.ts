@@ -263,4 +263,26 @@ export type Dictionary = {
     }
     copyright: string
   }
+  mindy: {
+    title: string
+    filters: {
+      category: string
+      subcategory: string
+      software: string
+    }
+    search: {
+      placeholder: string
+      noResults: string
+      recentSearches: string
+    }
+    details: {
+      title: string
+      description: string
+      createdBy: string
+      visitResource: string
+      comments: string
+      relatedResources: string
+      seeDetails: string
+    }
+  }
 } 
