@@ -8,31 +8,40 @@ interface HeroSectionProps {
   title: string;
   subtitle?: string;
   className?: string;
+  pattern?: 'grid' | 'none';
 }
 
-export function HeroSection({ title, subtitle, className }: HeroSectionProps) {
+export function HeroSection({ title, subtitle, className, pattern = 'none' }: HeroSectionProps) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!heroRef.current) return;
-      
-      const rect = heroRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      setMousePosition({ x, y });
-    };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | MouseEvent) => {
+    if (!heroRef.current) return;
+    
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = e instanceof MouseEvent ? e.clientX - rect.left : e.clientX - rect.left;
+    const y = e instanceof MouseEvent ? e.clientY - rect.top : e.clientY - rect.top;
+    
+    setMousePosition({ x, y });
+  };
 
+  const handleMouseEnter = () => setIsHovering(true);
+  const handleMouseLeave = () => setIsHovering(false);
+
+  useEffect(() => {
     const heroElement = heroRef.current;
     if (heroElement) {
       heroElement.addEventListener('mousemove', handleMouseMove);
+      heroElement.addEventListener('mouseenter', handleMouseEnter);
+      heroElement.addEventListener('mouseleave', handleMouseLeave);
     }
 
     return () => {
       if (heroElement) {
         heroElement.removeEventListener('mousemove', handleMouseMove);
+        heroElement.removeEventListener('mouseenter', handleMouseEnter);
+        heroElement.removeEventListener('mouseleave', handleMouseLeave);
       }
     };
   }, []);
@@ -41,19 +50,44 @@ export function HeroSection({ title, subtitle, className }: HeroSectionProps) {
     <motion.div
       ref={heroRef}
       className={cn(
-        "relative w-full overflow-hidden bg-gradient-to-br from-background to-muted",
+        "relative w-full overflow-hidden bg-gradient-to-br from-background to-primary/5",
         "min-h-[40vh] md:min-h-[50vh] flex items-center justify-center",
+        pattern === 'grid' && "before:absolute before:inset-0 before:bg-[linear-gradient(to_right,theme(colors.foreground/3)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.foreground/3)_1px,transparent_1px)] before:bg-[size:2rem_2rem] before:opacity-[0.02]",
         className
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Spotlight effect */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-30"
+      {/* Primary spotlight effect */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isHovering ? 1 : 0 }}
         style={{
-          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(var(--primary-rgb), 0.15), transparent 40%)`,
+          background: `
+            radial-gradient(
+              800px circle at ${mousePosition.x}px ${mousePosition.y}px,
+              rgba(var(--primary-rgb), 0.15),
+              transparent 40%
+            )
+          `
+        }}
+      />
+      
+      {/* Secondary spotlight effect */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-300"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isHovering ? 1 : 0 }}
+        style={{
+          background: `
+            radial-gradient(
+              600px circle at ${mousePosition.x}px ${mousePosition.y}px,
+              rgba(var(--primary-rgb), 0.1),
+              transparent 30%
+            )
+          `
         }}
       />
       

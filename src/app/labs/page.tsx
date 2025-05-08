@@ -157,14 +157,9 @@ export default function LabsPage() {
     <>
       <HeroSection
         title={t.labs.title}
-        description={t.labs.description}
+        subtitle={t.labs.description}
         pattern="grid"
-      >
-        <Button variant="outline" size="lg" className="group">
-          <Beaker className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
-          Start Exploring
-        </Button>
-      </HeroSection>
+      />
 
       <div className="container mx-auto px-4 py-8">
         <AnimatePresence mode="wait">

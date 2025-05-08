@@ -83,6 +83,7 @@ export interface Dictionary {
     description: string
     noLabs: string
     tryIt: string
+    explore: string
   }
   protected: {
     hello: string
