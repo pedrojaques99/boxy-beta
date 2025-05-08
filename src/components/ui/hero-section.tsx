@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEffect, useRef, useState } from 'react';
 
@@ -25,6 +25,7 @@ function ShopBackground() {
     opacity: number;
   }>>([]);
   const animationFrameRef = useRef<number>();
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,33 +34,40 @@ function ShopBackground() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
-    const handleResize = () => {
+    const updateDimensions = () => {
+      const container = canvas.parentElement;
+      if (!container) return;
+
+      const { width, height } = container.getBoundingClientRect();
+      setDimensions({ width, height });
+
       const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
-      
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
       ctx.scale(dpr, dpr);
 
-      // Initialize particles
-      const particleCount = Math.min(50, Math.floor((rect.width * rect.height) / 15000));
+      // Adjust particle count based on screen size
+      const baseCount = Math.min(50, Math.floor((width * height) / 15000));
+      const particleCount = window.innerWidth < 768 ? baseCount * 0.6 : baseCount;
+      
       particlesRef.current = Array.from({ length: particleCount }, () => ({
-        x: Math.random() * rect.width,
-        y: Math.random() * rect.height,
-        size: Math.random() * 2 + 1,
-        speedX: (Math.random() - 0.5) * 0.5,
-        speedY: (Math.random() - 0.5) * 0.5,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: window.innerWidth < 768 ? Math.random() * 1.5 + 0.5 : Math.random() * 2 + 1,
+        speedX: (Math.random() - 0.5) * (window.innerWidth < 768 ? 0.3 : 0.5),
+        speedY: (Math.random() - 0.5) * (window.innerWidth < 768 ? 0.3 : 0.5),
         opacity: Math.random() * 0.3 + 0.1
       }));
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
+    // Initial setup
+    updateDimensions();
+
+    // Handle resize
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    resizeObserver.observe(canvas.parentElement as Element);
 
     // Handle mouse movement
     const handleMouseMove = (e: MouseEvent) => {
@@ -74,21 +82,20 @@ function ShopBackground() {
 
     // Animation loop
     const animate = () => {
-      if (!ctx) return;
+      if (!ctx || !dimensions.width || !dimensions.height) return;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, dimensions.width, dimensions.height);
 
       particlesRef.current.forEach((particle) => {
         // Update position
         particle.x += particle.speedX;
         particle.y += particle.speedY;
 
-        // Boundary check
-        if (particle.x < 0) particle.x = rect.width;
-        if (particle.x > rect.width) particle.x = 0;
-        if (particle.y < 0) particle.y = rect.height;
-        if (particle.y > rect.height) particle.y = 0;
+        // Boundary check with smooth wrapping
+        if (particle.x < 0) particle.x = dimensions.width;
+        if (particle.x > dimensions.width) particle.x = 0;
+        if (particle.y < 0) particle.y = dimensions.height;
+        if (particle.y > dimensions.height) particle.y = 0;
 
         // Mouse interaction
         const dx = mousePosition.x - particle.x;
@@ -118,7 +125,7 @@ function ShopBackground() {
     animate();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       canvas.removeEventListener('mousemove', handleMouseMove);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -129,8 +136,12 @@ function ShopBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full opacity-30"
-      style={{ pointerEvents: 'none' }}
+      className="absolute inset-0 w-full h-full"
+      style={{ 
+        pointerEvents: 'none',
+        opacity: window.innerWidth < 768 ? 0.2 : 0.3,
+        mixBlendMode: 'screen'
+      }}
     />
   );
 }
@@ -272,36 +283,72 @@ export function HeroSection({
   children,
   variant
 }: HeroSectionProps) {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  function onMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
+    if (!ref.current) return;
+    const { left, top } = currentTarget.getBoundingClientRect();
+    mouseX.set(clientX - left);
+    mouseY.set(clientY - top);
+  }
+
+  const background = useMotionTemplate`radial-gradient(
+    600px circle at ${mouseX}px ${mouseY}px,
+    var(--spotlight-color) 0%,
+    transparent 80%
+  )`;
+
+  if (!isMounted) return null;
+
   return (
-    <section className={cn(
-      "relative overflow-hidden py-20",
-      pattern === 'dots' && "bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(#1f2937_1px,transparent_1px)]",
-      pattern === 'grid' && "bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] [background-size:24px_24px] dark:bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)]",
-      className
-    )}>
-      {variant === 'shop' && <ShopBackground />}
-      {variant === 'mindy' && <MindyBackground />}
+    <section 
+      ref={ref}
+      onMouseMove={onMouseMove}
+      className={cn(
+        "relative min-h-[40vh] sm:min-h-[50vh] md:min-h-[60vh] w-full flex items-center justify-center overflow-hidden bg-background/95",
+        "py-12 sm:py-16 md:py-20 lg:py-24",
+        pattern === 'dots' && "bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] dark:bg-[radial-gradient(#1f2937_1px,transparent_1px)]",
+        pattern === 'grid' && "bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] [background-size:24px_24px] dark:bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)]",
+        className
+      )}
+    >
+      <div className="absolute inset-0 w-full h-full">
+        {variant === 'shop' && <ShopBackground />}
+        {variant === 'mindy' && <MindyBackground />}
+      </div>
       
-      <div className="container relative mx-auto px-4">
+      <motion.div 
+        className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] pointer-events-none"
+        style={{ background }}
+      />
+      
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-3xl mx-auto text-center"
         >
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl font-bold tracking-tight sm:text-5xl"
+            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 hover:to-foreground/90 transition-all duration-300"
           >
             {title}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-6 text-lg leading-8 text-muted-foreground"
+            transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground hover:text-muted-foreground/80 transition-colors duration-300 px-4 sm:px-0"
           >
             {description}
           </motion.p>
@@ -309,14 +356,31 @@ export function HeroSection({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-10 flex items-center justify-center gap-4"
+              transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-6 sm:mt-8 md:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
             >
               {children}
             </motion.div>
           )}
         </motion.div>
       </div>
+
+      <style jsx global>{`
+        :root {
+          --spotlight-color: rgba(191, 255, 88, 0.05);
+        }
+        .dark {
+          --spotlight-color: rgba(191, 255, 88, 0.1);
+        }
+        @media (max-width: 640px) {
+          :root {
+            --spotlight-color: rgba(191, 255, 88, 0.03);
+          }
+          .dark {
+            --spotlight-color: rgba(191, 255, 88, 0.07);
+          }
+        }
+      `}</style>
     </section>
   );
 } 
