@@ -11,7 +11,7 @@ import { Dictionary } from '@/i18n/types'
 export interface SearchBarProps {
   onSearch: (query: string) => void
   t: Dictionary
-  context: 'products' | 'resources'
+  context: 'products' | 'resources' | 'shop' | 'mindy'
   isLoading?: boolean
 }
 
@@ -89,21 +89,39 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
   }
 
   const getPlaceholder = () => {
-    return context === 'resources' 
-      ? t?.mindy?.search?.placeholder 
-      : t?.shop?.search?.placeholder
+    switch (context) {
+      case 'resources':
+        return t?.mindy?.search?.placeholder
+      case 'shop':
+      case 'products':
+        return t?.shop?.search?.placeholder
+      default:
+        return 'Search...'
+    }
   }
 
   const getNoResults = () => {
-    return context === 'resources'
-      ? t?.mindy?.search?.noResults
-      : t?.shop?.search?.noResults
+    switch (context) {
+      case 'resources':
+        return t?.mindy?.search?.noResults
+      case 'shop':
+      case 'products':
+        return t?.shop?.search?.noResults
+      default:
+        return 'No results found'
+    }
   }
 
   const getRecentSearches = () => {
-    return context === 'resources'
-      ? t?.mindy?.search?.recentSearches
-      : t?.shop?.search?.recentSearches
+    switch (context) {
+      case 'resources':
+        return t?.mindy?.search?.recentSearches
+      case 'shop':
+      case 'products':
+        return t?.shop?.search?.recentSearches
+      default:
+        return 'Recent searches'
+    }
   }
 
   return (
@@ -112,17 +130,17 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
         <div className="relative w-full">
           <Input
             ref={inputRef}
-            type="search"
+            type="text"
             placeholder={getPlaceholder()}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setTimeout(() => setIsFocused(false), 200)}
             onKeyDown={handleKeyDown}
-            className="w-full pl-11 pr-11 h-11 bg-background/50 backdrop-blur-sm border-border/50 hover:border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200 text-white"
+            className="w-full pl-11 pr-11 h-11 bg-background/50 backdrop-blur-sm border-border/50 hover:border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200 rounded-full [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
             disabled={isLoading}
           />
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-white">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
           </div>
           <AnimatePresence>
@@ -132,7 +150,7 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 onClick={handleClear}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-white hover:text-foreground transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 disabled={isLoading}
               >
                 <X className="h-4 w-4" />
@@ -148,19 +166,19 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-0 right-0 mt-2 py-2 bg-background/95 backdrop-blur-sm border border-border/50 rounded-lg shadow-lg z-[60]"
+            className="absolute top-full left-0 right-0 mt-2 py-2 bg-background/95 backdrop-blur-sm border border-border/50 rounded-2xl shadow-lg z-[60]"
           >
-            <div className="px-3 py-1.5 text-xs font-medium text-muted-white">
+            <div className="px-4 py-1.5 text-xs font-medium text-muted-white">
               {getRecentSearches()}
             </div>
-            <div className="flex flex-wrap gap-2 p-2">
+            <div className="flex flex-wrap gap-2 p-3">
               {recentSearches.map((search, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   size="sm"
                   onClick={() => handleRecentSearch(search)}
-                  className="text-sm"
+                  className="text-sm rounded-full"
                   disabled={isLoading}
                 >
                   {search}

@@ -14,13 +14,15 @@ import { useSubscription } from '@/hooks/use-subscription'
 import { Dictionary } from '@/i18n/types'
 import { cn } from '@/lib/utils'
 import { Database } from '@/types/supabase'
+import { ProductCard } from '@/components/shop/product-card'
 
 interface ProductClientProps {
   product: Product
   t: Dictionary
+  userId: string
 }
 
-export function ProductClient({ product, t }: ProductClientProps) {
+export function ProductClient({ product, t, userId }: ProductClientProps) {
   const { theme } = useTheme()
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const authService = getAuthService()
@@ -273,53 +275,12 @@ export function ProductClient({ product, t }: ProductClientProps) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.1 * index }}
                 >
-                  <Link
-                    href={`/shop/${relatedProduct.id}`}
-                    className="block h-full"
-                  >
-                    <Card className="overflow-hidden group h-full hover:shadow-md transition-all duration-300">
-                      {relatedProduct.thumb && (
-                        <div className="relative w-full overflow-hidden bg-muted">
-                          <div className="aspect-[4/3]">
-                            <img
-                              src={relatedProduct.thumb}
-                              alt={relatedProduct.name}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-                            />
-                          </div>
-                          {relatedProduct.type && (
-                            <div className="absolute top-2 right-2">
-                              <motion.span
-                                whileHover={{ scale: 1.05 }}
-                                className="px-2 py-1 rounded-md text-sm bg-background/80 backdrop-blur-sm border border-primary text-primary"
-                              >
-                                {relatedProduct.type}
-                              </motion.span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                            {relatedProduct.name}
-                          </h2>
-                        </div>
-                        {relatedProduct.description && (
-                          <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                            {relatedProduct.description}
-                          </p>
-                        )}
-                      </CardContent>
-
-                      <CardFooter className="p-4 pt-0">
-                        <span className="text-sm font-medium text-primary group-hover:underline">
-                          {t.shop.viewDetails}
-                        </span>
-                      </CardFooter>
-                    </Card>
-                  </Link>
+                  <ProductCard
+                    product={relatedProduct}
+                    showFooterLink={true}
+                    viewDetailsText={t.shop.viewDetails}
+                    userId={userId}
+                  />
                 </motion.div>
               ))}
             </div>

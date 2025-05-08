@@ -11,6 +11,11 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { handleError } from '@/lib/error-handler';
 import { createClient } from '@/lib/supabase/client';
+import { HeroSection } from '@/components/ui/hero-section';
+import { Button } from '@/components/ui/button';
+import { Beaker } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 interface Lab {
   id: string;
@@ -26,6 +31,30 @@ interface Lab {
 }
 
 const ITEMS_PER_PAGE = 12;
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15
+    }
+  }
+};
 
 export default function LabsPage() {
   const [labs, setLabs] = useState<Lab[]>([]);
@@ -106,7 +135,12 @@ export default function LabsPage() {
   }, [fetchLabs]);
 
   const LoadingSkeleton = useMemo(() => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
       {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
         <div key={i} className="space-y-3">
           <Skeleton className="h-[200px] w-full rounded-lg" />
@@ -114,37 +148,50 @@ export default function LabsPage() {
           <Skeleton className="h-4 w-1/2" />
         </div>
       ))}
-    </div>
+    </motion.div>
   ), []);
 
   if (!t) return null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-stone-900 dark:text-white mb-4">{t.labs.title}</h1>
-        <p className="text-stone-600 dark:text-stone-300">
-          {t.labs.description}
-        </p>
-      </div>
+    <>
+      <HeroSection
+        title={t.labs.title}
+        description={t.labs.description}
+        pattern="grid"
+      >
+        <Button variant="outline" size="lg" className="group">
+          <Beaker className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
+          Start Exploring
+        </Button>
+      </HeroSection>
 
-      {/* Labs Grid */}
-      <div className="space-y-6">
-        {loading && page === 1 ? (
-          LoadingSkeleton
-        ) : labs.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <p className="text-stone-500">{t.labs.noLabs}</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="container mx-auto px-4 py-8">
+        <AnimatePresence mode="wait">
+          {loading && page === 1 ? (
+            LoadingSkeleton
+          ) : labs.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="col-span-full text-center py-12"
+            >
+              <p className="text-stone-500">{t.labs.noLabs}</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
               {labs.map((lab, index) => (
                 <Link
                   key={lab.id}
                   href={lab.app_url}
                   ref={index === labs.length - 1 ? lastElementRef : undefined}
-                  className="block transition-transform hover:scale-[1.02] hover:shadow-lg rounded-lg"
+                  className="block"
                 >
                   <AppCard
                     id={lab.id}
@@ -155,14 +202,31 @@ export default function LabsPage() {
                     tags={lab.tags}
                     createdBy={lab.created_by}
                     appUrl={lab.app_url}
+                    delay={index * 0.1}
                   />
                 </Link>
               ))}
-            </div>
-            {isFetching && LoadingSkeleton}
-          </>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Loading More Indicator */}
+        <div className="w-full py-8 flex justify-center">
+          <AnimatePresence>
+            {loading && labs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex items-center gap-2 text-muted-foreground"
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Loading more labs...</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </>
   );
 } 

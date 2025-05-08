@@ -16,7 +16,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "placeholder:text-muted-foreground",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
           "disabled:cursor-not-allowed disabled:opacity-50",
-          "dark:border-accent/20 dark:bg-black/50 dark:text-accent-foreground",
+          "text-foreground",
+          "dark:border-accent/20 dark:bg-black/50",
           "dark:focus:border-accent/50 dark:focus:ring-accent/30",
           "dark:placeholder:text-accent-foreground/50",
           className

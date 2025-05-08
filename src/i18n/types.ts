@@ -2,6 +2,8 @@ import type { Locale } from './settings'
 
 export interface MindyTranslations {
   title: string
+  description: string
+  noResults: string
   filters: {
     category: string
     subcategory: string
@@ -20,11 +22,13 @@ export interface MindyTranslations {
     comments: string
     relatedResources: string
     seeDetails: string
+    filterBy: string
   }
 }
 
 export interface ShopTranslations {
   title: string
+  description: string
   viewDetails: string
   noProducts: string
   search: {
@@ -37,11 +41,14 @@ export interface ShopTranslations {
     category: string
     software: string
     type: string
+    status: string
     textures: string
     models: string
     materials: string
     hdris: string
     plugins: string
+    free: string
+    premium: string
   }
 }
 

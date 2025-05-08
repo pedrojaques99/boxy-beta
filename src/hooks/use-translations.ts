@@ -5,7 +5,13 @@ import type { Locale } from '@/i18n/settings'
 import type { Dictionary } from '@/i18n/types'
 import { i18n } from '@/i18n/settings'
 
-export function useTranslations() {
+export type TranslationsResult = {
+  t: Dictionary | null
+  locale: Locale
+  setLocale: (locale: Locale) => void
+}
+
+export function useTranslations(): TranslationsResult {
   const [dictionary, setDictionary] = useState<Dictionary | null>(null)
   const [locale, setLocale] = useState<Locale>(() => {
     // During SSR, use the default locale

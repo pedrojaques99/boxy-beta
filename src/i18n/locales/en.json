@@ -28,6 +28,7 @@
   },
   "shop": {
     "title": "Products Gallery",
+    "description": "Explore our curated collection of high-quality resources and tools for your creative projects",
     "viewDetails": "Open the box",
     "noProducts": "No products available",
     "search": {
@@ -40,11 +41,14 @@
       "category": "Category",
       "software": "Software",
       "type": "Type",
+      "status": "Status",
       "textures": "Textures",
       "models": "Models",
       "materials": "Materials",
       "hdris": "HDRIs",
-      "plugins": "Plugins"
+      "plugins": "Plugins",
+      "free": "Free",
+      "premium": "Premium"
     }
   },
   "navigation": {
@@ -290,7 +294,8 @@
     "title": "Labs",
     "description": "Discover and try out amazing applications created by our community",
     "noLabs": "No labs found",
-    "tryIt": "Try it →"
+    "tryIt": "Try it →",
+    "explore": "Start Exploring"
   },
   "admin": {
     "loading": "Loading...",
@@ -352,6 +357,7 @@
   },
   "mindy": {
     "title": "Resources",
+    "description": "Find and explore mindfulness resources and tools to enhance your journey",
     "filters": {
       "category": "Category",
       "subcategory": "Subcategory",
@@ -362,6 +368,7 @@
       "noResults": "No resources found",
       "recentSearches": "Recent searches"
     },
+    "noResults": "No resources found matching your criteria",
     "details": {
       "title": "Resource Details",
       "description": "Description",
@@ -369,7 +376,8 @@
       "visitResource": "Visit Resource",
       "comments": "Comments",
       "relatedResources": "Related Resources",
-      "seeDetails": "See Details"
+      "seeDetails": "See details",
+      "filterBy": "Filter by {type}"
     }
   }
 } 

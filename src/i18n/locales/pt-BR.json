@@ -353,6 +353,7 @@
   },
   "mindy": {
     "title": "Recursos",
+    "description": "Encontre e explore recursos e ferramentas de mindfulness para aprimorar sua jornada",
     "filters": {
       "category": "Categoria",
       "subcategory": "Subcategoria",
@@ -370,7 +371,8 @@
       "visitResource": "Visitar Recurso",
       "comments": "Comentários",
       "relatedResources": "Recursos Relacionados",
-      "seeDetails": "Ver Detalhes"
+      "seeDetails": "Ver detalhes",
+      "filterBy": "Filtrar por {type}"
     }
   }
 } 
