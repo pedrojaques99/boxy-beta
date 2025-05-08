@@ -344,13 +344,11 @@ export default function ShopClient() {
   return (
     <>
       <HeroSection
-        title={t.shop.title}
-        description={t.shop.description}
-        pattern="none"
-        variant="shop"
+        title={t?.shop.title || "Products Gallery"}
+        subtitle={t?.shop.description || "Explore our curated collection of high-quality resources and tools for your creative projects"}
       />
       
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto px-4 py-8">
         <motion.div 
           className="mb-8 space-y-6"
           initial={{ opacity: 0, y: 20 }}

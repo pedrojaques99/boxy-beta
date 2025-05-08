@@ -6,6 +6,9 @@ import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useTranslations } from '@/hooks/use-translations'
+import Link from 'next/link'
 
 interface LikeButtonProps {
   type: 'resource' | 'product'
@@ -18,6 +21,7 @@ export function LikeButton({ type, id, userId }: LikeButtonProps) {
   const [liked, setLiked] = useState(false)
   const [count, setCount] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
+  const { t } = useTranslations()
 
   useEffect(() => {
     const fetchLikes = async () => {
@@ -53,15 +57,14 @@ export function LikeButton({ type, id, userId }: LikeButtonProps) {
     }
   }
 
-  return (
+  const button = (
     <Button
-      onClick={toggleLike}
-      disabled={!userId}
+      onClick={userId ? toggleLike : undefined}
       variant="ghost"
       size="icon"
       className={cn(
         "group relative hover:bg-transparent p-0 h-8 w-8",
-        !userId && "cursor-not-allowed opacity-50"
+        !userId && "cursor-not-allowed opacity-50 hover:opacity-70"
       )}
     >
       <AnimatePresence>
@@ -94,4 +97,21 @@ export function LikeButton({ type, id, userId }: LikeButtonProps) {
       )}
     </Button>
   )
+
+  if (!userId) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {button}
+        </TooltipTrigger>
+        <TooltipContent>
+          <Link href="/auth" className="text-sm">
+            {t?.auth.signInToContinue || "Sign in to like"}
+          </Link>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  return button
 } 

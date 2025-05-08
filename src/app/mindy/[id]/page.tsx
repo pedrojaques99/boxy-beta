@@ -2,9 +2,6 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { ResourceDetailClient } from './client'
-import { LikeButton } from '@/components/LikeButton'
-import { CommentsSection } from '@/components/CommentsSection'
-import { useUserId } from '@/lib/auth/useUserId'
 import { Suspense } from 'react'
 import { ResourceSocialClient } from '@/components/mindy/ResourceSocialClient'
 
@@ -82,9 +79,6 @@ export default async function ResourcePage({ params }: { params: { id: string } 
         comments={comments || []}
         likes={likes || []}
       />
-      <div className="mt-8">
-        <CommentsSection type="resource" id={resource.id} />
-      </div>
       <Suspense fallback={null}>
         <ResourceSocialClient resourceId={resource.id} />
       </Suspense>

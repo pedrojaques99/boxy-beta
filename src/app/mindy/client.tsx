@@ -260,9 +260,7 @@ export default function MindyClient() {
     <>
       <HeroSection
         title={t.mindy.title}
-        description={t.mindy.description || "Access our curated collection of mindfulness resources and tools to enhance your well-being journey."}
-        pattern="none"
-        variant="mindy"
+        subtitle={t.mindy.description || "Access our curated collection of mindfulness resources and tools to enhance your well-being journey."}
       />
       
       <div className="container mx-auto px-4 py-8">

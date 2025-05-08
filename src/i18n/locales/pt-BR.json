@@ -28,6 +28,7 @@
   },
   "shop": {
     "title": "Galeria de Produtos",
+    "description": "Explore nossa coleção de recursos e ferramentas de alta qualidade para seus projetos criativos",
     "viewDetails": "Abrir a caixa",
     "noProducts": "Nenhum produto disponível",
     "search": {
@@ -40,11 +41,14 @@
       "category": "Categoria",
       "software": "Software",
       "type": "Tipo",
+      "status": "Status",
       "textures": "Texturas",
       "models": "Modelos",
       "materials": "Materiais",
       "hdris": "HDRIs",
-      "plugins": "Plugins"
+      "plugins": "Plugins",
+      "free": "Gratuito",
+      "premium": "Premium"
     }
   },
   "navigation": {
@@ -291,7 +295,8 @@
     "title": "Labs",
     "description": "Descubra e experimente aplicações incríveis criadas por nossa comunidade",
     "noLabs": "Nenhum experimento encontrado",
-    "tryIt": "Experimentar →"
+    "tryIt": "Experimentar →",
+    "explore": "Começar a Explorar"
   },
   "admin": {
     "loading": "Carregando...",
@@ -352,8 +357,9 @@
     "avatarUpdateSuccess": "Avatar atualizado com sucesso"
   },
   "mindy": {
-    "title": "Recursos",
-    "description": "Encontre e explore recursos e ferramentas de mindfulness para aprimorar sua jornada",
+    "title": "Mindy",
+    "description": "Explore nossa coleção de recursos e ferramentas",
+    "noResults": "Nenhum recurso encontrado",
     "filters": {
       "category": "Categoria",
       "subcategory": "Subcategoria",
@@ -371,8 +377,10 @@
       "visitResource": "Visitar Recurso",
       "comments": "Comentários",
       "relatedResources": "Recursos Relacionados",
-      "seeDetails": "Ver detalhes",
-      "filterBy": "Filtrar por {type}"
+      "seeDetails": "Ver Detalhes",
+      "filterBy": "Filtrar por {type}",
+      "writeComment": "Escreva um comentário...",
+      "submitComment": "Enviar Comentário"
     }
   }
 } 

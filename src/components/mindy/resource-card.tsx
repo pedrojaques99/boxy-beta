@@ -2,15 +2,24 @@
 import Link from 'next/link'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useState } from 'react'
-import { ImageOff } from 'lucide-react'
+import { ImageOff, ArrowRight } from 'lucide-react'
 import { Resource } from '@/types/mindy'
 import { useTranslations } from '@/hooks/use-translations'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 interface ResourceCardProps {
   resource: Resource
 }
+
+const badgeStyles = cn(
+  "h-6 px-3 rounded-full border border-muted-foreground/20",
+  "bg-transparent hover:bg-muted/10",
+  "text-muted-foreground hover:text-foreground",
+  "transition-colors duration-200",
+  "hover:border-muted-foreground/40"
+)
 
 export function ResourceCard({ resource }: ResourceCardProps) {
   const [imageError, setImageError] = useState(false)
@@ -60,9 +69,9 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
-                    className="h-6 rounded-full bg-secondary/10 hover:bg-secondary/20"
+                    className={badgeStyles}
                     onClick={(e) => handleFilterClick(e, 'category', resource.category)}
                   >
                     {resource.category}
@@ -77,9 +86,9 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
-                    className="h-6 rounded-full bg-muted hover:bg-muted/80"
+                    className={badgeStyles}
                     onClick={(e) => handleFilterClick(e, 'subcategory', resource.subcategory)}
                   >
                     {resource.subcategory}
@@ -94,9 +103,9 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
-                    className="h-6 rounded-full bg-primary/10 hover:bg-primary/20 text-primary"
+                    className={badgeStyles}
                     onClick={(e) => handleFilterClick(e, 'software', resource.software)}
                   >
                     {resource.software}
@@ -113,8 +122,9 @@ export function ResourceCard({ resource }: ResourceCardProps) {
           </p>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          <span className="text-sm font-medium text-primary group-hover:underline text-xs hover:pl-1 transition-all">
+          <span className="text-sm font-medium text-primary group-hover:underline text-xs hover:pl-1 transition-all flex items-center gap-1">
             {t.mindy.details.seeDetails}
+            <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
           </span>
         </CardFooter>
       </Card>

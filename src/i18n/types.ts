@@ -23,6 +23,8 @@ export interface MindyTranslations {
     relatedResources: string
     seeDetails: string
     filterBy: string
+    writeComment: string
+    submitComment: string
   }
 }
 

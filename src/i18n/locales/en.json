@@ -356,8 +356,9 @@
     "avatarUpdateSuccess": "Avatar updated successfully"
   },
   "mindy": {
-    "title": "Resources",
-    "description": "Find and explore mindfulness resources and tools to enhance your journey",
+    "title": "Mindy",
+    "description": "Explore our curated collection of resources and tools",
+    "noResults": "No resources found",
     "filters": {
       "category": "Category",
       "subcategory": "Subcategory",
@@ -368,7 +369,6 @@
       "noResults": "No resources found",
       "recentSearches": "Recent searches"
     },
-    "noResults": "No resources found matching your criteria",
     "details": {
       "title": "Resource Details",
       "description": "Description",
@@ -376,8 +376,10 @@
       "visitResource": "Visit Resource",
       "comments": "Comments",
       "relatedResources": "Related Resources",
-      "seeDetails": "See details",
-      "filterBy": "Filter by {type}"
+      "seeDetails": "See Details",
+      "filterBy": "Filter by {type}",
+      "writeComment": "Write a comment...",
+      "submitComment": "Submit Comment"
     }
   }
 } 
