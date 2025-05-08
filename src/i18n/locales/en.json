@@ -143,7 +143,27 @@
       "invalidCpf": "Invalid CPF",
       "invalidExpiry": "Invalid expiry date",
       "invalidCvv": "Invalid CVV"
-    }
+    },
+    "authRequired": "Authentication Required",
+    "authRequiredDescription": "Please login to continue with the subscription",
+    "login": "Login",
+    "progressRestored": "Progress restored",
+    "addressFound": "Address found",
+    "error": {
+      "timeout": "Request timed out. Please try again.",
+      "sessionExpired": "Your session has expired. Please login again.",
+      "incompleteUserData": "Incomplete user data",
+      "paymentFailed": "Payment failed",
+      "unknown": "Unknown error",
+      "network": "Network error",
+      "cardDeclined": "Card declined",
+      "contactSupport": "Please contact support"
+    },
+    "retry": "Try Again",
+    "tryAnotherCard": "Try another card",
+    "contactSupport": "Contact Support",
+    "success": "Subscription completed successfully!",
+    "stepXOfY": "Step {step} of {total}"
   },
   "home": {
     "hero": {

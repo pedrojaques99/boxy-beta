@@ -50,9 +50,9 @@ export function HeroSection({ title, subtitle, className, pattern = 'none' }: He
     <motion.div
       ref={heroRef}
       className={cn(
-        "relative w-full overflow-hidden bg-gradient-to-br from-background to-primary/5",
-        "min-h-[40vh] md:min-h-[50vh] flex items-center justify-center",
-        pattern === 'grid' && "before:absolute before:inset-0 before:bg-[linear-gradient(to_right,theme(colors.foreground/3)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.foreground/3)_1px,transparent_1px)] before:bg-[size:2rem_2rem] before:opacity-[0.02]",
+        "relative w-full overflow-hidden bg-gradient-to-br from-background to-primary/10",
+        "min-h-[30vh] md:min-h-[40vh] flex items-center justify-center",
+        pattern === 'grid' && "before:absolute before:inset-0 before:bg-[linear-gradient(to_right,theme(colors.foreground/3)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.foreground/3)_1px,transparent_1px)] before:bg-[size:2rem_2rem] before:opacity-[0.4]",
         className
       )}
       initial={{ opacity: 0, y: 20 }}

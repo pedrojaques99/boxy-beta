@@ -19,13 +19,10 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
-import { handleError } from '@/lib/error-handler'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { createClient } from '@/lib/supabase/client'
-import { useLocale } from '@/hooks/use-locale'
-import type { Dictionary } from '@/i18n/types'
-import { Database } from '@/types/supabase'
+
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
 type Step = typeof STEPS[number]
@@ -118,6 +115,67 @@ const formatCurrency = (amount: number, locale: string) => {
   })
   return formatter.format(amount)
 }
+
+// Add this function before the CheckoutWizard component
+const fetchAddressByCEP = async (cep: string) => {
+  try {
+    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const data = await response.json();
+    
+    if (data.erro) {
+      throw new Error('CEP não encontrado');
+    }
+    
+    return {
+      street: data.logradouro,
+      neighborhood: data.bairro,
+      city: data.localidade,
+      state: data.uf,
+      complement: data.complemento,
+    };
+  } catch (error) {
+    console.error('Erro ao buscar CEP:', error);
+    throw error;
+  }
+};
+
+const pageTransition = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+  transition: { duration: 0.3 }
+};
+
+const StepIcon = ({ 
+  step: currentStep, 
+  result, 
+  currentStepIndex 
+}: { 
+  step: Step; 
+  result: { success: boolean }; 
+  currentStepIndex: number;
+}) => {
+  const icons = {
+    plan: CreditCard,
+    user: User,
+    payment: Lock,
+    confirm: Check,
+    result: result.success ? Check : AlertCircle
+  };
+  
+  const Icon = icons[currentStep];
+  
+  return (
+    <div className={cn(
+      "w-10 h-10 rounded-full flex items-center justify-center",
+      STEPS.indexOf(currentStep) <= currentStepIndex
+        ? "bg-primary text-primary-foreground"
+        : "bg-muted text-muted-foreground"
+    )}>
+      <Icon className="h-5 w-5" />
+    </div>
+  );
+};
 
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
   const user = useUser()
@@ -278,6 +336,46 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     }
   }, [user, mounted])
 
+  useEffect(() => {
+    const saveProgress = () => {
+      if (step > 0) {
+        localStorage.setItem('checkout_progress', JSON.stringify({
+          step,
+          userData,
+          planId,
+          timestamp: Date.now()
+        }));
+      }
+    };
+
+    saveProgress();
+
+    return () => {
+      // Limpar dados sensíveis ao sair
+      if (step === STEPS.length - 1) {
+        localStorage.removeItem('checkout_progress');
+      }
+    };
+  }, [step, userData, planId]);
+
+  // Recuperar progresso ao montar
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('checkout_progress');
+    if (savedProgress) {
+      const { step: savedStep, userData: savedUserData, planId: savedPlanId, timestamp } = JSON.parse(savedProgress);
+      
+      // Verificar se o progresso não expirou (24h)
+      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+        setStep(savedStep);
+        setUserData(savedUserData);
+        setPlanId(savedPlanId);
+        toast.info(safeT('checkout.progressRestored'));
+      } else {
+        localStorage.removeItem('checkout_progress');
+      }
+    }
+  }, []);
+
   const handleBack = () => {
     if (step > 0) {
       setStep(step - 1)
@@ -413,6 +511,54 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     }
   }
 
+  const calculateProgress = () => {
+    const steps = {
+      plan: planId ? 100 : 0,
+      user: Object.values(userData).filter(Boolean).length / Object.keys(userData).length * 100,
+      payment: Object.values(card).filter(Boolean).length / Object.keys(card).length * 100,
+      confirm: 100,
+      result: 100
+    };
+    
+    return steps[STEPS[step]] || 0;
+  };
+
+  const handleError = async (error: any) => {
+    // Log do erro
+    console.error('Checkout error:', error);
+
+    // Tentar recuperar automaticamente
+    if (error.message.includes('network')) {
+      toast.error(safeT('checkout.error.network'), {
+        action: {
+          label: safeT('checkout.retry'),
+          onClick: handleNext
+        }
+      });
+    } else if (error.message.includes('card_declined')) {
+      toast.error(safeT('checkout.error.cardDeclined'), {
+        action: {
+          label: safeT('checkout.tryAnotherCard'),
+          onClick: () => setStep(2)
+        }
+      });
+    } else {
+      // Erro não recuperável
+      setResult({
+        success: false,
+        message: error.message
+      });
+      
+      // Oferecer suporte
+      toast.error(safeT('checkout.error.contactSupport'), {
+        action: {
+          label: safeT('checkout.contactSupport'),
+          onClick: () => window.open('/support', '_blank')
+        }
+      });
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -452,36 +598,48 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
   return (
     <div className="max-w-2xl mx-auto my-12 px-4">
-      <div className="mb-10">
-        <Progress value={(step / (STEPS.length - 1)) * 100} className="h-2" />
-        <div className="flex justify-between mt-4 text-sm text-muted-foreground">
+      <div className="relative mb-8">
+        <Progress value={calculateProgress()} className="h-2" />
+        <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-xs text-muted-foreground">
           {STEPS.map((stepKey, index) => (
             <div
               key={stepKey}
               className={cn(
-                "flex items-center gap-2",
+                "flex flex-col items-center",
                 index <= step ? "text-primary" : "text-muted-foreground"
               )}
             >
-              {stepIcons[stepKey]}
-              <span className="hidden sm:inline">{stepTitles[stepKey]}</span>
+              <div className={cn(
+                "w-3 h-3 rounded-full mb-1",
+                index <= step ? "bg-primary" : "bg-muted"
+              )} />
+              <span>{stepTitles[stepKey]}</span>
             </div>
           ))}
         </div>
       </div>
 
+      <div role="alert" aria-live="polite" className="sr-only">
+        {safeT(`checkout.step${step + 1}Of${STEPS.length}`)}
+      </div>
+
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -40 }}
-          transition={{ duration: 0.2 }}
+          {...pageTransition}
+          className="space-y-6"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && isStepValid()) {
+              handleNext();
+            } else if (e.key === 'Backspace' && step > 0) {
+              handleBack();
+            }
+          }}
         >
           <Card className="shadow-lg border-2 border-primary/10">
             <CardHeader className="pb-6">
               <CardTitle className="flex items-center gap-2 text-xl">
-                {stepIcons[STEPS[step]]}
+                <StepIcon step={STEPS[step]} result={result} currentStepIndex={step} />
                 {stepTitles[STEPS[step]]}
               </CardTitle>
               {step > 0 && step < 4 && (
@@ -545,6 +703,39 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                     {userData.email.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.emailRequired')}</span>}
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="user-zip">{safeT('checkout.zip')}</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="user-zip"
+                        placeholder={safeT('checkout.zipPlaceholder')}
+                        value={userData.zip_code}
+                        onChange={async (e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          setUserData({ ...userData, zip_code: value });
+                          
+                          if (value.length === 8) {
+                            try {
+                              const address = await fetchAddressByCEP(value);
+                              setUserData(prev => ({
+                                ...prev,
+                                street: address.street || prev.street,
+                                neighborhood: address.neighborhood || prev.neighborhood,
+                                city: address.city || prev.city,
+                                state: address.state || prev.state,
+                                complement: address.complement || prev.complement,
+                              }));
+                              toast.success(safeT('checkout.addressFound'));
+                            } catch (error) {
+                              toast.error(safeT('checkout.error.invalidZip'));
+                            }
+                          }
+                        }}
+                        maxLength={8}
+                        className={cn('text-foreground bg-background', userData.zip_code.length > 0 && userData.zip_code.length < 8 && 'border-red-500')}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="user-street">{safeT('checkout.street')}</Label>
                     <Input
                       id="user-street"
@@ -575,18 +766,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       onChange={e => setUserData({ ...userData, complement: e.target.value })}
                       className="text-foreground bg-background"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="user-zip">{safeT('checkout.zip')}</Label>
-                    <Input
-                      id="user-zip"
-                      placeholder={safeT('checkout.zipPlaceholder')}
-                      value={userData.zip_code}
-                      onChange={e => setUserData({ ...userData, zip_code: e.target.value.replace(/\D/g, '') })}
-                      maxLength={8}
-                      className={cn('text-foreground bg-background', userData.zip_code.length > 0 && userData.zip_code.length < 8 && 'border-red-500')}
-                    />
-                    {userData.zip_code.length > 0 && userData.zip_code.length < 8 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidZip')}</span>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="user-neighborhood">{safeT('checkout.neighborhood')}</Label>

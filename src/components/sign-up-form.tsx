@@ -190,25 +190,7 @@ export function SignUpForm() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Button 
-            onClick={() => handleSocialSignUp('github')} 
-            className="relative bg-background hover:bg-accent" 
-            disabled={isSocialLoading || isLoading}
-            variant="outline"
-          >
-            {isSocialLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Image
-                src="/icons/mdi_github.svg"
-                alt="GitHub"
-                width={20}
-                height={20}
-                className="invert light:invert-0 opacity-80"
-              />
-            )}
-          </Button>
+        <div className="grid grid-cols-1 gap-4">
           <Button 
             onClick={() => handleSocialSignUp('google')} 
             className="relative bg-background hover:bg-accent" 

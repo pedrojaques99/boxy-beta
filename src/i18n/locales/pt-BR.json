@@ -144,7 +144,27 @@
       "invalidCpf": "CPF inválido",
       "invalidExpiry": "Validade inválida",
       "invalidCvv": "CVV inválido"
-    }
+    },
+    "authRequired": "Autenticação Necessária",
+    "authRequiredDescription": "Por favor, faça login para continuar com a assinatura",
+    "login": "Fazer Login",
+    "progressRestored": "Progresso restaurado",
+    "addressFound": "Endereço encontrado",
+    "error": {
+      "timeout": "Tempo limite excedido. Por favor, tente novamente.",
+      "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
+      "incompleteUserData": "Dados do usuário incompletos",
+      "paymentFailed": "Falha no pagamento",
+      "unknown": "Erro desconhecido",
+      "network": "Erro de conexão",
+      "cardDeclined": "Cartão recusado",
+      "contactSupport": "Por favor, entre em contato com o suporte"
+    },
+    "retry": "Tentar Novamente",
+    "tryAnotherCard": "Tentar outro cartão",
+    "contactSupport": "Contatar Suporte",
+    "success": "Assinatura realizada com sucesso!",
+    "stepXOfY": "Passo {step} de {total}"
   },
   "home": {
     "hero": {

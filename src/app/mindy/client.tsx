@@ -263,119 +263,125 @@ export default function MindyClient() {
         subtitle={t.mindy.description || "Access our curated collection of mindfulness resources and tools to enhance your well-being journey."}
       />
       
-      <div className="container mx-auto px-4 py-8">
-        <motion.h1 
-          className="text-3xl font-bold mb-8"
-          initial={{ opacity: 0, y: -20 }}
+      <div className="container mx-auto px-4">
+        {/* Search Section with Elevated Card */}
+        <motion.div 
+          className="-mt-8 relative z-10"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {t.mindy.title}
-        </motion.h1>
-
-        <motion.div 
-          className="mb-8 space-y-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex gap-2 items-center">
-            <div className="flex-1">
-              <SearchBar
-                onSearch={handleSearch}
-                t={t}
-                context="mindy"
-                isLoading={isSearching}
-              />
-            </div>
-            <AnimatePresence>
-              {showClearButton && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClearAll}
-                    className="shrink-0 h-11 w-11"
+          <div className="bg-card rounded-xl shadow-lg p-6 border border-border/50">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="flex-1">
+                <SearchBar
+                  onSearch={handleSearch}
+                  t={t}
+                  context="mindy"
+                  isLoading={isSearching}
+                />
+              </div>
+              <AnimatePresence>
+                {showClearButton && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleClearAll}
+                      className="shrink-0 h-11 w-11"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <motion.div 
-            className="flex flex-wrap gap-2"
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-          >
-            {filterOptions.map((option) => (
-              <motion.div
-                key={`${option.type}-${option.value}`}
-                variants={filterVariants}
-              >
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    'cursor-pointer hover:bg-accent transition-colors',
-                    searchParams.get(option.type) === option.value && 'bg-accent'
-                  )}
-                  onClick={() => handleFilterClick(option.type, option.value)}
-                >
-                  {option.value} ({option.count})
-                </Badge>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex justify-center items-center py-12"
-            >
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="resources"
+            <motion.div 
+              className="flex flex-wrap gap-2"
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {resources.length > 0 ? (
-                resources.map((resource) => (
-                  <motion.div
-                    key={resource.id}
-                    variants={itemVariants}
-                  >
-                    <ResourceCard
-                      resource={resource}
-                    />
-                  </motion.div>
-                ))
-              ) : (
+              {filterOptions.map((option, index) => (
                 <motion.div
-                  variants={itemVariants}
-                  className="col-span-full text-center py-8 text-muted-foreground"
+                  key={`${option.type}-${option.value}`}
+                  variants={filterVariants}
+                  style={{
+                    // Slight size variation for visual hierarchy
+                    scale: 1 - (index * 0.02),
+                    opacity: 1 - (index * 0.02)
+                  }}
                 >
-                  {t.mindy.noResults}
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'cursor-pointer hover:bg-accent/50 transition-all duration-200',
+                      'hover:scale-105',
+                      searchParams.get(option.type) === option.value && 'bg-accent',
+                      // Slight size variation for visual hierarchy
+                      index < 5 ? 'text-sm' : 'text-xs'
+                    )}
+                    onClick={() => handleFilterClick(option.type, option.value)}
+                  >
+                    {option.value}
+                    <span className="ml-1 opacity-60">({option.count})</span>
+                  </Badge>
                 </motion.div>
-              )}
+              ))}
             </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Results Section */}
+        <div className="mt-8">
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex justify-center items-center py-12"
+              >
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="resources"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {resources.length > 0 ? (
+                  resources.map((resource) => (
+                    <motion.div
+                      key={resource.id}
+                      variants={itemVariants}
+                    >
+                      <ResourceCard
+                        resource={resource}
+                      />
+                    </motion.div>
+                  ))
+                ) : (
+                  <motion.div
+                    variants={itemVariants}
+                    className="col-span-full text-center py-8 text-muted-foreground"
+                  >
+                    {t.mindy.noResults}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </>
   )

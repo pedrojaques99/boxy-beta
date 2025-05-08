@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { usePathname, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from '@/hooks/use-translations';
-import { i18n } from '@/i18n/settings';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { User as SupabaseUser } from '@supabase/supabase-js';

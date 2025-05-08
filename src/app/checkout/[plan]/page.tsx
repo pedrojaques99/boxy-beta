@@ -100,16 +100,14 @@ export default function CheckoutPage() {
         </Link>
       </div>
       
-      <Card className="p-6">
-        <h1 className="text-2xl font-bold mb-6">Finalizar Assinatura</h1>
-        <CheckoutWizard 
-          defaultPlanId={planId} 
-          onSuccess={() => {
-            toast.success('Assinatura criada com sucesso!');
-            router.push('/dashboard?subscription=success');
-          }} 
-        />
-      </Card>
+      <h1 className="text-2xl font-bold mb-6">Finalizar Assinatura</h1>
+      <CheckoutWizard 
+        defaultPlanId={planId} 
+        onSuccess={() => {
+          toast.success('Assinatura criada com sucesso!');
+          router.push('/dashboard?subscription=success');
+        }} 
+      />
     </div>
   );
 } 
