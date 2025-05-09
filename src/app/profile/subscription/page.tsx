@@ -21,15 +21,29 @@ import { useTranslations } from '@/hooks/use-translations'
 import { useRouter } from 'next/navigation'
 import { Loader2, CreditCard, ReceiptText, AlertTriangle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
+
+interface CardDetails {
+  last4: string;
+  brand: string;
+  exp_month: number;
+  exp_year: number;
+}
 
 export default function SubscriptionPage() {
   const user = useUser()
   const { t } = useTranslations()
+  const supabase = useSupabaseClient()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const authService = getAuthService()
   const router = useRouter()
+  const [cardDetails, setCardDetails] = useState<CardDetails | null>(null)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -71,6 +85,73 @@ export default function SubscriptionPage() {
   }
 
   const plan = subscription ? getPlanById(subscription.plan_id as PlanId) : null
+
+  const safeT = (key: string): string => {
+    if (!t) return key;
+    const keys = key.split('.');
+    let value: any = t;
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+    return typeof value === 'string' ? value : key;
+  };
+
+  const fetchCardDetails = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch('/api/pagarme/card-details', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch card details');
+      
+      const data = await response.json();
+      setCardDetails(data);
+    } catch (error) {
+      console.error('Error fetching card details:', error);
+      toast.error(safeT('subscription.error.fetchingCard'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateCard = () => {
+    router.push('/checkout?update=true');
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user) return;
+    
+    try {
+      setCancelling(true);
+      const response = await fetch('/api/pagarme/cancel-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to cancel subscription');
+      
+      toast.success(safeT('subscription.cancelSuccess'));
+      router.refresh();
+      setCancelDialogOpen(false);
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      toast.error(safeT('subscription.error.cancelling'));
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -221,6 +302,40 @@ export default function SubscriptionPage() {
               loadSubscription()
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            {safeT('subscription.cancelConfirmTitle')}
+          </DialogTitle>
+          <div className="space-y-4 py-4">
+            <p className="text-muted-foreground">
+              {safeT('subscription.cancelConfirmDescription')}
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setCancelDialogOpen(false)}
+                disabled={cancelling}
+              >
+                {safeT('subscription.cancelNo')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelSubscription}
+                disabled={cancelling}
+              >
+                {cancelling ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  safeT('subscription.cancelYes')
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -485,6 +485,37 @@ export class AuthService {
   };
 
   /**
+   * Get recent downloads for a user
+   * @param userId User ID to fetch downloads for
+   * @param limit Number of downloads to fetch
+   * @returns Array of recent downloads
+   */
+  getRecentDownloads = async (userId: string, limit = 5) => {
+    try {
+      const { data, error } = await this.supabase
+        .from('downloads')
+        .select(`
+          id,
+          created_at,
+          resource:resource_id (
+            id,
+            title,
+            image_url
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching recent downloads:', error);
+      return [];
+    }
+  };
+
+  /**
    * Handle errors consistently across the service
    * @param error The error to handle
    * @param defaultMessage Default error message if none provided

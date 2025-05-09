@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import { handleError, handleSuccess } from '@/lib/error-handler';
-import { Loader2, Lock, Unlock, Crown, Settings, Edit2, Calendar, User } from 'lucide-react';
+import { Loader2, Lock, Unlock, Crown, Settings, Edit2, Calendar, User, Heart } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -15,6 +15,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@supabase/auth-helpers-react';
 import { toast } from 'sonner';
 import { useTranslations } from '@/hooks/use-translations';
+
+interface Download {
+  id: string;
+  created_at: string;
+  resource: {
+    id: string;
+    title: string;
+    image_url: string;
+  };
+}
 
 interface UserProfile {
   id: string;
@@ -30,6 +40,7 @@ interface UserProfile {
     description: string;
     image_url: string;
   }>;
+  downloads?: Download[];
 }
 
 export default function ProfilePage() {
@@ -89,7 +100,13 @@ export default function ProfilePage() {
           existingProfile = await authService.saveUserProfile(newProfile);
         }
 
-        setProfile(existingProfile);
+        // Fetch recent downloads
+        const downloads = await authService.getRecentDownloads(data.user.id, 5);
+
+        setProfile({
+          ...existingProfile,
+          downloads: downloads || []
+        });
       } catch (error) {
         console.error('Profile error:', error);
         const { error: errorMessage } = handleError(error);
@@ -356,14 +373,34 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <Button 
-                onClick={() => router.push('/profile/edit')}
-                className="w-fit"
-                variant="outline"
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                {safeT('profile.editProfile')}
-              </Button>
+              <div className="flex flex-col space-y-4">
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => router.push('/profile/edit')}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  {safeT('profile.editProfile')}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => router.push('/profile/subscription')}
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  {safeT('profile.manageSubscription')}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => router.push('/profile/liked')}
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  {safeT('profile.likedResources.title')}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -443,6 +480,47 @@ export default function ProfilePage() {
                 >
                   {safeT('profile.browseResources')}
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Downloads Section */}
+        <Card className="bg-card border-0 shadow-sm col-span-full">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold">
+              {safeT('profile.recentDownloads')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profile.downloads && profile.downloads.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {profile.downloads.map((download) => (
+                  <div
+                    key={download.id}
+                    className="group relative overflow-hidden rounded-lg border bg-card transition-colors hover:bg-accent"
+                  >
+                    <div className="aspect-square overflow-hidden">
+                      <img
+                        src={download.resource.image_url}
+                        alt={download.resource.title}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-medium leading-none truncate">
+                        {download.resource.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {new Date(download.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                {safeT('profile.noDownloads')}
               </div>
             )}
           </CardContent>

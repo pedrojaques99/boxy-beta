@@ -629,6 +629,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           {...pageTransition}
           className="space-y-6"
           onKeyDown={(e) => {
+            // Only handle keyboard navigation if not in an input field
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+              return;
+            }
             if (e.key === 'Enter' && isStepValid()) {
               handleNext();
             } else if (e.key === 'Backspace' && step > 0) {

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useTranslations } from '@/hooks/use-translations'
+import Image from 'next/image'
 
 export function Footer() {
   const { t } = useTranslations()
@@ -13,7 +14,15 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-4">{t.footer.brand.title}</h3>
+            <div className="mb-4">
+              <Image 
+                src="/logo/logo-boxy-icon.png"
+                alt="BOXY Logo"
+                width={32}
+                height={32}
+                priority
+              />
+            </div>
             <p className="text-sm text-muted-foreground">
               {t.footer.brand.description}
             </p>
@@ -22,13 +31,28 @@ export function Footer() {
             <h4 className="font-semibold mb-4">{t.footer.products.title}</h4>
             <ul className="space-y-2">
               <li>
+                <Link href="/about" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t?.navigation?.about}
+                </Link>
+              </li>
+              <li>
                 <Link href="/shop" className="text-sm text-muted-foreground hover:text-accent transition-colors">
-                  {t.footer.products.explore}
+                  {t?.navigation?.shop}
+                </Link>
+              </li>
+              <li>
+                <Link href="/labs" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t?.navigation?.labs}
+                </Link>
+              </li>
+              <li>
+                <Link href="/mindy" className="text-sm text-muted-foreground hover:text-accent transition-colors">
+                  {t?.navigation?.mindy}
                 </Link>
               </li>
               <li>
                 <Link href="/price" className="text-sm text-muted-foreground hover:text-accent transition-colors">
-                  {t.footer.products.pricing}
+                  {t?.navigation?.pricing}
                 </Link>
               </li>
             </ul>

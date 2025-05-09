@@ -74,7 +74,24 @@
       "nextBilling": "Next Billing",
       "changePlan": "Change Plan",
       "noSubscription": "No active subscription",
-      "subscribe": "Subscribe Now"
+      "subscribe": "Subscribe Now",
+      "cardAndPlan": "Card & Plan Management",
+      "cardDetails": "Card Details",
+      "expires": "Expires",
+      "noCard": "No card information available",
+      "updateCard": "Update Card",
+      "cancelTitle": "Cancel Subscription",
+      "cancelDescription": "You can cancel your subscription at any time. Your access will remain active until the end of your current billing period.",
+      "cancelButton": "Cancel Subscription",
+      "cancelConfirmTitle": "Confirm Cancellation",
+      "cancelConfirmDescription": "Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.",
+      "cancelYes": "Yes, Cancel",
+      "cancelNo": "No, Keep It",
+      "cancelSuccess": "Subscription cancelled successfully",
+      "error": {
+        "fetchingCard": "Error fetching card details",
+        "cancelling": "Error cancelling subscription"
+      }
     },
     "profileInfo": "Profile Information",
     "accountSettings": "Account Settings",
@@ -91,6 +108,24 @@
     "loading": {
       "profileInfo": "Loading profile information...",
       "accountSettings": "Loading account settings..."
+    },
+    "recentDownloads": "Recent Downloads",
+    "noDownloads": "No downloads yet",
+    "likedResources": {
+      "title": "Liked Resources",
+      "description": "Manage your favorite resources",
+      "noLikes": "No liked resources yet",
+      "loading": "Loading liked resources...",
+      "filters": {
+        "category": "Category",
+        "search": "Search resources..."
+      },
+      "table": {
+        "resource": "Resource",
+        "category": "Category",
+        "addedAt": "Added At",
+        "actions": "Actions"
+      }
     }
   },
   "checkout": {
@@ -259,7 +294,7 @@
           "button": "Get Started"
         },
         "annual": {
-          "name": "Annual",
+          "name": "Yearly Plan",
           "price": "R$ 379.00",
           "monthly": "R$ 31.58/month",
           "features": [
@@ -273,7 +308,7 @@
           "button": "Subscribe"
         },
         "monthly": {
-          "name": "Monthly",
+          "name": "Monthly Plan",
           "price": "R$ 37.90",
           "monthly": "R$ 37.90/month",
           "features": [
@@ -334,7 +369,6 @@
     "plans": {
       "title": "Plans",
       "create": "Create plans",
-      "creating": "Creating plans...",
       "created": "Plans created successfully",
       "error": "Error creating plans"
     },
@@ -359,6 +393,48 @@
         "error": "Upload error",
         "alt": "Product thumbnail"
       }
+    },
+    "subscribers": {
+      "title": "Subscribers",
+      "description": "Manage platform subscribers",
+      "filters": {
+        "status": "Status",
+        "search": "Search subscribers..."
+      },
+      "table": {
+        "email": "Email",
+        "name": "Name",
+        "plan": "Plan",
+        "status": "Status",
+        "startDate": "Start Date",
+        "nextBilling": "Next Billing",
+        "actions": "Actions"
+      },
+      "export": "Export CSV",
+      "noSubscribers": "No subscribers found",
+      "loading": "Loading subscribers..."
+    },
+    "downloads": {
+      "title": "Downloads",
+      "description": "Track resource downloads",
+      "filters": {
+        "type": "Resource Type",
+        "search": "Search downloads..."
+      },
+      "table": {
+        "resource": "Resource",
+        "user": "User",
+        "date": "Date",
+        "type": "Type"
+      },
+      "stats": {
+        "total": "Total Downloads",
+        "uniqueUsers": "Unique Users",
+        "uniqueResources": "Unique Resources"
+      },
+      "export": "Export CSV",
+      "noDownloads": "No downloads found",
+      "loading": "Loading downloads..."
     }
   },
   "profileEdit": {

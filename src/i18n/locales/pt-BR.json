@@ -74,14 +74,30 @@
       "nextBilling": "Próxima Cobrança",
       "changePlan": "Alterar Plano",
       "noSubscription": "Nenhuma assinatura ativa",
-      "subscribe": "Assinar Agora"
+      "subscribe": "Assinar Agora",
+      "cardAndPlan": "Gerenciamento de Cartão e Plano",
+      "cardDetails": "Dados do Cartão",
+      "expires": "Vencimento",
+      "noCard": "Nenhuma informação de cartão disponível",
+      "updateCard": "Atualizar Cartão",
+      "cancelTitle": "Cancelar Assinatura",
+      "cancelDescription": "Você pode cancelar sua assinatura a qualquer momento. Seu acesso permanecerá ativo até o final do período de cobrança atual.",
+      "cancelButton": "Cancelar Assinatura",
+      "cancelConfirmTitle": "Confirmar Cancelamento",
+      "cancelConfirmDescription": "Tem certeza que deseja cancelar sua assinatura? Você perderá acesso aos recursos premium ao final do período de cobrança atual.",
+      "cancelYes": "Sim, Cancelar",
+      "cancelNo": "Não, Manter",
+      "cancelSuccess": "Assinatura cancelada com sucesso",
+      "error": {
+        "fetchingCard": "Erro ao buscar dados do cartão",
+        "cancelling": "Erro ao cancelar assinatura"
+      }
     },
     "profileInfo": "Informações do Perfil",
     "accountSettings": "Configurações da Conta",
     "bio": "Bio",
     "noBio": "Nenhuma bio adicionada ainda.",
     "memberSince": "Membro desde",
-    "currentPlan": "Plano Atual",
     "upgradeToPremium": "Upgrade para Premium",
     "editProfile": "Editar Perfil",
     "paymentSettings": "Configurações de Pagamento",
@@ -92,6 +108,24 @@
     "loading": {
       "profileInfo": "Carregando informações do perfil...",
       "accountSettings": "Carregando configurações da conta..."
+    },
+    "recentDownloads": "Downloads Recentes",
+    "noDownloads": "Nenhum download ainda",
+    "likedResources": {
+      "title": "Recursos Favoritos",
+      "description": "Gerencie seus recursos favoritos",
+      "noLikes": "Nenhum recurso favoritado ainda",
+      "loading": "Carregando recursos favoritos...",
+      "filters": {
+        "category": "Categoria",
+        "search": "Buscar recursos..."
+      },
+      "table": {
+        "resource": "Recurso",
+        "category": "Categoria",
+        "addedAt": "Adicionado em",
+        "actions": "Ações"
+      }
     }
   },
   "checkout": {
@@ -260,7 +294,7 @@
           "button": "Explorar"
         },
         "annual": {
-          "name": "Anual",
+          "name": "Plano Anual",
           "price": "R$ 379,00",
           "monthly": "R$ 31,58/mês",
           "features": [
@@ -274,7 +308,7 @@
           "button": "Assinar"
         },
         "monthly": {
-          "name": "Mensal",
+          "name": "Plano Mensal",
           "price": "R$ 37,90",
           "monthly": "R$ 37,90/mês",
           "features": [
@@ -335,7 +369,6 @@
     "plans": {
       "title": "Planos",
       "create": "Criar planos",
-      "creating": "Criando planos...",
       "created": "Planos criados com sucesso",
       "error": "Erro ao criar planos"
     },
@@ -360,6 +393,48 @@
         "error": "Erro ao enviar",
         "alt": "Miniatura do produto"
       }
+    },
+    "subscribers": {
+      "title": "Assinantes",
+      "description": "Gerenciar assinantes da plataforma",
+      "filters": {
+        "status": "Status",
+        "search": "Buscar assinantes..."
+      },
+      "table": {
+        "email": "E-mail",
+        "name": "Nome",
+        "plan": "Plano",
+        "status": "Status",
+        "startDate": "Data de Início",
+        "nextBilling": "Próxima Cobrança",
+        "actions": "Ações"
+      },
+      "export": "Exportar CSV",
+      "noSubscribers": "Nenhum assinante encontrado",
+      "loading": "Carregando assinantes..."
+    },
+    "downloads": {
+      "title": "Downloads",
+      "description": "Acompanhar downloads de recursos",
+      "filters": {
+        "type": "Tipo de Recurso",
+        "search": "Buscar downloads..."
+      },
+      "table": {
+        "resource": "Recurso",
+        "user": "Usuário",
+        "date": "Data",
+        "type": "Tipo"
+      },
+      "stats": {
+        "total": "Total de Downloads",
+        "uniqueUsers": "Usuários Únicos",
+        "uniqueResources": "Recursos Únicos"
+      },
+      "export": "Exportar CSV",
+      "noDownloads": "Nenhum download encontrado",
+      "loading": "Carregando downloads..."
     }
   },
   "profileEdit": {

@@ -147,6 +147,48 @@ export interface Dictionary {
         alt: string
       }
     }
+    subscribers: {
+      title: string
+      description: string
+      filters: {
+        status: string
+        search: string
+      }
+      table: {
+        email: string
+        name: string
+        plan: string
+        status: string
+        startDate: string
+        nextBilling: string
+        actions: string
+      }
+      export: string
+      noSubscribers: string
+      loading: string
+    }
+    downloads: {
+      title: string
+      description: string
+      filters: {
+        type: string
+        search: string
+      }
+      table: {
+        resource: string
+        user: string
+        date: string
+        type: string
+      }
+      stats: {
+        total: string
+        uniqueUsers: string
+        uniqueResources: string
+      }
+      export: string
+      noDownloads: string
+      loading: string
+    }
   }
   profile: {
     subscription: {
@@ -158,6 +200,57 @@ export interface Dictionary {
       changePlan: string
       noSubscription: string
       subscribe: string
+      cardAndPlan: string
+      cardDetails: string
+      expires: string
+      noCard: string
+      updateCard: string
+      cancelTitle: string
+      cancelDescription: string
+      cancelButton: string
+      cancelConfirmTitle: string
+      cancelConfirmDescription: string
+      cancelYes: string
+      cancelNo: string
+      cancelSuccess: string
+      error: {
+        fetchingCard: string
+        cancelling: string
+      }
+    }
+    profileInfo: string
+    accountSettings: string
+    bio: string
+    noBio: string
+    memberSince: string
+    upgradeToPremium: string
+    editProfile: string
+    paymentSettings: string
+    notificationPreferences: string
+    manageSubscription: string
+    clickToChange: string
+    tryAgain: string
+    loading: {
+      profileInfo: string
+      accountSettings: string
+    }
+    recentDownloads: string
+    noDownloads: string
+    likedResources: {
+      title: string
+      description: string
+      noLikes: string
+      loading: string
+      filters: {
+        category: string
+        search: string
+      }
+      table: {
+        resource: string
+        category: string
+        addedAt: string
+        actions: string
+      }
     }
   }
   checkout: {
