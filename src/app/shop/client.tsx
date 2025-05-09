@@ -348,73 +348,70 @@ export default function ShopClient() {
         subtitle={t?.shop.description || "Explore our curated collection of high-quality resources and tools for your creative projects"}
       />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4">
+        {/* Floating Search Section */}
         <motion.div 
-          className="mb-8 space-y-6"
+          className="-mt-8 relative z-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* Search Bar and Clear Filters */}
-          <div className="flex gap-2 items-center">
-            <div className="flex-1">
-              <SearchBar 
-                onSearch={handleSearch}
-                t={t}
-                context="shop"
-                isLoading={loading}
-              />
-            </div>
-            <AnimatePresence>
-              {hasActiveFilters && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleClearAll}
-                    className="shrink-0 h-11 w-11"
+          <div className="bg-card rounded-xl shadow-lg p-6 border border-border/50">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="flex-1">
+                <SearchBar
+                  onSearch={handleSearch}
+                  t={t}
+                  context="shop"
+                  isLoading={loading}
+                />
+              </div>
+              <AnimatePresence>
+                {hasActiveFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleClearAll}
+                      className="shrink-0 h-11 w-11"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          {/* Free Filter and Tag Cloud */}
-          <motion.div 
-            className="flex items-center gap-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-          >
+            {/* Free Filter and Tag Cloud */}
             <motion.div 
-              className="flex items-center gap-2 min-w-fit"
-              variants={filterVariants}
+              className="flex flex-wrap items-center gap-2"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
             >
-              <Checkbox
-                id="free-filter"
-                checked={showOnlyFree}
-                onCheckedChange={handleFreeFilterChange}
-              />
-              <Label
-                htmlFor="free-filter"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              <motion.div 
+                variants={filterVariants}
+                className="flex items-center gap-2"
               >
-                {t.shop.filters.free}
-              </Label>
-            </motion.div>
+                <Checkbox
+                  id="free-filter"
+                  checked={showOnlyFree}
+                  onCheckedChange={handleFreeFilterChange}
+                  className="h-4 w-4"
+                />
+                <Label
+                  htmlFor="free-filter"
+                  className="text-sm text-muted-foreground"
+                >
+                  {t.shop.filters.free}
+                </Label>
+              </motion.div>
 
-            {/* Tag Cloud */}
-            <motion.div 
-              className="flex-1"
-              variants={filterVariants}
-            >
               {tagError ? (
                 <div className="text-sm text-destructive">{tagError}</div>
               ) : tagLoading ? (
@@ -432,56 +429,58 @@ export default function ShopClient() {
                 />
               )}
             </motion.div>
-          </motion.div>
+          </div>
         </motion.div>
-        
+
         {/* Product Grid */}
-        <AnimatePresence mode="wait">
-          {loading && !products.length ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex justify-center items-center py-12"
-            >
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="products"
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {products.length > 0 ? (
-                products.map((product) => (
+        <div className="mt-8">
+          <AnimatePresence mode="wait">
+            {loading && !products.length ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex justify-center items-center py-12"
+              >
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="products"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <motion.div
+                      key={product.id}
+                      variants={itemVariants}
+                    >
+                      <ProductCard
+                        product={product}
+                        onFilterClick={handleTagClick}
+                        isTagActive={(key, value) => activeFilters[key] === value}
+                        showFooterLink={true}
+                        viewDetailsText={t.shop.viewDetails}
+                        userId={userId}
+                      />
+                    </motion.div>
+                  ))
+                ) : (
                   <motion.div
-                    key={product.id}
                     variants={itemVariants}
+                    className="col-span-full text-center py-8 text-muted-foreground"
                   >
-                    <ProductCard
-                      product={product}
-                      onFilterClick={handleTagClick}
-                      isTagActive={(key, value) => activeFilters[key] === value}
-                      showFooterLink={true}
-                      viewDetailsText={t.shop.viewDetails}
-                      userId={userId}
-                    />
+                    {t.shop.noProducts}
                   </motion.div>
-                ))
-              ) : (
-                <motion.div
-                  variants={itemVariants}
-                  className="col-span-full text-center py-8 text-muted-foreground"
-                >
-                  {t.shop.noProducts}
-                </motion.div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Loading More Indicator */}
         <div ref={ref} className="w-full flex justify-center py-8">

@@ -2,10 +2,14 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Product } from '@/types'
 import { LikeButton } from '@/components/LikeButton'
 import { cn } from '@/lib/utils'
+import { Eye } from 'lucide-react'
+import Image from 'next/image'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useState, useCallback } from 'react'
 
 interface ProductCardProps {
   product: Product
@@ -16,6 +20,15 @@ interface ProductCardProps {
   userId?: string | null
 }
 
+const softwareIcons: Record<string, string> = {
+  'Photoshop': '/icons/photoshop-icon.svg',
+  'Figma': '/icons/figma-icon.svg',
+  'Illustrator': '/icons/illustrator-icon.svg',
+  'After Effects': '/icons/ae-icon.svg',
+  'Premiere': '/icons/premiere-icon.svg',
+  'Blender': '/icons/blender-icon.svg'
+}
+
 export function ProductCard({ 
   product, 
   onFilterClick, 
@@ -24,8 +37,33 @@ export function ProductCard({
   viewDetailsText = "Ver detalhes",
   userId
 }: ProductCardProps) {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isHovering) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, [isHovering]);
+
   return (
-    <Card className="overflow-hidden group h-full relative">
+    <Card 
+      className={cn(
+        "overflow-hidden group h-full relative transition-all duration-300",
+        "before:absolute before:inset-0 before:p-[1px] before:rounded-lg before:content-[''] before:pointer-events-none",
+        isHovering && "before:bg-[radial-gradient(800px_circle_at_var(--xPos)_var(--yPos),rgba(var(--primary),0.15),transparent_40%)]"
+      )}
+      style={{
+        '--xPos': `${position.x}px`,
+        '--yPos': `${position.y}px`
+      } as React.CSSProperties}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
       <div className="absolute top-4 right-4 z-10">
         <LikeButton type="product" id={product.id} userId={userId} />
       </div>
@@ -39,24 +77,59 @@ export function ProductCard({
               className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </Link>
-          {product.type && onFilterClick && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onFilterClick('type', product.type!)}
-              className={cn(
-                "absolute top-2 left-2 px-2.5 py-1 rounded-full text-xs transition-all",
-                "border border-stone-300 dark:border-stone-600",
-                "hover:border-stone-400 dark:hover:border-stone-500",
-                "bg-background/80 backdrop-blur-sm",
-                isTagActive && isTagActive('type', product.type)
-                  ? 'bg-stone-100 dark:bg-stone-800 border-stone-400 dark:border-stone-500 shadow-sm'
-                  : 'hover:bg-stone-50 dark:hover:bg-stone-800/50'
-              )}
-            >
-              {product.type}
-            </motion.button>
-          )}
+          <div className="absolute top-2 left-2 flex items-center gap-2">
+            {product.software && onFilterClick && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onFilterClick('software', product.software!)}
+                    className={cn(
+                      "p-1.5 rounded-full transition-all",
+                      "bg-background/10 backdrop-blur-sm border border-stone-500/50",
+                      isTagActive && isTagActive('software', product.software)
+                        ? 'bg-stone-100 dark:bg-stone-800 shadow-sm'
+                        : 'hover:bg-stone-50 dark:hover:bg-stone-800/50'
+                    )}
+                  >
+                    {softwareIcons[product.software] ? (
+                      <Image 
+                        src={softwareIcons[product.software]} 
+                        alt={product.software}
+                        width={16}
+                        height={16}
+                        className="w-4 h-4"
+                      />
+                    ) : (
+                      <span className="text-xs px-1">{product.software}</span>
+                    )}
+                  </motion.button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">{product.software}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {product.type && onFilterClick && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onFilterClick('type', product.type!)}
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs transition-all",
+                  "border border-stone-500/50",
+                  "hover:border-stone-400 dark:hover:border-stone-500",
+                  "bg-background/10 backdrop-blur-sm",
+                  isTagActive && isTagActive('type', product.type)
+                    ? 'bg-stone-100 dark:bg-stone-800 border-stone-400 dark:border-stone-500 shadow-sm'
+                    : 'hover:bg-stone-50 dark:hover:bg-stone-800/50'
+                )}
+              >
+                {product.type}
+              </motion.button>
+            )}
+          </div>
         </div>
       )}
       
@@ -65,16 +138,11 @@ export function ProductCard({
           <h2 className="text-lg font-semibold group-hover:text-primary transition-colors">
             {product.name}
           </h2>
-          {product.description && (
-            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-              {product.description}
-            </p>
-          )}
         </Link>
 
-        {onFilterClick && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {product.category && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-2">
+            {product.category && onFilterClick && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -92,37 +160,17 @@ export function ProductCard({
                 {product.category}
               </motion.button>
             )}
-            {product.software && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onFilterClick('software', product.software!)}
-                className={cn(
-                  "px-2.5 py-1 rounded-full text-xs transition-all",
-                  "border border-stone-300 dark:border-stone-600",
-                  "hover:border-stone-400 dark:hover:border-stone-500",
-                  "bg-background/80 backdrop-blur-sm",
-                  isTagActive && isTagActive('software', product.software)
-                    ? 'bg-stone-100 dark:bg-stone-800 border-stone-400 dark:border-stone-500 shadow-sm'
-                    : 'hover:bg-stone-50 dark:hover:bg-stone-800/50'
-                )}
-              >
-                {product.software}
-              </motion.button>
-            )}
           </div>
-        )}
+          {showFooterLink && (
+            <Link href={`/shop/${product.id}`}>
+              <span className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 hover:translate-x-1 transition-all">
+                {viewDetailsText}
+                <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </span>
+            </Link>
+          )}
+        </div>
       </CardContent>
-
-      {showFooterLink && (
-        <CardFooter className="p-4 pt-0">
-          <Link href={`/shop/${product.id}`} className="block">
-            <span className="text-sm font-medium text-primary group-hover:underline hover:pl-1 transition-all">
-              {viewDetailsText}
-            </span>
-          </Link>
-        </CardFooter>
-      )}
     </Card>
   )
 } 

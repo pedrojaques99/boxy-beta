@@ -3,12 +3,8 @@ import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { getDictionary } from '@/i18n'
 import { i18n } from '@/i18n/settings'
-import { ProductClient } from '@/components/shop/product-client'
-import { LikeButton } from '@/components/LikeButton'
-import { CommentsSection } from '@/components/CommentsSection'
 import { Suspense } from 'react'
-import { ProductSocialClient } from '@/components/shop/ProductSocialClient'
-import { Database } from '@/types/supabase'
+import ProductPageClient from './client'
 
 async function getProduct(id: string) {
   const supabase = await createClient()
@@ -40,11 +36,16 @@ export default async function ProductPage({
   }
 
   return (
-    <>
-      <ProductClient product={product} t={t} />
-      <Suspense fallback={null}>
-        <ProductSocialClient productId={product.id} />
-      </Suspense>
-    </>
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="h-4 bg-muted rounded w-full"></div>
+          <div className="h-4 bg-muted rounded w-3/4"></div>
+        </div>
+      </div>
+    }>
+      <ProductPageClient product={product} t={t} />
+    </Suspense>
   )
 } 

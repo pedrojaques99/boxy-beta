@@ -2,15 +2,13 @@
 
 import { getAuthService } from '@/lib/auth/auth-service';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { ArrowRight, MessageCircle } from 'lucide-react';
 import { HeroSection } from '@/components/home/hero-section';
 import { FeaturesSection } from '@/components/home/features-section';
 import { PricingSection } from '@/components/home/pricing-section';
-import { ProductCard } from '@/components/shop/product-card';
 import { CategoriesSection } from '@/components/home/categories-section';
 import { LatestProductsSection } from '@/components/home/latest-products-section';
 import { useTranslations } from '@/hooks/use-translations';
@@ -66,6 +64,12 @@ export default function HomePage() {
         if (products) setLatestProducts(products);
         if (categoriesData) {
           const uniqueCategories = [...new Set(categoriesData.map((item: { category: string }) => item.category))] as string[];
+          if (!uniqueCategories.includes('Freebies')) {
+            uniqueCategories.push('Freebies');
+          }
+          if (!uniqueCategories.includes('Tools')) {
+            uniqueCategories.push('Tools');
+          }
           setCategories(uniqueCategories);
         }
       } catch (error) {
@@ -86,8 +90,12 @@ export default function HomePage() {
 
       <CategoriesSection categories={categories} />
 
-      <section className="py-20 bg-neutral-950">
-        <div className="w-[90%] mx-auto">
+      <section className="relative py-20 bg-neutral-950">
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: 'url(/images/about-bg.webp)' }}
+        />
+        <div className="w-[90%] mx-auto relative z-10">
           <FeaturesSection />
         </div>
       </section>

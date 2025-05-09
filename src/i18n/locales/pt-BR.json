@@ -12,7 +12,7 @@
     },
     "signUpSuccess": {
       "title": "Bem-vindo ao BOXY!",
-      "description": "Sua conta foi criada com sucesso. Agora você pode explorar nossos recursos criativos.",
+      "description": "Sua conta foi criada com sucesso. Agora você pode explorar nossos recursos criativos, links e ferramentas úteis.",
       "continue": "Continuar para o Dashboard",
       "checkEmail": "Por favor, verifique seu email para confirmar sua conta."
     },
@@ -47,6 +47,7 @@
       "materials": "Materiais",
       "hdris": "HDRIs",
       "plugins": "Plugins",
+      "tools": "Ferramentas",
       "free": "Gratuito",
       "premium": "Premium"
     }
@@ -63,7 +64,7 @@
     "myAccount": "Minha Conta",
     "signOut": "Sair",
     "signIn": "Entrar",
-    "getStarted": "Começar"
+    "getStarted": "Home"
   },
   "profile": {
     "subscription": {
@@ -98,7 +99,7 @@
     "bio": "Bio",
     "noBio": "Nenhuma bio adicionada ainda.",
     "memberSince": "Membro desde",
-    "upgradeToPremium": "Upgrade para Premium",
+    "upgradeToPremium": "Seja um boxer premium",
     "editProfile": "Editar Perfil",
     "paymentSettings": "Configurações de Pagamento",
     "notificationPreferences": "Preferências de Notificação",
@@ -233,9 +234,18 @@
       "discover": "Descubra recursos exclusivos para {category}"
     },
     "about": {
-      "title": "Sobre a BOXY",
-      "description": "Somos uma plataforma dedicada a conectar criativos com as melhores ferramentas e recursos. Nossa missão é impulsionar a criatividade e facilitar o processo criativo.",
-      "teamMember": "Membro da equipe"
+      "title": "Sobre a BOXY®",
+      "description": "Da junção de 3 designers apaixonados pelo o que fazem, nasceu a BOXY®. Nossa missão sempre foi grandiosa – transformar a rotina do designer brasileiro em algo extraordinário.",
+      "subtitle": "Com uma produção de mockups, templates, ferramentas e cursos 100% brasileira, temos o orgulho de dizer que seremos o maior projeto de assets para designers brasileiros!",
+      "team": {
+        "title": "Nossa Equipe",
+        "subtitle": "Conheça os criadores por trás da BOXY®"
+      },
+      "cta": {
+        "title": "Junte-se à nossa comunidade",
+        "description": "Faça parte da maior comunidade de designers brasileiros e tenha acesso a recursos exclusivos.",
+        "button": "Entrar agora"
+      }
     },
     "faq": {
       "title": "Perguntas Frequentes",
@@ -260,17 +270,17 @@
         "q1": {
           "quarter": "Q1",
           "title": "Lançamento da Plataforma",
-          "description": "Início das operações e primeiros recursos"
+          "description": "Início das operações, criação da comunidade e primeiros recursos"
         },
         "q2": {
           "quarter": "Q2",
           "title": "Expansão de Recursos",
-          "description": "Novas categorias e ferramentas"
+          "description": "Novas categorias e ferramentas no labs"
         },
         "q3": {
           "quarter": "Q3",
           "title": "Comunidade e Colaboração",
-          "description": "Recursos de interação entre usuários"
+          "description": "Recursos de interação entre usuários, desafios, comentários, likes e mais"
         }
       }
     },
@@ -326,7 +336,13 @@
   "footer": {
     "brand": {
       "title": "BOXY",
-      "description": "Transformando a forma como os criativos trabalham."
+      "description": "De criativo para criativo."
+    },
+    "newsletter": {
+      "title": "Newsletter",
+      "description": "Fique por dentro dos nossos últimos lançamentos e atualizações",
+      "placeholder": "Digite seu email",
+      "subscribe": "Inscrever"
     },
     "products": {
       "title": "Produtos",
@@ -453,7 +469,7 @@
   },
   "mindy": {
     "title": "Mindy",
-    "description": "Explore nossa coleção de recursos e ferramentas",
+    "description": "Explore nossa coleção de recursos, links e ferramentas úteis",
     "noResults": "Nenhum recurso encontrado",
     "filters": {
       "category": "Categoria",
@@ -469,13 +485,15 @@
       "title": "Detalhes do Recurso",
       "description": "Descrição",
       "createdBy": "Criado por",
-      "visitResource": "Visitar Recurso",
+      "visitResource": "Abrir Recurso",
       "comments": "Comentários",
       "relatedResources": "Recursos Relacionados",
       "seeDetails": "Ver Detalhes",
       "filterBy": "Filtrar por {type}",
+      "submitComment": "Enviar Comentário",
       "writeComment": "Escreva um comentário...",
-      "submitComment": "Enviar Comentário"
+      "noComments": "Nenhum comentário ainda",
+      "noRelatedResources": "Nenhum recurso relacionado encontrado"
     }
   }
 } 

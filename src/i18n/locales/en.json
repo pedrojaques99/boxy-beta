@@ -18,7 +18,7 @@
     },
     "accessDenied": {
       "title": "Access Denied",
-      "description": "You don't have permission to access this page",
+      "description": "You don't have permission to open this box",
       "backHome": "Back to Home"
     }
   },
@@ -27,7 +27,7 @@
     "logout": "Logout"
   },
   "shop": {
-    "title": "Products Gallery",
+    "title": "Products",
     "description": "Explore our curated collection of high-quality resources and tools for your creative projects",
     "viewDetails": "Open the box",
     "noProducts": "No products available",
@@ -47,6 +47,7 @@
       "materials": "Materials",
       "hdris": "HDRIs",
       "plugins": "Plugins",
+      "tools": "Tools",
       "free": "Free",
       "premium": "Premium"
     }
@@ -63,7 +64,7 @@
     "myAccount": "My Account",
     "signOut": "Sign Out",
     "signIn": "Sign In",
-    "getStarted": "Get Started"
+    "getStarted": "Home"
   },
   "profile": {
     "subscription": {
@@ -98,7 +99,7 @@
     "bio": "Bio",
     "noBio": "No bio added yet.",
     "memberSince": "Member Since",
-    "upgradeToPremium": "Upgrade to Premium",
+    "upgradeToPremium": "Be a boxer premium",
     "editProfile": "Edit Profile",
     "paymentSettings": "Payment Settings",
     "notificationPreferences": "Notification Preferences",
@@ -233,9 +234,18 @@
       "discover": "Discover exclusive resources for {category}"
     },
     "about": {
-      "title": "About BOXY",
-      "description": "We are a platform dedicated to connecting creatives with the best tools and resources. Our mission is to boost creativity and facilitate the creative process.",
-      "teamMember": "Team member"
+      "title": "About BOXY®",
+      "description": "Born from the union of 3 designers passionate about what they do, BOXY® was created. Our mission has always been grand – to transform the Brazilian designer's routine into something extraordinary.",
+      "subtitle": "With a 100% Brazilian production of mockups, templates, tools, and courses, we are proud to say that we will be the largest asset project for Brazilian designers!",
+      "team": {
+        "title": "Our Team",
+        "subtitle": "Meet the creators behind BOXY®"
+      },
+      "cta": {
+        "title": "Join our community",
+        "description": "Be part of the largest Brazilian designers community and get access to exclusive resources.",
+        "button": "Join now"
+      }
     },
     "faq": {
       "title": "FAQ",
@@ -259,18 +269,18 @@
       "items": {
         "q1": {
           "quarter": "Q1",
-          "title": "Platform Launch",
-          "description": "Start of operations and first resources"
+          "title": "Community Launch",
+          "description": "Start of operations, creation of the community and first resources"
         },
         "q2": {
           "quarter": "Q2",
           "title": "Resource Expansion",
-          "description": "New categories and tools"
+          "description": "New categories and tools in the labs®"
         },
         "q3": {
           "quarter": "Q3",
           "title": "Community and Collaboration",
-          "description": "User interaction features"
+          "description": "User interaction features, like comments, likes, challenges, and more"
         }
       }
     },
@@ -326,7 +336,13 @@
   "footer": {
     "brand": {
       "title": "BOXY",
-      "description": "Transforming the way creatives work."
+      "description": "Empowering creativity through high-quality resources and tools"
+    },
+    "newsletter": {
+      "title": "Newsletter",
+      "description": "Stay updated with our latest releases and updates",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe"
     },
     "products": {
       "title": "Products",
@@ -453,7 +469,7 @@
   },
   "mindy": {
     "title": "Mindy",
-    "description": "Explore our curated collection of resources and tools",
+    "description": "Explore our curated collection of resources, links and useful tools",
     "noResults": "No resources found",
     "filters": {
       "category": "Category",
@@ -469,13 +485,15 @@
       "title": "Resource Details",
       "description": "Description",
       "createdBy": "Created by",
-      "visitResource": "Visit Resource",
+      "visitResource": "Open Resource",
       "comments": "Comments",
       "relatedResources": "Related Resources",
       "seeDetails": "See Details",
       "filterBy": "Filter by {type}",
       "writeComment": "Write a comment...",
-      "submitComment": "Submit Comment"
+      "submitComment": "Submit Comment",
+      "noComments": "No comments yet",
+      "noRelatedResources": "No related resources found"
     }
   }
 } 

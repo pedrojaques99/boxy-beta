@@ -15,11 +15,12 @@ import { Dictionary } from '@/i18n/types'
 import { cn } from '@/lib/utils'
 import { Database } from '@/types/supabase'
 import { ProductCard } from '@/components/shop/product-card'
+import { LikeButton } from '@/components/LikeButton'
 
 interface ProductClientProps {
   product: Product
   t: Dictionary
-  userId: string
+  userId?: string | null
 }
 
 export function ProductClient({ product, t, userId }: ProductClientProps) {
@@ -164,11 +165,15 @@ export function ProductClient({ product, t, userId }: ProductClientProps) {
             className="space-y-5"
           >
             <h1 className="text-4xl font-bold tracking-tight text-foreground">{product.name}</h1>
-            {product.type && (
-              <span className="inline-block rounded-full bg-primary/10 dark:bg-primary/20 text-primary px-3 py-1 text-sm font-medium">
-                {product.type}
-              </span>
-            )}
+            
+            <div className="flex items-center gap-4">
+              {product.type && (
+                <span className="inline-block rounded-full bg-primary/10 dark:bg-primary/20 text-primary px-3 py-1 text-sm font-medium">
+                  {product.type}
+                </span>
+              )}
+              <LikeButton type="product" id={product.id} userId={userId} />
+            </div>
 
             {product.description && (
               <motion.div 
@@ -185,17 +190,23 @@ export function ProductClient({ product, t, userId }: ProductClientProps) {
               {product.category && (
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">Category:</span>
-                  <span className="rounded-full bg-secondary/10 dark:bg-secondary/20 text-secondary-foreground px-3 py-1 text-sm">
+                  <Link 
+                    href={`/shop?category=${encodeURIComponent(product.category)}`}
+                    className="rounded-full border border-stone-500/50 bg-background/10 backdrop-blur-sm px-3 py-1 text-sm transition-all hover:border-stone-400 hover:text-primary"
+                  >
                     {product.category}
-                  </span>
+                  </Link>
                 </div>
               )}
               {product.software && (
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-foreground">Software:</span>
-                  <span className="rounded-full bg-secondary/10 dark:bg-secondary/20 text-secondary-foreground px-3 py-1 text-sm">
+                  <Link 
+                    href={`/shop?software=${encodeURIComponent(product.software)}`}
+                    className="rounded-full border border-stone-500/50 bg-background/10 backdrop-blur-sm px-3 py-1 text-sm transition-all hover:border-stone-400 hover:text-primary"
+                  >
                     {product.software}
-                  </span>
+                  </Link>
                 </div>
               )}
             </div>
@@ -203,15 +214,19 @@ export function ProductClient({ product, t, userId }: ProductClientProps) {
             {product.tags && (
               <div className="flex flex-wrap gap-2">
                 {product.tags.map((tag) => (
-                  <motion.span
+                  <Link
                     key={tag}
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="rounded-full bg-muted text-muted-foreground px-3 py-1 text-sm"
+                    href={`/shop?type=${encodeURIComponent(tag)}`}
                   >
-                    #{tag}
-                  </motion.span>
+                    <motion.span
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="rounded-full bg-muted text-muted-foreground px-3 py-1 text-sm hover:bg-muted/80 hover:text-primary transition-colors cursor-pointer"
+                    >
+                      #{tag}
+                    </motion.span>
+                  </Link>
                 ))}
               </div>
             )}

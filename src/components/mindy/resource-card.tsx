@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { ImageOff, ArrowRight } from 'lucide-react'
 import { Resource } from '@/types/mindy'
 import { useTranslations } from '@/hooks/use-translations'
@@ -25,11 +25,22 @@ const badgeStyles = cn(
 
 export function ResourceCard({ resource, priority = false }: ResourceCardProps) {
   const [imageError, setImageError] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
   const { t } = useTranslations()
 
   const handleImageError = () => {
     setImageError(true)
   }
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isHovering) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, [isHovering]);
 
   const handleFilterClick = (e: React.MouseEvent, type: string, value: string) => {
     e.preventDefault() // Prevent card link click
@@ -41,7 +52,20 @@ export function ResourceCard({ resource, priority = false }: ResourceCardProps) 
 
   return (
     <Link href={`/mindy/${resource.id}`} className="block">
-      <Card className="overflow-hidden group h-full">
+      <Card 
+        className={cn(
+          "overflow-hidden group h-full relative transition-all duration-300",
+          "before:absolute before:inset-0 before:p-[1px] before:rounded-lg before:content-[''] before:pointer-events-none",
+          isHovering && "before:bg-[radial-gradient(800px_circle_at_var(--xPos)_var(--yPos),rgba(var(--primary),0.15),transparent_40%)]"
+        )}
+        style={{
+          '--xPos': `${position.x}px`,
+          '--yPos': `${position.y}px`
+        } as React.CSSProperties}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
         <div className="relative w-full aspect-[2/1] bg-muted overflow-hidden">
           {resource.thumbnail_url && !imageError ? (
             <Image

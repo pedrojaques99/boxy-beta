@@ -41,13 +41,27 @@ export function useTranslations(): TranslationsResult {
     const loadDictionary = async () => {
       try {
         const module = await import(`@/i18n/locales/${locale}.json`)
-        setDictionary(module.default)
+        const dict = module.default
+        // Ensure the loaded dictionary has all required fields
+        if (!dict.home?.about) {
+          dict.home = {
+            ...dict.home,
+            about: {
+              title: '',
+              description: '',
+              subtitle: '',
+              team: { title: '', subtitle: '' },
+              cta: { title: '', description: '', button: '' }
+            }
+          }
+        }
+        setDictionary(dict as Dictionary)
       } catch (error) {
         console.error(`Failed to load dictionary for locale: ${locale}`, error)
         // Fallback to English if the requested locale fails to load
         if (locale !== 'en') {
           const enModule = await import('@/i18n/locales/en.json')
-          setDictionary(enModule.default)
+          setDictionary(enModule.default as Dictionary)
         }
       }
     }

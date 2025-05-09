@@ -11,27 +11,33 @@ interface CategoriesSectionProps {
   categories: string[];
 }
 
-const categoryImages = {
-  'Modelos': '/images/categories/modelos.webp',
-  'PNG': '/images/categories/png.webp',
-  'Texturas': '/images/categories/texturas.webp',
-  'Mockups': '/images/categories/mockups.webp',
-  'Freebie': '/images/categories/freebie.webp',
+const categoryImages: Record<string, string> = {
+  'modelos': '/images/categories/modelos.webp',
+  'png': '/images/categories/png.webp',
+  'texturas': '/images/categories/texturas.webp',
+  'mockups': '/images/categories/mockups.webp',
+  'free': '/images/categories/freebie.webp',
+  'tools': '/images/categories/tools.webp',
   'default': '/images/categories/modelos.webp'
 };
 
 const getCategoryTranslation = (category: string, t: Dictionary) => {
-  switch (category) {
-    case 'Modelos':
+  const categoryLower = category.toLowerCase();
+  switch (categoryLower) {
+    case 'modelos':
       return t.shop.filters.models;
-    case 'PNG':
+    case 'png':
       return 'PNG';
-    case 'Texturas':
+    case 'texturas':
       return t.shop.filters.textures;
-    case 'Mockups':
+    case 'mockups':
       return 'Mockups';
-    case 'Freebies':
+    case 'free':
+    case 'freebie':
+    case 'freebies':
       return t.shop.filters.free;
+    case 'tools':
+      return t.shop.filters.tools;
     default:
       return category;
   }
@@ -41,6 +47,17 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
   const { t } = useTranslations();
 
   if (!t) return null;
+
+  // Normalize categories to match our expected format
+  const normalizedCategories = categories.map(category => {
+    const lower = category.toLowerCase();
+    // Handle special cases
+    if (lower === 'mockup') return 'mockups';
+    if (lower === 'modelo') return 'modelos';
+    if (lower === 'freebie' || lower === 'freebies') return 'free';
+    if (lower === 'tool') return 'tools';
+    return category;
+  });
 
   return (
     <section className="py-20 bg-muted/30">
@@ -58,8 +75,9 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
         </motion.div>
 
         <div className="w-[80%] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-          {categories.map((category, index) => {
-            const imageUrl = categoryImages[category as keyof typeof categoryImages] || categoryImages.default;
+          {normalizedCategories.map((category, index) => {
+            const categoryLower = category.toLowerCase();
+            const imageUrl = categoryImages[categoryLower] || categoryImages.default;
             const translatedCategory = getCategoryTranslation(category, t);
             const categoryForUrl = encodeURIComponent(category);
             

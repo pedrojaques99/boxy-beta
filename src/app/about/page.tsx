@@ -6,8 +6,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useTranslations } from '@/hooks/use-translations';
 
 export default function AboutPage() {
+  const { t } = useTranslations();
+  
   const teamMembers = [
     {
       name: 'Pedro Jaques',
@@ -29,17 +32,19 @@ export default function AboutPage() {
     },
   ];
 
+  if (!t) return null;
+
   return (
     <div className="flex flex-col min-h-screen">
       <AboutHero
-        title="Sobre a BOXY®"
-        description="Da junção de 3 designers apaixonados pelo o que fazem, nasceu a BOXY®. Nossa missão sempre foi grandiosa – transformar a rotina do designer brasileiro em algo extraordinário."
-        subtitle="Com uma produção de mockups, templates, ferramentas e cursos 100% brasileira, temos o orgulho de dizer que seremos o maior projeto de assets para designers brasileiros!"
+        title={t.home.about.title}
+        description={t.home.about.description}
+        subtitle={t.home.about.subtitle}
       />
 
       <TeamSection
-        title="Nossa Equipe"
-        subtitle="Conheça os criadores por trás da BOXY®"
+        title={t.home.about.team.title}
+        subtitle={t.home.about.team.subtitle}
         members={teamMembers}
       />
 
@@ -52,13 +57,13 @@ export default function AboutPage() {
             transition={{ duration: 0.6 }}
             className="max-w-3xl mx-auto text-center"
           >
-            <h2 className="text-3xl font-bold mb-6">Junte-se à nossa comunidade</h2>
+            <h2 className="text-3xl font-bold mb-6">{t.home.about.cta.title}</h2>
             <p className="text-lg text-muted-foreground mb-8">
-              Faça parte da maior comunidade de designers brasileiros e tenha acesso a recursos exclusivos.
+              {t.home.about.cta.description}
             </p>
             <Link href="/shop">
               <Button size="lg" className="gap-2">
-                Explorar Produtos
+                {t.home.about.cta.button}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
