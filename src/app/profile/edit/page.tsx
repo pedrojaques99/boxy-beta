@@ -142,14 +142,14 @@ export default function EditProfilePage() {
         const oldPath = profile.avatar_url.split('/').pop();
         if (oldPath) {
           await supabase.storage
-            .from('avatars')
+            .from('avatar')
             .remove([`${profile.id}/${oldPath}`]);
         }
       }
 
       // Upload new avatar
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from('avatar')
         .upload(filePath, file, {
           // @ts-ignore - Supabase supports onUploadProgress but types are not updated
           onUploadProgress: (progress: UploadProgressEvent) => {
@@ -160,7 +160,7 @@ export default function EditProfilePage() {
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
+        .from('avatar')
         .getPublicUrl(filePath);
 
       const { error: updateError } = await supabase

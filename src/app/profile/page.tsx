@@ -147,7 +147,7 @@ export default function ProfilePage() {
       if (profile.avatar_url) {
         const oldPath = profile.avatar_url.split('/').pop();
         if (oldPath) {
-          await authService.removeFile('avatars', `${profile.id}/${oldPath}`);
+          await authService.removeFile('avatar', `${profile.id}/${oldPath}`);
         }
       }
 
@@ -156,7 +156,7 @@ export default function ProfilePage() {
       const filePath = `${profile.id}/${fileName}`;
 
       // Upload the new avatar
-      const publicUrl = await authService.uploadFile('avatars', filePath, file, {
+      const publicUrl = await authService.uploadFile('avatar', filePath, file, {
           cacheControl: '3600',
           upsert: false
         });
