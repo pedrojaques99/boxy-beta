@@ -596,21 +596,28 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   return (
     <div className="max-w-2xl mx-auto my-12 px-4">
       <div className="relative mb-12">
-        <Progress value={calculateProgress()} className="h-2.5 bg-muted/30" />
+        <Progress 
+          value={calculateProgress()} 
+          className="h-3 bg-muted/50" 
+        />
         <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs">
           {STEPS.map((stepKey, index) => (
             <div
               key={stepKey}
               className={cn(
                 "flex flex-col items-center gap-2 transition-colors duration-200",
-                index <= step ? "text-primary font-medium" : "text-muted-foreground"
+                index <= step 
+                  ? "text-foreground font-medium" 
+                  : "text-muted-foreground/70"
               )}
             >
               <div className={cn(
                 "w-4 h-4 rounded-full transition-all duration-200",
-                index < step ? "bg-primary scale-75" : 
-                index === step ? "bg-primary scale-100 ring-4 ring-primary/20" : 
-                "bg-muted"
+                index < step 
+                  ? "bg-primary scale-75 ring-2 ring-primary/30" 
+                  : index === step 
+                    ? "bg-primary scale-100 ring-4 ring-primary/30" 
+                    : "bg-muted/50 ring-2 ring-border"
               )} />
               <span className="whitespace-nowrap">{stepTitles[stepKey]}</span>
             </div>
@@ -628,24 +635,27 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           {...pageTransition}
           className="space-y-6"
         >
-          <Card className="shadow-lg border border-border/50 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-            <CardHeader className="pb-6 border-b">
+          <Card className="shadow-xl border-2 border-border bg-card">
+            <CardHeader className="pb-6 border-b border-border">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <div className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200",
-                  step === STEPS.length - 1 ? 
-                    (result.success ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500") :
-                    "bg-primary/20 text-primary"
+                  step === STEPS.length - 1 
+                    ? (result.success 
+                        ? "bg-green-500/20 text-green-500 ring-2 ring-green-500/20" 
+                        : "bg-red-500/20 text-red-500 ring-2 ring-red-500/20")
+                    : "bg-primary/20 text-primary ring-2 ring-primary/20"
                 )}>
                   {stepIcons[STEPS[step]]}
                 </div>
-                {stepTitles[STEPS[step]]}
+                <span className="font-semibold">{stepTitles[STEPS[step]]}</span>
               </CardTitle>
               {step > 0 && step < 4 && (
-                <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  {safeT('checkout.plan')}: <span className="font-medium text-foreground">{planId && PLANS[planId].name}</span> 
-                  <span className="text-primary font-medium">{planId && formatCurrency(PLANS[planId].price, locale)}</span>
+                <div className="text-sm flex items-center gap-2 mt-3 p-2 rounded-md bg-muted/30">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                  <span className="text-muted-foreground">{safeT('checkout.plan')}:</span>
+                  <span className="font-medium text-foreground">{planId && PLANS[planId].name}</span>
+                  <span className="text-primary font-semibold">{planId && formatCurrency(PLANS[planId].price, locale)}</span>
                 </div>
               )}
             </CardHeader>
@@ -661,15 +671,39 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       key={id}
                       variant={planId === id ? 'default' : 'outline'}
                       className={cn(
-                        "w-full justify-start p-6 h-auto",
-                        planId === id && "border-primary"
+                        "w-full justify-between p-6 h-auto relative group transition-all duration-200",
+                        planId === id 
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                          : "hover:border-primary/50 hover:bg-primary/5",
+                        "border-2"
                       )}
                       onClick={() => setPlanId(id as PlanId)}
                     >
-                      <div className="flex flex-col items-start">
-                        <span className="font-semibold">{plan.name}</span>
-                        <span className="text-sm text-muted-foreground">{formatCurrency(plan.price, locale)}</span>
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="font-semibold text-lg">{plan.name}</span>
+                        <span className={cn(
+                          "text-sm",
+                          planId === id ? "text-primary-foreground/80" : "text-muted-foreground"
+                        )}>{plan.name}</span>
                       </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={cn(
+                          "text-2xl font-bold",
+                          planId === id ? "text-primary-foreground" : "text-foreground"
+                        )}>{formatCurrency(plan.price, locale)}</span>
+                        <span className={cn(
+                          "text-sm",
+                          planId === id ? "text-primary-foreground/80" : "text-muted-foreground"
+                        )}>{safeT('checkout.perMonth')}</span>
+                      </div>
+                      {planId === id && (
+                        <motion.div
+                          layoutId="plan-selection"
+                          className="absolute inset-0 border-2 border-primary rounded-md"
+                          initial={false}
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
                     </Button>
                   ))}
                 </motion.div>
@@ -937,12 +971,15 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </motion.div>
               )}
             </CardContent>
-            <div className="flex justify-between p-6 border-t bg-muted/10">
+            <div className="flex justify-between p-6 border-t border-border bg-muted/5">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={step === 0 || step === 4}
-                className="gap-2 hover:bg-background"
+                className={cn(
+                  "gap-2 border-2",
+                  step === 0 || step === 4 ? "" : "hover:bg-primary/5 hover:border-primary/50"
+                )}
               >
                 <ArrowLeft className="h-4 w-4" />
                 {safeT('checkout.back')}
@@ -951,7 +988,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid() || loading}
-                  className="gap-2 relative overflow-hidden"
+                  className={cn(
+                    "gap-2 relative overflow-hidden",
+                    isStepValid() && !loading ? "hover:opacity-90 transition-opacity" : ""
+                  )}
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -975,7 +1015,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <Button
                   onClick={handleNext}
                   disabled={loading}
-                  className="gap-2 bg-green-500 hover:bg-green-600"
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white font-medium shadow-lg shadow-green-500/20"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
