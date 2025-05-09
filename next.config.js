@@ -8,6 +8,7 @@ const nextConfig = {
     minimumCacheTTL: 60 * 60 * 24, // 24 hours
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    unoptimized: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
