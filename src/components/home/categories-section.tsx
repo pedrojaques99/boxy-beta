@@ -12,29 +12,26 @@ interface CategoriesSectionProps {
 }
 
 const categoryImages = {
-  '3D': '/images/categories/3d.jpg',
-  'Texturas': '/images/categories/textures.jpg',
-  'Modelos': '/images/categories/models.jpg',
-  'Materiais': '/images/categories/materials.jpg',
-  'HDRIs': '/images/categories/hdris.jpg',
-  'Plugins': '/images/categories/plugins.jpg',
-  'default': '/images/categories/default.jpg'
+  'Modelos': '/images/categories/modelos.webp',
+  'PNG': '/images/categories/png.webp',
+  'Texturas': '/images/categories/texturas.webp',
+  'Mockups': '/images/categories/mockups.webp',
+  'Freebie': '/images/categories/freebie.webp',
+  'default': '/images/categories/modelos.webp'
 };
 
 const getCategoryTranslation = (category: string, t: Dictionary) => {
   switch (category) {
-    case '3D':
-      return t.shop.filters.category;
-    case 'Texturas':
-      return t.shop.filters.textures;
     case 'Modelos':
       return t.shop.filters.models;
-    case 'Materiais':
-      return t.shop.filters.materials;
-    case 'HDRIs':
-      return t.shop.filters.hdris;
-    case 'Plugins':
-      return t.shop.filters.plugins;
+    case 'PNG':
+      return 'PNG';
+    case 'Texturas':
+      return t.shop.filters.textures;
+    case 'Mockups':
+      return 'Mockups';
+    case 'Freebie':
+      return t.shop.filters.free;
     default:
       return category;
   }
