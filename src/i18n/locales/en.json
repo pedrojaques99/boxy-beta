@@ -5,10 +5,28 @@
     "continueWithGithub": "Open with Github",
     "continueWithGoogle": "Open with Google",
     "loggingIn": "Logging in...",
+    "signInWithEmail": "Sign in with Email",
+    "createAccount": "Create an account",
+    "dontHaveAccount": "Don't have an account? Sign up",
+    "alreadyHaveAccount": "Already have an account? Sign in",
+    "forgotPassword": "Forgot your password?",
+    "resetPassword": "Reset password",
+    "resetPasswordInstructions": "Enter your email and we'll send you a reset link",
+    "sendResetLink": "Send reset link",
+    "checkEmail": "Check your email",
+    "passwordResetSent": "Password reset instructions sent",
+    "backToLogin": "Back to login",
+    "or": "or continue with",
     "error": {
       "title": "Authentication Error",
       "description": "There was an error processing your sign in. Please try again.",
-      "backToLogin": "Back to Login"
+      "backToLogin": "Back to Login",
+      "invalidEmail": "Invalid email",
+      "invalidPassword": "Invalid password",
+      "emailRequired": "Email is required",
+      "passwordRequired": "Password is required",
+      "passwordMismatch": "Passwords don't match",
+      "weakPassword": "Password is too weak"
     },
     "signUpSuccess": {
       "title": "Welcome to BOXY!",
@@ -18,8 +36,13 @@
     },
     "accessDenied": {
       "title": "Access Denied",
-      "description": "You don't have permission to open this box",
+      "description": "You don't have permission to access this page",
       "backHome": "Back to Home"
+    },
+    "troubleshooting": {
+      "title": "Having trouble signing in?",
+      "description": "Diagnose authentication",
+      "contact": "Contact support"
     }
   },
   "protected": {

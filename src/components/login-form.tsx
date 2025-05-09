@@ -32,11 +32,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
-const formSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-})
-
 interface LoginError {
   message: string;
   code?: string;
@@ -50,6 +45,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const [redirectTo, setRedirectTo] = useState<string | null>(null)
   const router = useRouter()
   const authService = getAuthService()
+
+  const formSchema = z.object({
+    email: z.string().email(t?.auth?.error?.invalidEmail || 'Invalid email address'),
+    password: z.string().min(6, t?.auth?.error?.weakPassword || 'Password must be at least 6 characters'),
+  })
 
   // Verificar se já está autenticado
   useEffect(() => {
@@ -109,7 +109,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       const { error } = await authService.signInWithOAuth(provider);
       if (error) throw error;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Authentication failed. Please try again.'
+      const errorMessage = error instanceof Error ? error.message : t?.auth?.error?.description || 'Authentication failed'
       setError({ message: errorMessage, code: 'oauth_error' })
       setIsLoading(false)
     }
@@ -125,7 +125,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       
       // Redirect will be handled by Supabase's sign-in mechanism
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Invalid email or password'
+      const errorMessage = error instanceof Error ? error.message : t?.auth?.error?.invalidPassword || 'Invalid email or password'
       setError({ message: errorMessage, code: 'auth_error' })
       setIsEmailLoading(false)
     }
@@ -135,7 +135,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   return (
     <div className={cn('flex flex-col items-center gap-6', className)} {...props}>
-      <Card className="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent p-4 w-[400px]">
+      <Card className="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent p-6 w-[600px]">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">{t.auth.welcome}</CardTitle>
           <CardDescription className="text-muted-foreground">{t.auth.signInToContinue}</CardDescription>
@@ -149,14 +149,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-foreground dark:text-white">Email</FormLabel>
+                      <FormLabel className="text-foreground dark:text-white">E-mail</FormLabel>
                       <FormControl>
                         <Input 
-                          placeholder="name@example.com" 
+                          placeholder="seu@email.com" 
                           type="email" 
                           {...field} 
                           disabled={isEmailLoading}
-                          className="bg-background text-foreground dark:text-white placeholder:text-muted-foreground border-input focus-visible:ring-1"
+                          className="bg-background/50 text-foreground dark:text-white placeholder:text-muted-foreground/70 border-input focus-visible:ring-1 focus-visible:ring-primary"
                         />
                       </FormControl>
                       <FormMessage />
@@ -168,14 +168,14 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-foreground dark:text-white">Password</FormLabel>
+                      <FormLabel className="text-foreground dark:text-white">Senha</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="••••••••" 
                           type="password" 
                           {...field} 
                           disabled={isEmailLoading}
-                          className="bg-background text-foreground dark:text-white placeholder:text-muted-foreground border-input focus-visible:ring-1"
+                          className="bg-background/50 text-foreground dark:text-white placeholder:text-muted-foreground/70 border-input focus-visible:ring-1 focus-visible:ring-primary"
                         />
                       </FormControl>
                       <FormMessage />
@@ -195,10 +195,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   {isEmailLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Signing in...</span>
+                      <span>{t.auth.loggingIn}</span>
                     </div>
                   ) : (
-                    'Sign in with Email'
+                    t.auth.signInWithEmail
                   )}
                 </Button>
               </form>
@@ -210,15 +210,15 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
+                  {t.auth.or}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
+            <div className="flex justify-center gap-4 w-full items-center">
               <Button 
                 onClick={() => handleSocialLogin('google')} 
-                className="relative bg-background hover:bg-accent" 
+                className="relative bg-background hover:bg-accent w-1/4" 
                 variant="outline"
                 disabled={isLoading || isEmailLoading}
               >
@@ -230,6 +230,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                     alt="Google"
                     width={20}
                     height={20}
+                    title="Google"
                     className="opacity-80"
                   />
                 )}
@@ -244,7 +245,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               className="px-0 font-normal text-muted-foreground hover:text-foreground" 
               disabled={isLoading || isEmailLoading}
             >
-              Don&apos;t have an account? Sign up
+              {t.auth.dontHaveAccount}
             </Button>
           </Link>
         </CardFooter>
@@ -252,7 +253,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         {/* Troubleshooting link */}
         <div className="text-center text-xs text-muted-foreground pb-4">
           <Link href="/auth-diagnostics" className="hover:underline">
-            Problemas para entrar? Diagnosticar autenticação
+            {t.auth.troubleshooting.description}
           </Link>
         </div>
       </Card>

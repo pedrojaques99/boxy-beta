@@ -62,10 +62,28 @@ export interface Dictionary {
     continueWithGithub: string
     continueWithGoogle: string
     loggingIn: string
+    signInWithEmail: string
+    createAccount: string
+    dontHaveAccount: string
+    alreadyHaveAccount: string
+    forgotPassword: string
+    resetPassword: string
+    resetPasswordInstructions: string
+    sendResetLink: string
+    checkEmail: string
+    passwordResetSent: string
+    backToLogin: string
+    or: string
     error: {
       title: string
       description: string
       backToLogin: string
+      invalidEmail: string
+      invalidPassword: string
+      emailRequired: string
+      passwordRequired: string
+      passwordMismatch: string
+      weakPassword: string
     }
     signUpSuccess: {
       title: string
@@ -77,6 +95,11 @@ export interface Dictionary {
       title: string
       description: string
       backHome: string
+    }
+    troubleshooting: {
+      title: string
+      description: string
+      contact: string
     }
   }
   protected: {
