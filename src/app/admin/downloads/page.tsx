@@ -24,6 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { createClient } from '@/lib/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Users } from 'lucide-react';
 
 interface ResourceDownload {
   id: string;
@@ -41,201 +45,206 @@ interface ResourceDownload {
   };
 }
 
-export default function DownloadsPage() {
+export default function AdminDownloadsPage() {
   const [downloads, setDownloads] = useState<ResourceDownload[]>([]);
+  const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const supabase = useSupabaseClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const supabase = createClient();
 
-  const fetchDownloads = async () => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+
+      // Buscar downloads com informações do usuário e produto
+      const { data: downloadsData, error: downloadsError } = await supabase
         .from('downloads')
         .select(`
-          *,
-          user:user_id (
-            email,
-            user_metadata
-          ),
-          resource:resource_id (
-            id,
-            title,
+          id,
+          user_id,
+          product_id,
+          download_date,
+          status,
+          products (
+            name,
             type
+          ),
+          auth.users!downloads_user_id_fkey (
+            email
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('download_date', { ascending: false });
 
-      if (error) throw error;
-      setDownloads(data || []);
+      if (downloadsError) throw downloadsError;
+
+      // Buscar assinantes com informações do usuário
+      const { data: subscribersData, error: subscribersError } = await supabase
+        .from('subscriptions')
+        .select(`
+          id,
+          user_id,
+          plan_id,
+          status,
+          started_at,
+          current_period_end,
+          auth.users!subscriptions_user_id_fkey (
+            email
+          )
+        `)
+        .order('started_at', { ascending: false });
+
+      if (subscribersError) throw subscribersError;
+
+      setDownloads(downloadsData || []);
+      setSubscribers(subscribersData || []);
     } catch (error) {
-      console.error('Error fetching downloads:', error);
-      toast.error('Erro ao carregar downloads');
+      console.error('Erro ao buscar dados:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchDownloads();
-  }, []);
-
-  const filteredDownloads = downloads.filter(download => {
-    const matchesSearch = 
-      download.user.email.toLowerCase().includes(search.toLowerCase()) ||
-      download.user.user_metadata?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      download.resource.title.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesType = typeFilter === 'all' || download.resource.type === typeFilter;
-    
-    return matchesSearch && matchesType;
-  });
-
-  const exportToCSV = () => {
-    const headers = ['Data', 'Usuário', 'Email', 'Recurso', 'Tipo'];
-    const rows = filteredDownloads.map(download => [
-      format(new Date(download.created_at), 'dd/MM/yyyy HH:mm'),
-      download.user.user_metadata?.name || 'N/A',
-      download.user.email,
-      download.resource.title,
-      download.resource.type
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `downloads_${format(new Date(), 'dd-MM-yyyy')}.csv`;
-    link.click();
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'completed':
+        return 'bg-green-500/10 text-green-500';
+      case 'pending':
+        return 'bg-yellow-500/10 text-yellow-500';
+      case 'failed':
+      case 'canceled':
+        return 'bg-red-500/10 text-red-500';
+      default:
+        return 'bg-gray-500/10 text-gray-500';
+    }
   };
 
-  // Get unique resource types
-  const resourceTypes = Array.from(new Set(downloads.map(d => d.resource.type)));
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-2xl font-bold">Downloads</CardTitle>
-          <Button onClick={exportToCSV} className="gap-2">
+    <div className="container mx-auto py-8 space-y-8">
+      <Tabs defaultValue="downloads">
+        <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsTrigger value="downloads" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            Exportar CSV
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por usuário, email ou recurso..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {resourceTypes.map(type => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            Downloads
+          </TabsTrigger>
+          <TabsTrigger value="subscribers" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Assinantes
+          </TabsTrigger>
+        </TabsList>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-          ) : (
-            <div className="rounded-md border">
+        <TabsContent value="downloads">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Downloads</span>
+                <div className="relative w-64">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar downloads..."
+                    className="pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>Usuário</TableHead>
-                    <TableHead>Recurso</TableHead>
+                    <TableHead>Produto</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredDownloads.map((download) => (
+                  {downloads.map((download: any) => (
                     <TableRow key={download.id}>
                       <TableCell>
-                        {format(new Date(download.created_at), 'dd/MM/yyyy HH:mm')}
+                        {format(new Date(download.download_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </TableCell>
+                      <TableCell>{download.auth?.users?.email}</TableCell>
+                      <TableCell>{download.products?.name}</TableCell>
+                      <TableCell>{download.products?.type}</TableCell>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {download.user.user_metadata?.name || 'N/A'}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {download.user.email}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{download.resource.title}</div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted">
-                          {download.resource.type}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.open(`/resources/${download.resource.id}`, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                        <Badge className={getStatusColor(download.status)}>
+                          {download.status}
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </div>
-          )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          {/* Download Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{downloads.length}</div>
-                <div className="text-sm text-muted-foreground">Total de Downloads</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">
-                  {new Set(downloads.map(d => d.user_id)).size}
+        <TabsContent value="subscribers">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Assinantes</span>
+                <div className="relative w-64">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar assinantes..."
+                    className="pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <div className="text-sm text-muted-foreground">Usuários Únicos</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold">
-                  {new Set(downloads.map(d => d.resource_id)).size}
-                </div>
-                <div className="text-sm text-muted-foreground">Recursos Únicos</div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data Início</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Plano</TableHead>
+                    <TableHead>Validade</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscribers.map((subscriber: any) => (
+                    <TableRow key={subscriber.id}>
+                      <TableCell>
+                        {format(new Date(subscriber.started_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>{subscriber.auth?.users?.email}</TableCell>
+                      <TableCell>{subscriber.plan_id}</TableCell>
+                      <TableCell>
+                        {format(new Date(subscriber.current_period_end), "dd/MM/yyyy", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(subscriber.status)}>
+                          {subscriber.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 } 

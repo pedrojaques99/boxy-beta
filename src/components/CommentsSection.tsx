@@ -28,6 +28,26 @@ interface Comment {
   }
 }
 
+interface RealtimePayload {
+  new: {
+    id: string
+    user_id: string
+    content: string
+    created_at: string
+    resource_id?: string
+    product_id?: string
+  }
+  old: {
+    id: string
+    user_id: string
+    content: string
+    created_at: string
+    resource_id?: string
+    product_id?: string
+  }
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE'
+}
+
 export function CommentsSection({ type, id, userId }: CommentsSectionProps) {
   const supabase = createClient()
   const [comments, setComments] = useState<Comment[]>([])
@@ -45,31 +65,56 @@ export function CommentsSection({ type, id, userId }: CommentsSectionProps) {
         `)
         .eq(type === 'resource' ? 'resource_id' : 'product_id', id)
         .order('created_at', { ascending: false })
-      setComments(data || [])
+      
+      if (data) {
+        console.log('Fetched comments:', data)
+        setComments(data)
+      }
     }
     fetchComments()
+
+    // Subscribe to new comments
+    const channel = supabase
+      .channel('comments')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'comments',
+          filter: `${type === 'resource' ? 'resource_id' : 'product_id'}.eq.${id}`
+        },
+        (payload: RealtimePayload) => {
+          console.log('Real-time comment update:', payload)
+          fetchComments() // Refresh comments when there's a change
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
   }, [id, supabase, type])
 
   const addComment = async () => {
     if (!userId || !content.trim()) return
     setLoading(true)
-    await supabase.from('comments').insert({
-      user_id: userId,
-      [type === 'resource' ? 'resource_id' : 'product_id']: id,
-      content
-    })
-    setContent('')
-    // Refresh comments
-    const { data } = await supabase
-      .from('comments')
-      .select(`
-        *,
-        profiles:user_id (name, avatar_url)
-      `)
-      .eq(type === 'resource' ? 'resource_id' : 'product_id', id)
-      .order('created_at', { ascending: false })
-    setComments(data || [])
-    setLoading(false)
+    try {
+      const { error } = await supabase.from('comments').insert({
+        user_id: userId,
+        [type === 'resource' ? 'resource_id' : 'product_id']: id,
+        content: content.trim()
+      })
+
+      if (error) throw error
+      
+      setContent('')
+      // The subscription will handle updating the comments
+    } catch (error) {
+      console.error('Error adding comment:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!t?.mindy) return null

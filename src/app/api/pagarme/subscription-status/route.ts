@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getPagarmeClient } from '@/lib/pagarme';
+import axios from 'axios';
+
+const PAGARME_API_KEY = process.env.PAGARME_API_KEY;
+const PAGARME_API_URL = 'https://api.pagar.me/core/v5';
 
 export async function POST(request: Request) {
   try {
@@ -14,10 +17,19 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
-    const pagarme = getPagarmeClient();
 
-    // Get subscription from Pagar.me
-    const pagarmeSubscription = await pagarme.subscriptions.find(subscription_id);
+    // Get subscription from Pagar.me V5 API
+    const response = await axios.get(
+      `${PAGARME_API_URL}/subscriptions/${subscription_id}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Basic ${Buffer.from(PAGARME_API_KEY + ':').toString('base64')}`
+        }
+      }
+    );
+
+    const pagarmeSubscription = response.data;
 
     if (!pagarmeSubscription) {
       return NextResponse.json(

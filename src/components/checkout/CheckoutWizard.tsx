@@ -491,16 +491,20 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           userData.state.length === 2
         )
       case 2:
-        return (
-          card.number.length === 16 &&
-          luhnCheck(card.number) &&
-          card.name.length > 0 &&
-          card.expiry.length === 5 &&
-          validateExpiryDate(card.expiry) &&
-          card.cvv.length >= 3 &&
-          card.cpf.length === 11 &&
-          validateCPF(card.cpf)
-        )
+        const cardValidation = {
+          numberLength: card.number.length === 16,
+          luhnCheck: luhnCheck(card.number),
+          nameLength: card.name.length > 0,
+          expiryLength: card.expiry.length === 5,
+          expiryValid: validateExpiryDate(card.expiry),
+          cvvLength: card.cvv.length >= 3,
+          cpfLength: card.cpf.length === 11,
+          cpfValid: validateCPF(card.cpf)
+        };
+        
+        console.log('Card validation details:', cardValidation);
+        
+        return Object.values(cardValidation).every(Boolean);
       case 3:
         return true
       default:

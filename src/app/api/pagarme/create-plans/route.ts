@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 
 // Constantes para a API V5 do Pagar.me
 const PAGARME_API_KEY = process.env.PAGARME_API_KEY
@@ -81,9 +81,10 @@ export async function POST() {
             status: response.data.status
           }
         } catch (error) {
-          console.error(`Erro ao criar plano ${plan.name}:`, error.response?.data || error)
-          if (error.response?.data) {
-            throw new Error(`Erro ao criar plano ${plan.name}: ${JSON.stringify(error.response.data)}`)
+          const axiosError = error as AxiosError
+          console.error(`Erro ao criar plano ${plan.name}:`, axiosError.response?.data || axiosError)
+          if (axiosError.response?.data) {
+            throw new Error(`Erro ao criar plano ${plan.name}: ${JSON.stringify(axiosError.response.data)}`)
           }
           throw error
         }
