@@ -289,9 +289,8 @@ export function Navigation() {
                     href="/profile"
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                      "text-foreground/60 hover:text-foreground/80",
-                      "dark:text-foreground/60 dark:hover:text-foreground/80",
-                      pathname === "/profile" && "text-foreground dark:text-foreground font-medium"
+                      "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                      pathname === "/profile" && "bg-primary/90"
                     )}
                   >
                     <User className="h-4 w-4" />
@@ -312,9 +311,8 @@ export function Navigation() {
                   href="/auth"
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 text-sm transition-colors",
-                    "text-foreground/60 hover:text-foreground/80",
-                    "dark:text-foreground/60 dark:hover:text-foreground/80",
-                    pathname === "/auth" && "text-foreground dark:text-foreground font-medium"
+                    "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                    pathname === "/auth" && "bg-primary/90"
                   )}
                 >
                   {t?.navigation?.signIn}
@@ -380,7 +378,7 @@ export function Navigation() {
                     <Link
                       href="/profile"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center text-sm"
+                      className="flex items-center text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-2"
                     >
                       <User className="h-4 w-4 mr-2" />
                       {t?.navigation?.myAccount}
@@ -401,7 +399,7 @@ export function Navigation() {
                   <Link
                     href="/auth"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center text-sm"
+                    className="flex items-center text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-2"
                   >
                     {t?.navigation?.signIn}
                   </Link>

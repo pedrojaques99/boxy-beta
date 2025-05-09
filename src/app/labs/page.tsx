@@ -134,12 +134,30 @@ export default function LabsPage() {
     fetchLabs(1, true);
   }, [fetchLabs]);
 
+  // Add Playground app card data
+  const playgroundApp: Lab = useMemo(() => ({
+    id: 'playground',
+    name: 'Playground',
+    description: 'Interactive space with real-time cursor tracking. See other users cursors in real-time!',
+    thumb_url: '/images/playground-thumb.png',
+    is_free: true,
+    tags: ['interactive', 'realtime', 'cursors'],
+    created_by: 'BOXY',
+    app_url: '/playground',
+    software: 'web',
+    type: 'interactive'
+  }), []);
+
+  const allLabs = useMemo(() => {
+    return [playgroundApp, ...labs];
+  }, [playgroundApp, labs]);
+
   const LoadingSkeleton = useMemo(() => (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
     >
       {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
         <div key={i} className="space-y-3">
@@ -179,13 +197,13 @@ export default function LabsPage() {
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             >
-              {labs.map((lab, index) => (
+              {allLabs.map((lab, index) => (
                 <Link
                   key={lab.id}
                   href={lab.app_url}
-                  ref={index === labs.length - 1 ? lastElementRef : undefined}
+                  ref={index === allLabs.length - 1 ? lastElementRef : undefined}
                   className="block"
                 >
                   <AppCard

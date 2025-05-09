@@ -2,14 +2,18 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from '@/hooks/use-translations';
+import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
 
 export function HeroSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { t } = useTranslations();
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (videoRef.current) {
@@ -18,6 +22,18 @@ export function HeroSection() {
       });
     }
   }, []);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   if (!t) return null;
 
@@ -55,9 +71,29 @@ export function HeroSection() {
           <p className="text-xl text-muted-foreground">
             {t.home.hero.subtitle}
           </p>
+          
+          {/* Search Bar and Buttons */}
           <div className="flex items-center justify-center gap-4">
+            <div className="relative flex-1 max-w-xl">
+              <Input
+                type="text"
+                placeholder={t.shop.search.placeholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="w-full pl-11 h-11 bg-background/50 backdrop-blur-sm border-border/50 hover:border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200 rounded-full"
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+                <Search className="h-4 w-4" />
+              </div>
+            </div>
+            
+            <Button onClick={handleSearch} size="icon" className="h-11 w-11 rounded-full">
+              <Search className="h-4 w-4" />
+            </Button>
+
             <Link href="/shop">
-              <Button size="lg" className="gap-2">
+              <Button size="lg" variant="outline" className="gap-2 min-w-[120px]">
                 {t.navigation.shop} <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
