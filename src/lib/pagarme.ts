@@ -1,4 +1,4 @@
-import { Client } from '@pagar.me/sdk';
+import { client as Client } from 'pagarme';
 
 export const getPagarmeClient = () => {
   const apiKey = process.env.PAGARME_API_KEY;
@@ -7,5 +7,5 @@ export const getPagarmeClient = () => {
     throw new Error('PAGARME_API_KEY is not defined');
   }
 
-  return new Client({ apiKey });
+  return Client.connect({ api_key: apiKey });
 }; 
