@@ -52,28 +52,19 @@ export function HeroSection({ title, subtitle, className, pattern = 'none' }: He
       className={cn(
         "relative w-full overflow-hidden bg-gradient-to-br from-background to-primary/10",
         "min-h-[30vh] md:min-h-[40vh] flex items-center justify-center",
-        pattern === 'grid' && "before:absolute before:inset-0 before:bg-[linear-gradient(to_right,theme(colors.foreground/3)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.foreground/3)_1px,transparent_1px)] before:bg-[size:2rem_2rem] before:opacity-[0.4]",
+        pattern === 'grid' && [
+          "before:absolute before:inset-0",
+          "before:bg-[linear-gradient(to_right,theme(colors.foreground/3)_0.5px,transparent_1px),linear-gradient(to_bottom,theme(colors.foreground/3)_0.5px,transparent_1px)]",
+          "before:bg-[size:2rem_2rem]",
+          "before:mask-image:[linear-gradient(to_bottom,transparent,black_10%,black_100%,transparent)]",
+          "before:opacity-10"
+        ],
         className
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Primary spotlight effect */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-300"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isHovering ? 1 : 0 }}
-        style={{
-          background: `
-            radial-gradient(
-              800px circle at ${mousePosition.x}px ${mousePosition.y}px,
-              rgba(var(--primary-rgb), 0.15),
-              transparent 40%
-            )
-          `
-        }}
-      />
       
       {/* Secondary spotlight effect */}
       <motion.div
@@ -83,9 +74,9 @@ export function HeroSection({ title, subtitle, className, pattern = 'none' }: He
         style={{
           background: `
             radial-gradient(
-              600px circle at ${mousePosition.x}px ${mousePosition.y}px,
+              900px circle at ${mousePosition.x}px ${mousePosition.y}px,
               rgba(var(--primary-rgb), 0.1),
-              transparent 30%
+              transparent 20%
             )
           `
         }}
