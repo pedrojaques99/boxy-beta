@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { Loader2, Heart, Search, Download, Trash2 } from 'lucide-react'
 
 interface Resource {
+  id: string
   name: string
   category: string
   file_url: string
@@ -34,9 +35,25 @@ export default function LikedResourcesPage() {
   const supabase = useSupabaseClient()
   const [resources, setResources] = useState<LikedResource[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [categories, setCategories] = useState<string[]>([])
+
+  // Add safeT function for translation
+  const safeT = (key: string): string => {
+    if (!t) return key;
+    const keys = key.split('.');
+    let value: any = t;
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+    return typeof value === 'string' ? value : key;
+  };
 
   useEffect(() => {
     if (user) {
@@ -47,49 +64,52 @@ export default function LikedResourcesPage() {
   const loadLikedResources = async () => {
     try {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('liked_resources')
+      setError(null)
+
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from('resources')
         .select(`
           id,
-          resource_id,
-          user_id,
-          created_at,
-          resource:resources (
-            name,
-            category,
-            file_url
-          )
+          name,
+          category,
+          file_url
         `)
+
+      if (resourcesError) throw resourcesError
+
+      const { data: likedData, error: likedError } = await supabase
+        .from('liked_resources')
+        .select('*')
         .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (likedError) throw likedError
 
-      // First cast to unknown, then validate and transform the data
-      const rawData = data as unknown
-      if (Array.isArray(rawData)) {
-        const validData = rawData.filter((item): item is LikedResource => {
-          return (
-            typeof item === 'object' &&
-            item !== null &&
-            typeof item.id === 'string' &&
-            typeof item.resource_id === 'string' &&
-            typeof item.user_id === 'string' &&
-            typeof item.created_at === 'string' &&
-            typeof item.resource === 'object' &&
-            item.resource !== null &&
-            typeof item.resource.name === 'string' &&
-            typeof item.resource.category === 'string' &&
-            typeof item.resource.file_url === 'string'
-          )
-        })
+      // Map the liked resources with their full resource data
+      const likedResources = likedData.map(liked => {
+        const resource = resourcesData.find(r => r.id === liked.resource_id)
+        return {
+          id: liked.id,
+          resource_id: liked.resource_id,
+          user_id: liked.user_id,
+          created_at: liked.created_at,
+          resource: resource || {
+            id: liked.resource_id,
+            name: 'Resource not found',
+            category: 'Unknown',
+            file_url: ''
+          }
+        }
+      })
 
-        setResources(validData)
-        const uniqueCategories = [...new Set(validData.map(item => item.resource.category))]
-        setCategories(uniqueCategories)
-      }
-    } catch (error) {
-      console.error('Error loading liked resources:', error)
+      setResources(likedResources)
+
+      // Extract unique categories
+      const uniqueCategories = [...new Set(resourcesData.map(r => r.category))]
+      setCategories(uniqueCategories)
+
+    } catch (err) {
+      console.error('Error loading liked resources:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load liked resources')
       toast.error('Failed to load liked resources')
     } finally {
       setLoading(false)
@@ -107,21 +127,32 @@ export default function LikedResourcesPage() {
       if (error) throw error
 
       setResources(prev => prev.filter(r => r.resource_id !== resourceId))
-      toast.success('Resource removed from favorites')
+      toast.success(safeT('profile.likedResources.unlikeSuccess'))
     } catch (error) {
       console.error('Error removing resource from favorites:', error)
-      toast.error('Failed to remove resource from favorites')
+      toast.error(safeT('profile.likedResources.unlikeError'))
     }
   }
 
-  const handleDownload = async (fileUrl: string) => {
+  const handleDownload = async (resource: Resource) => {
     try {
-      // Implement download logic here
-      window.open(fileUrl, '_blank')
-      toast.success('Download started')
+      if (!resource.file_url) {
+        throw new Error('Download URL not available')
+      }
+
+      // Log the download
+      await supabase.from('downloads').insert({
+        user_id: user?.id,
+        resource_id: resource.id,
+        downloaded_at: new Date().toISOString()
+      })
+
+      // Start the download
+      window.open(resource.file_url, '_blank')
+      toast.success(safeT('profile.likedResources.downloadStarted'))
     } catch (error) {
       console.error('Error downloading resource:', error)
-      toast.error('Failed to download resource')
+      toast.error(safeT('profile.likedResources.downloadError'))
     }
   }
 
@@ -133,9 +164,28 @@ export default function LikedResourcesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">{t?.profile?.likedResources?.loading}</span>
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="flex items-center justify-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">{safeT('profile.likedResources.loading')}</span>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center min-h-[400px]">
+            <p className="text-destructive text-center mb-4">{error}</p>
+            <Button onClick={() => loadLikedResources()}>
+              {safeT('profile.tryAgain')}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -144,15 +194,15 @@ export default function LikedResourcesPage() {
     <div className="container mx-auto py-8 space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t?.profile?.likedResources?.title}</CardTitle>
-          <CardDescription>{t?.profile?.likedResources?.description}</CardDescription>
+          <CardTitle>{safeT('profile.likedResources.title')}</CardTitle>
+          <CardDescription>{safeT('profile.likedResources.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={t?.profile?.likedResources?.filters?.search}
+                placeholder={safeT('profile.likedResources.filters.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -163,10 +213,10 @@ export default function LikedResourcesPage() {
               onValueChange={setSelectedCategory}
             >
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder={t?.profile?.likedResources?.filters?.category} />
+                <SelectValue placeholder={safeT('profile.likedResources.filters.category')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="all">{safeT('profile.likedResources.filters.allCategories')}</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
@@ -177,17 +227,17 @@ export default function LikedResourcesPage() {
           {filteredResources.length === 0 ? (
             <div className="text-center py-8">
               <Heart className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">{t?.profile?.likedResources?.noLikes}</p>
+              <p className="text-muted-foreground">{safeT('profile.likedResources.noLikes')}</p>
             </div>
           ) : (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t?.profile?.likedResources?.table?.resource}</TableHead>
-                    <TableHead>{t?.profile?.likedResources?.table?.category}</TableHead>
-                    <TableHead>{t?.profile?.likedResources?.table?.addedAt}</TableHead>
-                    <TableHead className="text-right">{t?.profile?.likedResources?.table?.actions}</TableHead>
+                    <TableHead>{safeT('profile.likedResources.table.resource')}</TableHead>
+                    <TableHead>{safeT('profile.likedResources.table.category')}</TableHead>
+                    <TableHead>{safeT('profile.likedResources.table.addedAt')}</TableHead>
+                    <TableHead className="text-right">{safeT('profile.likedResources.table.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -203,7 +253,9 @@ export default function LikedResourcesPage() {
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => handleDownload(item.resource.file_url)}
+                            onClick={() => handleDownload(item.resource)}
+                            disabled={!item.resource.file_url}
+                            title={item.resource.file_url ? 'Download' : 'Download not available'}
                           >
                             <Download className="h-4 w-4" />
                           </Button>

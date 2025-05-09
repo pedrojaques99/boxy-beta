@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { useState } from 'react'
 import { ImageOff, ArrowRight } from 'lucide-react'
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils'
 
 interface ResourceCardProps {
   resource: Resource
+  priority?: boolean
 }
 
 const badgeStyles = cn(
@@ -21,7 +23,7 @@ const badgeStyles = cn(
   "hover:border-muted-foreground/40"
 )
 
-export function ResourceCard({ resource }: ResourceCardProps) {
+export function ResourceCard({ resource, priority = false }: ResourceCardProps) {
   const [imageError, setImageError] = useState(false)
   const { t } = useTranslations()
 
@@ -40,19 +42,19 @@ export function ResourceCard({ resource }: ResourceCardProps) {
   return (
     <Link href={`/mindy/${resource.id}`} className="block">
       <Card className="overflow-hidden group h-full">
-        <div className="relative w-full h-40 bg-muted overflow-hidden">
+        <div className="relative w-full aspect-[2/1] bg-muted overflow-hidden">
           {resource.thumbnail_url && !imageError ? (
-            <img
+            <Image
               src={resource.thumbnail_url}
               alt={resource.title}
-              loading="lazy"
-              width={400}
-              height={160}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              priority={priority}
+              quality={80}
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               onError={handleImageError}
-              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-              className="transition-transform duration-300 group-hover:scale-105"
-              decoding="async"
-              fetchPriority="low"
+              loading={priority ? 'eager' : 'lazy'}
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qLjgyPjA+OjU8PkM5QklCR1JTUzE1PkNhaUpKWlL/2wBDAR"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-muted">

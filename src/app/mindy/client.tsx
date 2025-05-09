@@ -1,7 +1,7 @@
 'use client'
 
 import { SearchBar } from '@/components/shop/search-bar'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { LikeButton } from '@/components/LikeButton'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -79,10 +79,14 @@ export default function MindyClient() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterOptions, setFilterOptions] = useState<FilterOption[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const debouncedSearch = useDebounce(searchQuery, 300)
   const supabase = createClient()
   const searchParams = useSearchParams()
   const router = useRouter()
+  const observerTarget = useRef<HTMLDivElement>(null)
 
   // Fetch unique filter values
   useEffect(() => {
@@ -164,13 +168,61 @@ export default function MindyClient() {
     fetchInitialData()
   }, [supabase])
 
-  const fetchResources = async (search?: string) => {
+  // Cache key generation
+  const getCacheKey = (search?: string) => {
+    const category = searchParams.get('category')
+    const subcategory = searchParams.get('subcategory')
+    const software = searchParams.get('software')
+    return `mindy-resources:${search || ''}:${category || ''}:${subcategory || ''}:${software || ''}:${page}`
+  }
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          setPage((prev) => prev + 1)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasMore, isLoadingMore])
+
+  // Fetch resources with caching
+  const fetchResources = async (search?: string, currentPage = 1) => {
     try {
-      setIsLoading(true)
+      setIsLoadingMore(currentPage > 1)
+      if (currentPage === 1) setIsLoading(true)
+
+      const cacheKey = getCacheKey(search)
+      const cachedData = sessionStorage.getItem(cacheKey)
+
+      if (cachedData) {
+        const { resources: cachedResources, timestamp } = JSON.parse(cachedData)
+        // Cache valid for 5 minutes
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          if (currentPage === 1) {
+            setResources(cachedResources)
+          } else {
+            setResources(prev => [...prev, ...cachedResources])
+          }
+          setHasMore(cachedResources.length === 12) // Assuming 12 items per page
+          return
+        }
+      }
+
       let url = '/api/mindy'
       const params = new URLSearchParams()
 
-      // Add filters from URL if they exist
+      params.append('page', currentPage.toString())
+      params.append('limit', '12')
+
       const category = searchParams.get('category')
       const subcategory = searchParams.get('subcategory')
       const software = searchParams.get('software')
@@ -179,39 +231,50 @@ export default function MindyClient() {
       if (subcategory) params.append('subcategory', subcategory)
       if (software) params.append('software', software)
 
-      // Add search query if it exists
       if (search?.trim()) {
-        url = `/api/mindy/search?q=${encodeURIComponent(search.trim())}`
-      } else if (params.toString()) {
-        url = `/api/mindy?${params.toString()}`
+        url = `/api/mindy/search?q=${encodeURIComponent(search.trim())}&${params.toString()}`
+      } else {
+        url = `${url}?${params.toString()}`
       }
 
       const response = await fetch(url)
       if (!response.ok) throw new Error('Failed to fetch resources')
       const data = await response.json()
-      setResources(data.resources)
+
+      // Cache the results
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        resources: data.resources,
+        timestamp: Date.now()
+      }))
+
+      if (currentPage === 1) {
+        setResources(data.resources)
+      } else {
+        setResources(prev => [...prev, ...data.resources])
+      }
+      setHasMore(data.resources.length === 12)
     } catch (error) {
       console.error('Error fetching resources:', error)
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
       setIsSearching(false)
     }
   }
 
-  // Effect for URL changes
+  // Reset pagination when filters or search change
   useEffect(() => {
-    if (!searchQuery) {
-      fetchResources()
-    }
-  }, [searchParams])
+    setPage(1)
+    setResources([])
+    fetchResources(debouncedSearch, 1)
+  }, [debouncedSearch, searchParams])
 
-  // Debounced search effect
+  // Fetch more when page changes
   useEffect(() => {
-    if (debouncedSearch) {
-      setIsSearching(true)
-      fetchResources(debouncedSearch)
+    if (page > 1) {
+      fetchResources(debouncedSearch, page)
     }
-  }, [debouncedSearch])
+  }, [page])
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query)
@@ -382,6 +445,16 @@ export default function MindyClient() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Load More Trigger */}
+        {!isLoading && hasMore && (
+          <div
+            ref={observerTarget}
+            className="flex justify-center items-center py-8"
+          >
+            {isLoadingMore && <Loader2 className="h-6 w-6 animate-spin" />}
+          </div>
+        )}
       </div>
     </>
   )

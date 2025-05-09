@@ -15,6 +15,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// Supported image content types
+const supportedContentTypes = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+  '.avif': 'image/avif',
+}
+
 export async function middleware(req: NextRequest) {
   // Create a response object that we can modify
   let res = NextResponse.next()
@@ -123,6 +132,23 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL('/profile', req.url))
     }
 
+    // Handle image optimization for /mindy and /shop routes
+    const { pathname } = req.nextUrl
+    if (pathname.startsWith('/mindy') || pathname.startsWith('/shop')) {
+      // Add cache headers
+      res = NextResponse.next()
+      
+      // Cache successful requests for 1 hour at the edge, 1 day in the browser
+      res.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=3600, stale-while-revalidate=604800')
+      
+      // Add security headers
+      res.headers.set('X-Content-Type-Options', 'nosniff')
+      res.headers.set('X-Frame-Options', 'DENY')
+      res.headers.set('X-XSS-Protection', '1; mode=block')
+      
+      return res
+    }
+
     return res
   } catch (error) {
     console.error('Middleware error:', error)
@@ -145,5 +171,7 @@ export const config = {
     '/price/:path*',
     '/admin/:path*',
     '/auth/:path*',
+    '/mindy/:path*',
+    '/shop/:path*',
   ],
 }

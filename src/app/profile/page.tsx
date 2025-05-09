@@ -372,35 +372,6 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
-
-              <div className="flex flex-col space-y-4">
-                <Button
-                  variant="outline"
-                  className="justify-start"
-                  onClick={() => router.push('/profile/edit')}
-                >
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  {safeT('profile.editProfile')}
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  className="justify-start"
-                  onClick={() => router.push('/profile/subscription')}
-                >
-                  <Crown className="h-4 w-4 mr-2" />
-                  {safeT('profile.manageSubscription')}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="justify-start"
-                  onClick={() => router.push('/profile/liked')}
-                >
-                  <Heart className="h-4 w-4 mr-2" />
-                  {safeT('profile.likedResources.title')}
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -416,6 +387,33 @@ export default function ProfilePage() {
           <CardContent>
             <div className="space-y-4">
               <Button 
+                onClick={() => router.push('/profile/edit')}
+                className="w-full justify-start h-12 px-4"
+                variant="outline"
+              >
+                <Edit2 className="h-4 w-4 mr-2" />
+                {safeT('profile.editProfile')}
+              </Button>
+
+              <Button 
+                onClick={() => router.push('/profile/subscription')}
+                className="w-full justify-start h-12 px-4"
+                variant="outline"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                {safeT('profile.manageSubscription')}
+              </Button>
+
+              <Button 
+                onClick={() => router.push('/profile/liked')}
+                className="w-full justify-start h-12 px-4"
+                variant="outline"
+              >
+                <Heart className="h-4 w-4 mr-2" />
+                {safeT('profile.likedResources.title')}
+              </Button>
+
+              <Button 
                 onClick={() => router.push('/profile/payment')}
                 className="w-full justify-start h-12 px-4"
                 variant="outline"
@@ -423,6 +421,7 @@ export default function ProfilePage() {
                 <Crown className="h-4 w-4 mr-2" />
                 {safeT('profile.paymentSettings')}
               </Button>
+
               <Button 
                 onClick={() => router.push('/profile/notifications')}
                 className="w-full justify-start h-12 px-4"
@@ -430,14 +429,6 @@ export default function ProfilePage() {
               >
                 <Settings className="h-4 w-4 mr-2" />
                 {safeT('profile.notificationPreferences')}
-              </Button>
-              <Button 
-                onClick={() => router.push('/price')}
-                className="w-full justify-start h-12 px-4"
-                variant="outline"
-              >
-                <Crown className="h-4 w-4 mr-2" />
-                {safeT('profile.manageSubscription')}
               </Button>
             </div>
           </CardContent>
