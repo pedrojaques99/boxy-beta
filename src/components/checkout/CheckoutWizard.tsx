@@ -386,17 +386,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     if (step === STEPS.length - 1) {
       setLoading(true)
       
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current)
-      }
-      
-      loadingTimeoutRef.current = setTimeout(() => {
-        if (mounted && loading) {
-          setLoading(false)
-          toast.error(safeT('checkout.error.timeout'))
-        }
-      }, 15000)
-      
       try {
         const { data: { session } } = await supabaseClient.auth.getSession()
         
@@ -408,69 +397,77 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           throw new Error(safeT('checkout.error.incompleteUserData'))
         }
 
+        // Create an AbortController with a timeout
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 12000)
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // Increased timeout to 30s
         
-        const res = await fetch('/api/pagarme/subscribe', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            user_id: user.id,
-            email: user.email,
-            name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
-            plan_id: planId,
-            payment_method: 'credit_card',
-            card: {
-              holder_name: card.name,
-              number: card.number,
-              exp_month: card.expiry.split('/')[0],
-              exp_year: card.expiry.split('/')[1],
-              cvv: card.cvv,
-              cpf: card.cpf
+        try {
+          const res = await fetch('/api/pagarme/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
             },
-            billing_address: {
-              street: userData.street,
-              number: userData.number,
-              complement: userData.complement,
-              zip_code: userData.zip_code,
-              neighborhood: userData.neighborhood,
-              city: userData.city,
-              state: userData.state,
-              country: userData.country
-            }
-          }),
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
+            body: JSON.stringify({
+              user_id: user.id,
+              email: user.email,
+              name: userData.name || user.email?.split('@')[0] || 'User',
+              plan_id: planId,
+              payment_method: 'credit_card',
+              card: {
+                holder_name: card.name,
+                number: card.number.replace(/\s/g, ''),
+                exp_month: parseInt(card.expiry.split('/')[0]),
+                exp_year: parseInt('20' + card.expiry.split('/')[1]),
+                cvv: card.cvv,
+                cpf: card.cpf.replace(/\D/g, '')
+              },
+              billing_address: {
+                street: userData.street,
+                number: userData.number,
+                complement: userData.complement,
+                zip_code: userData.zip_code.replace(/\D/g, ''),
+                neighborhood: userData.neighborhood,
+                city: userData.city,
+                state: userData.state,
+                country: userData.country
+              }
+            }),
+            signal: controller.signal
+          })
 
-        if (!res.ok) {
-          const error = await res.json()
-          throw new Error(error.message || safeT('checkout.error.paymentFailed'))
-        }
+          clearTimeout(timeoutId)
 
-        const data = await res.json()
+          if (!res.ok) {
+            const error = await res.json()
+            throw new Error(error.message || safeT('checkout.error.paymentFailed'))
+          }
 
-        if (mounted) {
-          setResult({ success: true, message: safeT('checkout.success') })
-          toast.success(safeT('checkout.success'))
-          onSuccess?.()
+          const data = await res.json()
+          
+          if (mounted) {
+            setResult({ success: true, message: safeT('checkout.success') })
+            toast.success(safeT('checkout.success'))
+            onSuccess?.()
+            setStep(step + 1)
+          }
+        } catch (err) {
+          if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
+            throw new Error(safeT('checkout.error.timeout'))
+          }
+          throw err
         }
       } catch (err) {
         if (mounted) {
           const errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
           setResult({ success: false, message: errorMessage })
           toast.error(errorMessage)
+          // Move to the result step even on error
+          setStep(step + 1)
         }
       } finally {
         if (mounted) {
           setLoading(false)
-          if (loadingTimeoutRef.current) {
-            clearTimeout(loadingTimeoutRef.current)
-            loadingTimeoutRef.current = null
-          }
         }
       }
     } else {
@@ -598,22 +595,24 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
   return (
     <div className="max-w-2xl mx-auto my-12 px-4">
-      <div className="relative mb-8">
-        <Progress value={calculateProgress()} className="h-2" />
-        <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-xs text-muted-foreground">
+      <div className="relative mb-12">
+        <Progress value={calculateProgress()} className="h-2.5 bg-muted/30" />
+        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs">
           {STEPS.map((stepKey, index) => (
             <div
               key={stepKey}
               className={cn(
-                "flex flex-col items-center",
-                index <= step ? "text-primary" : "text-muted-foreground"
+                "flex flex-col items-center gap-2 transition-colors duration-200",
+                index <= step ? "text-primary font-medium" : "text-muted-foreground"
               )}
             >
               <div className={cn(
-                "w-3 h-3 rounded-full mb-1",
-                index <= step ? "bg-primary" : "bg-muted"
+                "w-4 h-4 rounded-full transition-all duration-200",
+                index < step ? "bg-primary scale-75" : 
+                index === step ? "bg-primary scale-100 ring-4 ring-primary/20" : 
+                "bg-muted"
               )} />
-              <span>{stepTitles[stepKey]}</span>
+              <span className="whitespace-nowrap">{stepTitles[stepKey]}</span>
             </div>
           ))}
         </div>
@@ -628,31 +627,29 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           key={step}
           {...pageTransition}
           className="space-y-6"
-          onKeyDown={(e) => {
-            // Only handle keyboard navigation if not in an input field
-            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-              return;
-            }
-            if (e.key === 'Enter' && isStepValid()) {
-              handleNext();
-            } else if (e.key === 'Backspace' && step > 0) {
-              handleBack();
-            }
-          }}
         >
-          <Card className="shadow-lg border-2 border-primary/10">
-            <CardHeader className="pb-6">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <StepIcon step={STEPS[step]} result={result} currentStepIndex={step} />
+          <Card className="shadow-lg border border-border/50 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+            <CardHeader className="pb-6 border-b">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200",
+                  step === STEPS.length - 1 ? 
+                    (result.success ? "bg-green-500/20 text-green-500" : "bg-red-500/20 text-red-500") :
+                    "bg-primary/20 text-primary"
+                )}>
+                  {stepIcons[STEPS[step]]}
+                </div>
                 {stepTitles[STEPS[step]]}
               </CardTitle>
               {step > 0 && step < 4 && (
-                <div className="text-sm text-muted-foreground mt-2">
-                  {safeT('checkout.plan')}: <b>{planId && PLANS[planId].name}</b> — {planId && formatCurrency(PLANS[planId].price, locale)}
+                <div className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  {safeT('checkout.plan')}: <span className="font-medium text-foreground">{planId && PLANS[planId].name}</span> 
+                  <span className="text-primary font-medium">{planId && formatCurrency(PLANS[planId].price, locale)}</span>
                 </div>
               )}
             </CardHeader>
-            <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto px-6">
+            <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto px-6 py-6">
               {step === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -940,12 +937,12 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </motion.div>
               )}
             </CardContent>
-            <div className="flex justify-between mt-6 px-6 pb-6">
+            <div className="flex justify-between p-6 border-t bg-muted/10">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={step === 0 || step === 4}
-                className="gap-2"
+                className="gap-2 hover:bg-background"
               >
                 <ArrowLeft className="h-4 w-4" />
                 {safeT('checkout.back')}
@@ -954,15 +951,23 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid() || loading}
-                  className="gap-2"
+                  className="gap-2 relative overflow-hidden"
                 >
                   {loading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
                       {safeT('checkout.next')}
                       <ArrowRight className="h-4 w-4" />
                     </>
+                  )}
+                  {isStepValid() && !loading && (
+                    <motion.div
+                      className="absolute inset-0 bg-primary/10"
+                      initial={{ x: '-100%' }}
+                      animate={{ x: '100%' }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    />
                   )}
                 </Button>
               )}
@@ -970,10 +975,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <Button
                   onClick={handleNext}
                   disabled={loading}
-                  className="gap-2"
+                  className="gap-2 bg-green-500 hover:bg-green-600"
                 >
                   {loading ? (
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
                       {safeT('checkout.confirm')}
