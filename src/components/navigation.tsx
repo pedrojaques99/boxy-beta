@@ -19,6 +19,7 @@ type UserStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
 type Dictionary = {
   navigation?: {
+    home: string
     about: string
     shop: string
     labs: string
@@ -117,6 +118,16 @@ export function Navigation() {
 
   const NavLinks = () => (
     <>
+      <Link
+        href="/"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className={cn(
+          'text-sm font-medium transition-colors hover:text-primary',
+          isActive('/') ? 'text-primary' : 'text-muted-foreground'
+        )}
+      >
+        Home
+      </Link>
       <Link
         href="/about"
         onClick={() => setIsMobileMenuOpen(false)}

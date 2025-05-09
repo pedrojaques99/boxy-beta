@@ -17,7 +17,7 @@ const categoryImages: Record<string, string> = {
   'texturas': '/images/categories/texturas.webp',
   'mockups': '/images/categories/mockups.webp',
   'free': '/images/categories/freebie.webp',
-  'tools': '/images/categories/tools.webp',
+  'tools': '/images/categories/tools.png',
   'default': '/images/categories/modelos.webp'
 };
 
