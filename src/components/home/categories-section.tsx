@@ -30,7 +30,7 @@ const getCategoryTranslation = (category: string, t: Dictionary) => {
       return t.shop.filters.textures;
     case 'Mockups':
       return 'Mockups';
-    case 'Freebie':
+    case 'Freebies':
       return t.shop.filters.free;
     default:
       return category;
