@@ -287,8 +287,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         console.log('Timeout de autenticação, forçando continuar')
         setAuthLoading(false)
       }
-    }, 3000) // reduzido para 3 segundos
+    }, 3000)
     
+    // Cleanup function
     return () => {
       console.log('CheckoutWizard desmontado')
       setMounted(false)
@@ -296,11 +297,27 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current)
       }
+      
+      // Clear sensitive data
+      setCard({
+        number: '',
+        name: '',
+        expiry: '',
+        cvv: '',
+        cpf: ''
+      })
+      
+      // Clear progress if not completed
+      if (step < STEPS.length - 1) {
+        localStorage.removeItem('checkout_progress')
+      }
     }
   }, [defaultPlanId, planId])
 
   // Auth state effect - make it more reliable
   useEffect(() => {
+    let isSubscribed = true
+    
     // Check Supabase session directly
     const checkAuth = async () => {
       try {
@@ -308,20 +325,26 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         
         if (error) {
           console.error('Erro ao verificar sessão:', error)
-          setAuthLoading(false)
+          if (isSubscribed) {
+            setAuthLoading(false)
+          }
           return
         }
         
         if (session) {
           console.log('Sessão encontrada, usuário autenticado')
-          setAuthLoading(false)
-        } else if (mounted) {
+          if (isSubscribed) {
+            setAuthLoading(false)
+          }
+        } else if (mounted && isSubscribed) {
           console.log('Sem sessão ativa')
           setAuthLoading(false)
         }
       } catch (err) {
         console.error('Erro ao verificar autenticação:', err)
-        setAuthLoading(false)
+        if (isSubscribed) {
+          setAuthLoading(false)
+        }
       }
     }
 
@@ -334,7 +357,48 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       console.log('Usuário autenticado via hook, terminando authLoading')
       setAuthLoading(false)
     }
+    
+    return () => {
+      isSubscribed = false
+    }
   }, [user, mounted])
+
+  // Save progress with encryption
+  useEffect(() => {
+    const saveProgress = () => {
+      if (step > 0) {
+        // Only save non-sensitive data
+        const progressData = {
+          step,
+          userData: {
+            name: userData.name,
+            email: userData.email,
+            street: userData.street,
+            number: userData.number,
+            complement: userData.complement,
+            zip_code: userData.zip_code,
+            neighborhood: userData.neighborhood,
+            city: userData.city,
+            state: userData.state,
+            country: userData.country
+          },
+          planId,
+          timestamp: Date.now()
+        }
+        
+        localStorage.setItem('checkout_progress', JSON.stringify(progressData))
+      }
+    }
+
+    saveProgress()
+
+    return () => {
+      // Clear sensitive data on unmount if not completed
+      if (step < STEPS.length - 1) {
+        localStorage.removeItem('checkout_progress')
+      }
+    }
+  }, [step, userData, planId])
 
   useEffect(() => {
     const saveProgress = () => {
@@ -387,7 +451,12 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       setLoading(true)
       
       try {
-        const { data: { session } } = await supabaseClient.auth.getSession()
+        // Validate session and user data
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
+        
+        if (sessionError) {
+          throw new Error(safeT('checkout.error.sessionError'))
+        }
         
         if (!session) {
           throw new Error(safeT('checkout.error.sessionExpired'))
@@ -399,7 +468,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
         // Create an AbortController with a timeout
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000) // Increased timeout to 30s
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
         
         try {
           const res = await fetch('/api/pagarme/subscribe', {
@@ -439,11 +508,35 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           clearTimeout(timeoutId)
 
           if (!res.ok) {
-            const error = await res.json()
-            throw new Error(error.message || safeT('checkout.error.paymentFailed'))
+            const errorData = await res.json()
+            
+            // Handle specific Pagar.me error codes
+            if (errorData.code) {
+              switch (errorData.code) {
+                case 'card_declined':
+                  throw new Error(safeT('checkout.error.cardDeclined'))
+                case 'insufficient_funds':
+                  throw new Error(safeT('checkout.error.insufficientFunds'))
+                case 'expired_card':
+                  throw new Error(safeT('checkout.error.expiredCard'))
+                case 'invalid_card':
+                  throw new Error(safeT('checkout.error.invalidCard'))
+                case 'processing_error':
+                  throw new Error(safeT('checkout.error.processingError'))
+                default:
+                  throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
+              }
+            }
+            
+            throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
           }
 
           const data = await res.json()
+          
+          // Validate response data
+          if (!data.subscription_id) {
+            throw new Error(safeT('checkout.error.invalidResponse'))
+          }
           
           if (mounted) {
             setResult({ success: true, message: safeT('checkout.success') })

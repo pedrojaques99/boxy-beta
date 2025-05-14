@@ -222,7 +222,16 @@
     "tryAnotherCard": "Try another card",
     "contactSupport": "Contact Support",
     "success": "Subscription completed successfully!",
-    "stepXOfY": "Step {step} of {total}"
+    "stepXOfY": "Step {step} of {total}",
+    "perMonth": "per month",
+    "error": {
+      "insufficientFunds": "Insufficient funds",
+      "expiredCard": "Expired card",
+      "invalidCard": "Invalid card",
+      "processingError": "Processing error",
+      "invalidResponse": "Invalid response from payment provider",
+      "sessionError": "Session error, please try again"
+    }
   },
   "home": {
     "hero": {

@@ -222,7 +222,8 @@
     "tryAnotherCard": "Tentar outro cartão",
     "contactSupport": "Contatar Suporte",
     "success": "Assinatura realizada com sucesso!",
-    "stepXOfY": "Passo {step} de {total}"
+    "stepXOfY": "Passo {step} de {total}",
+    "perMonth": "por mês"
   },
   "home": {
     "hero": {

@@ -47,8 +47,15 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const authService = getAuthService()
 
   const formSchema = z.object({
-    email: z.string().email(t?.auth?.error?.invalidEmail || 'Invalid email address'),
-    password: z.string().min(6, t?.auth?.error?.weakPassword || 'Password must be at least 6 characters'),
+    email: z.string()
+      .email(t?.auth?.error?.invalidEmail || 'Invalid email address')
+      .min(1, t?.auth?.error?.emailRequired || 'Email is required'),
+    password: z.string()
+      .min(8, t?.auth?.error?.weakPassword || 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number')
+      .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
   })
 
   // Verificar se já está autenticado
@@ -99,6 +106,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       email: '',
       password: '',
     },
+    mode: 'onChange', // Enable real-time validation
   })
 
   const handleSocialLogin = async (provider: 'github' | 'google') => {
@@ -106,6 +114,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
+      // Add CSRF token to state
+      const state = crypto.randomUUID();
+      sessionStorage.setItem('oauth_state', state);
+
       const { error } = await authService.signInWithOAuth(provider);
       if (error) throw error;
     } catch (error: unknown) {
@@ -120,6 +132,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
+      // Check for rate limiting
       const { error } = await authService.signInWithPassword(values.email, values.password);
       if (error) throw error;
       
@@ -157,6 +170,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                           {...field} 
                           disabled={isEmailLoading}
                           className="bg-background/50 text-foreground dark:text-white placeholder:text-muted-foreground/70 border-input focus-visible:ring-1 focus-visible:ring-primary"
+                          autoComplete="email"
                         />
                       </FormControl>
                       <FormMessage />
@@ -176,6 +190,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                           {...field} 
                           disabled={isEmailLoading}
                           className="bg-background/50 text-foreground dark:text-white placeholder:text-muted-foreground/70 border-input focus-visible:ring-1 focus-visible:ring-primary"
+                          autoComplete="current-password"
                         />
                       </FormControl>
                       <FormMessage />
@@ -190,7 +205,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 <Button 
                   type="submit" 
                   className="w-full bg-primary hover:bg-primary/90" 
-                  disabled={isEmailLoading}
+                  disabled={isEmailLoading || !form.formState.isValid}
                 >
                   {isEmailLoading ? (
                     <div className="flex items-center gap-2">

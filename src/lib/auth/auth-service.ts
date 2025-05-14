@@ -31,7 +31,11 @@ type AuthError = {
  */
 export class AuthService {
   private supabase = createClient();
-  private adminCache: Map<string, boolean> = new Map();
+  private adminCache: Map<string, { isAdmin: boolean; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly MAX_LOGIN_ATTEMPTS = 5;
+  private readonly LOGIN_ATTEMPT_WINDOW = 15 * 60 * 1000; // 15 minutes
+  private loginAttempts: Map<string, { count: number; timestamp: number }> = new Map();
 
   /**
    * Get the current authenticated session
@@ -39,7 +43,24 @@ export class AuthService {
    */
   getSession = async () => {
     try {
-      return await this.supabase.auth.getSession();
+      const { data, error } = await this.supabase.auth.getSession();
+      if (error) throw error;
+
+      // Check if session is about to expire
+      if (data.session) {
+        const expiresAt = new Date(data.session.expires_at! * 1000);
+        const now = new Date();
+        const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+
+        // If session expires in less than 5 minutes, refresh it
+        if (timeUntilExpiry < 5 * 60 * 1000) {
+          const { data: refreshData, error: refreshError } = await this.supabase.auth.refreshSession();
+          if (refreshError) throw refreshError;
+          return { data: refreshData, error: null };
+        }
+      }
+
+      return { data, error: null };
     } catch (error) {
       console.error('Error getting session:', error);
       throw this.handleError(error, 'Failed to get session');
@@ -194,12 +215,13 @@ export class AuthService {
    * Check and repair auth cookies if needed
    * @returns Object with status of repair operation
    */
-  checkAndRepairAuthCookies = () => {
+  checkAndRepairAuthCookies = async () => {
     if (typeof document === 'undefined') return { fixed: false, message: 'Not in browser environment' };
     
     try {
       const cookies = document.cookie.split(';');
       let foundCorruptedCookies = false;
+      let secureCookies = false;
       
       cookies.forEach(cookie => {
         const [name, value] = cookie.split('=').map(part => part.trim());
@@ -207,19 +229,34 @@ export class AuthService {
         // Check for corrupted auth cookies
         if ((name.includes('supabase') || name.includes('sb-')) && 
             (!value || value === 'undefined' || value === 'null')) {
-          // Clear corrupted cookie
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          // Clear corrupted cookie with secure flags
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=strict`;
           foundCorruptedCookies = true;
         }
+
+        // Check if we have secure cookies
+        if (name.includes('supabase') || name.includes('sb-')) {
+          secureCookies = true;
+        }
       });
+
+      // If no secure cookies found, set them
+      if (!secureCookies) {
+        const { data: session } = await this.getSession();
+        if (session?.session) {
+          // Force a session refresh to get secure cookies
+          await this.supabase.auth.refreshSession();
+        }
+      }
       
       return { 
         fixed: foundCorruptedCookies,
-        message: foundCorruptedCookies ? 'Corrupted cookies cleared' : 'No corrupted cookies found' 
+        message: foundCorruptedCookies ? 'Corrupted cookies cleared' : 'No corrupted cookies found',
+        secureCookies
       };
     } catch (err) {
       console.error('Error checking cookies:', err);
-      return { fixed: false, message: 'Error checking cookies' };
+      return { fixed: false, message: 'Error checking cookies', secureCookies: false };
     }
   };
 
@@ -276,13 +313,17 @@ export class AuthService {
    * @param userId Current user ID to validate against cached value
    * @returns True if user is admin according to session storage
    */
-  getCachedAdminStatus = (userId: string): boolean => {
-    if (typeof window === 'undefined') return false;
-    
-    const cachedAdminStatus = sessionStorage.getItem('admin_authenticated');
-    const cachedUserId = sessionStorage.getItem('admin_user_id');
-    
-    return cachedAdminStatus === 'true' && cachedUserId === userId;
+  getCachedAdminStatus = (userId: string): boolean | null => {
+    const cached = this.adminCache.get(userId);
+    if (!cached) return null;
+
+    const now = Date.now();
+    if (now - cached.timestamp > this.CACHE_TTL) {
+      this.adminCache.delete(userId);
+      return null;
+    }
+
+    return cached.isAdmin;
   };
 
   /**
@@ -291,15 +332,7 @@ export class AuthService {
    * @param isAdmin Whether user has admin status
    */
   saveCachedAdminStatus = (userId: string, isAdmin: boolean): void => {
-    if (typeof window === 'undefined') return;
-    
-    if (isAdmin) {
-      sessionStorage.setItem('admin_authenticated', 'true');
-      sessionStorage.setItem('admin_user_id', userId);
-    } else {
-      sessionStorage.removeItem('admin_authenticated');
-      sessionStorage.removeItem('admin_user_id');
-    }
+    this.adminCache.set(userId, { isAdmin, timestamp: Date.now() });
   };
 
   /**
@@ -330,13 +363,25 @@ export class AuthService {
    */
   signInWithPassword = async (email: string, password: string) => {
     try {
-      return await this.supabase.auth.signInWithPassword({
+      if (this.isRateLimited(email)) {
+        throw new Error('Too many login attempts. Please try again later.');
+      }
+
+      const { data, error } = await this.supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      if (error) {
+        this.recordLoginAttempt(email);
+        throw error;
+      }
+
+      this.clearLoginAttempts(email);
+      return { data, error: null };
     } catch (error) {
-      console.error('Error signing in with password:', error);
-      throw error;
+      console.error('Error signing in:', error);
+      throw this.handleError(error, 'Failed to sign in');
     }
   };
   
@@ -348,19 +393,26 @@ export class AuthService {
    */
   signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
-      return await this.supabase.auth.signInWithOAuth({
+      const state = sessionStorage.getItem('oauth_state');
+      if (!state) {
+        throw new Error('Missing OAuth state');
+      }
+
+      const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
           queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
+            state,
           },
         },
       });
+
+      if (error) throw error;
+      return { data, error: null };
     } catch (error) {
-      console.error(`Error signing in with ${provider}:`, error);
-      throw error;
+      console.error('Error signing in with OAuth:', error);
+      throw this.handleError(error, 'Failed to sign in with OAuth');
     }
   };
   
@@ -531,6 +583,29 @@ export class AuthService {
     return {
       message: defaultMessage
     };
+  }
+
+  private isRateLimited(email: string): boolean {
+    const attempt = this.loginAttempts.get(email);
+    if (!attempt) return false;
+
+    const now = Date.now();
+    if (now - attempt.timestamp > this.LOGIN_ATTEMPT_WINDOW) {
+      this.loginAttempts.delete(email);
+      return false;
+    }
+
+    return attempt.count >= this.MAX_LOGIN_ATTEMPTS;
+  }
+
+  private recordLoginAttempt(email: string): void {
+    const attempt = this.loginAttempts.get(email) || { count: 0, timestamp: Date.now() };
+    attempt.count++;
+    this.loginAttempts.set(email, attempt);
+  }
+
+  private clearLoginAttempts(email: string): void {
+    this.loginAttempts.delete(email);
   }
 }
 
