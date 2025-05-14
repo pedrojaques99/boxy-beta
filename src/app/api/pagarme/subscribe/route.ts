@@ -11,7 +11,25 @@ const pagarmeApiKey = process.env.PAGARME_API_KEY
 
 export async function POST(request: Request) {
   try {
+    // 1. Validar o token de sessão do header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 })
+    }
+    const token = authHeader.replace('Bearer ', '').trim()
+
+    // 2. Validar o token com o Supabase
     const supabase = await createServiceClient()
+    const { data: { user }, error: userTokenError } = await supabase.auth.getUser(token)
+    if (userTokenError || !user) {
+      return NextResponse.json({ error: 'Invalid or expired session token' }, { status: 401 })
+    }
+
+    // 3. Validar se o user_id do body bate com o do token
+    const body = await request.json()
+    if (body.user_id !== user.id) {
+      return NextResponse.json({ error: 'User ID mismatch' }, { status: 403 })
+    }
 
     // Check if all required environment variables are present
     if (!supabaseUrl || !supabaseServiceRole || !pagarmeApiKey) {
@@ -21,7 +39,6 @@ export async function POST(request: Request) {
       )
     }
 
-    const body = await request.json()
     const { user_id, email, name, plan_id, payment_method, card, billing_address } = body
 
     // Log the request data (without sensitive information)
@@ -62,7 +79,7 @@ export async function POST(request: Request) {
     }
 
     // Preferir o CPF enviado pelo frontend, senão pegar do user_metadata
-    const cpf = card?.cpf || userData.user.user_metadata?.cpf
+    const cpf = card?.cpf || (userData && userData.user && userData.user.user_metadata?.cpf)
     if (!cpf) {
       return NextResponse.json({ 
         error: 'CPF não encontrado',

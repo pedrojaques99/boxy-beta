@@ -481,6 +481,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           throw new Error(safeT('checkout.error.incompleteUserData'))
         }
 
+        // LOG: token de sessão
+        console.log('[CheckoutWizard] Token de sessão usado na API:', session.access_token);
+
         // Create an AbortController with a timeout
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
@@ -524,6 +527,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
           if (!res.ok) {
             const errorData = await res.json()
+            console.error('[CheckoutWizard] Erro na resposta da API /api/pagarme/subscribe:', errorData)
             
             // Handle specific Pagar.me error codes
             if (errorData.code) {
@@ -560,6 +564,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             setStep(step + 1)
           }
         } catch (err) {
+          console.error('[CheckoutWizard] Erro real no try interno do handleNext:', err);
           if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
             throw new Error(safeT('checkout.error.timeout'))
           }
@@ -567,6 +572,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         }
       } catch (err) {
         if (mounted) {
+          console.error('[CheckoutWizard] Erro real no catch do handleNext:', err);
           let errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
           let showLoginButton = false;
           if (errorMessage === 'SESSION_EXPIRED') {
@@ -576,7 +582,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           setResult({ success: false, message: errorMessage })
           toast.error(errorMessage)
           setStep(step + 1)
-          // Exibir botão de login novamente na tela de erro
           if (showLoginButton) {
             setTimeout(() => {
               const btn = document.createElement('button');
