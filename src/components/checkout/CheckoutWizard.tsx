@@ -691,32 +691,32 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   return (
-    <div className="max-w-2xl mx-auto my-12 px-4">
-      <div className="relative mb-12">
+    <div className="w-full max-w-md sm:max-w-2xl mx-auto my-6 sm:my-12 px-2 sm:px-4 md:px-6">
+      <div className="relative mb-8 sm:mb-12">
         <Progress 
           value={calculateProgress()} 
-          className="h-3 bg-muted/50" 
+          className="h-2 sm:h-3 bg-muted/50" 
         />
-        <div className="absolute -bottom-8 left-0 right-0 flex justify-between text-xs">
+        <div className="absolute -bottom-6 sm:-bottom-8 left-0 right-0 flex justify-between text-[10px] sm:text-xs">
           {STEPS.map((stepKey, index) => (
             <div
               key={stepKey}
               className={cn(
-                "flex flex-col items-center gap-2 transition-colors duration-200",
+                "flex flex-col items-center gap-1 sm:gap-2 transition-colors duration-200",
                 index <= step 
                   ? "text-foreground font-medium" 
                   : "text-muted-foreground/70"
               )}
             >
               <div className={cn(
-                "w-4 h-4 rounded-full transition-all duration-200",
+                "w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-200",
                 index < step 
                   ? "bg-primary scale-75 ring-2 ring-primary/30" 
                   : index === step 
                     ? "bg-primary scale-100 ring-4 ring-primary/30" 
                     : "bg-muted/50 ring-2 ring-border"
               )} />
-              <span className="whitespace-nowrap">{stepTitles[stepKey]}</span>
+              <span className="whitespace-nowrap hidden xs:inline-block">{stepTitles[stepKey]}</span>
             </div>
           ))}
         </div>
@@ -730,13 +730,13 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         <motion.div
           key={step}
           {...pageTransition}
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
-          <Card className="shadow-xl border-2 border-border bg-card">
-            <CardHeader className="pb-6 border-b border-border">
-              <CardTitle className="flex items-center gap-3 text-xl">
+          <Card className="shadow-xl border-2 border-border bg-card w-full rounded-lg">
+            <CardHeader className="pb-4 sm:pb-6 border-b border-border">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl">
                 <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-200",
+                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors duration-200",
                   step === STEPS.length - 1 
                     ? (result.success 
                         ? "bg-green-500/20 text-green-500 ring-2 ring-green-500/20" 
@@ -745,10 +745,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 )}>
                   {stepIcons[STEPS[step]]}
                 </div>
-                <span className="font-semibold">{stepTitles[STEPS[step]]}</span>
+                <span className="font-semibold hidden xs:inline-block">{stepTitles[STEPS[step]]}</span>
               </CardTitle>
               {step > 0 && step < 4 && (
-                <div className="text-sm flex items-center gap-2 mt-3 p-2 rounded-md bg-muted/30">
+                <div className="text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mt-2 sm:mt-3 p-1 sm:p-2 rounded-md bg-muted/30">
                   <CreditCard className="h-4 w-4 text-primary" />
                   <span className="text-muted-foreground">{safeT('checkout.plan')}:</span>
                   <span className="font-medium text-foreground">{planId && PLANS[planId].name}</span>
@@ -756,19 +756,19 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </div>
               )}
             </CardHeader>
-            <CardContent className="space-y-6 max-h-[70vh] overflow-y-auto px-6 py-6">
+            <CardContent className="space-y-4 sm:space-y-6 max-h-[70vh] overflow-y-auto px-2 sm:px-6 py-4 sm:py-6">
               {step === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
+                  className="space-y-2 sm:space-y-4"
                 >
                   {Object.entries(PLANS).map(([id, plan]) => (
                     <Button
                       key={id}
                       variant={planId === id ? 'default' : 'outline'}
                       className={cn(
-                        "w-full justify-between p-6 h-auto relative group transition-all duration-200",
+                        "w-full justify-between p-4 sm:p-6 h-auto relative group transition-all duration-200",
                         planId === id 
                           ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                           : "hover:border-primary/50 hover:bg-primary/5",
@@ -776,20 +776,20 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       )}
                       onClick={() => setPlanId(id as PlanId)}
                     >
-                      <div className="flex flex-col items-start gap-1">
-                        <span className="font-semibold text-lg">{plan.name}</span>
+                      <div className="flex flex-col items-start gap-0.5 sm:gap-1">
+                        <span className="font-semibold text-base sm:text-lg">{plan.name}</span>
                         <span className={cn(
-                          "text-sm",
+                          "text-xs sm:text-sm",
                           planId === id ? "text-primary-foreground/80" : "text-muted-foreground"
                         )}>{plan.name}</span>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex flex-col items-end gap-0.5 sm:gap-1">
                         <span className={cn(
-                          "text-2xl font-bold",
+                          "text-xl sm:text-2xl font-bold",
                           planId === id ? "text-primary-foreground" : "text-foreground"
                         )}>{formatCurrency(plan.price, locale)}</span>
                         <span className={cn(
-                          "text-sm",
+                          "text-xs sm:text-sm",
                           planId === id ? "text-primary-foreground/80" : "text-muted-foreground"
                         )}>{safeT('checkout.perMonth')}</span>
                       </div>
@@ -810,7 +810,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6"
                 >
                   <div className="space-y-2">
                     <Label htmlFor="user-name">{safeT('checkout.name')}</Label>
@@ -940,7 +940,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6"
                 >
                   <div className="space-y-2">
                     <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
@@ -1068,13 +1068,13 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </motion.div>
               )}
             </CardContent>
-            <div className="flex justify-between p-6 border-t border-border bg-muted/5">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-between p-4 sm:p-6 border-t border-border bg-muted/5">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={step === 0 || step === 4}
                 className={cn(
-                  "gap-2 border-2",
+                  "gap-2 border-2 w-full sm:w-auto",
                   step === 0 || step === 4 ? "" : "hover:bg-primary/5 hover:border-primary/50"
                 )}
               >
@@ -1086,7 +1086,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   onClick={handleNext}
                   disabled={!isStepValid() || loading}
                   className={cn(
-                    "gap-2 relative overflow-hidden",
+                    "gap-2 relative overflow-hidden w-full sm:w-auto",
                     isStepValid() && !loading ? "hover:opacity-90 transition-opacity" : ""
                   )}
                 >
@@ -1112,7 +1112,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 <Button
                   onClick={handleNext}
                   disabled={loading}
-                  className="gap-2 bg-green-600 hover:bg-green-700 text-white font-medium shadow-lg shadow-green-500/20"
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white font-medium shadow-lg shadow-green-500/20 w-full sm:w-auto"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

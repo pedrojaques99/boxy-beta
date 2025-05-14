@@ -92,22 +92,10 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container py-12 max-w-4xl">
-      <div className="mb-8">
-        <Link href="/price" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar para Planos
-        </Link>
+    <div className="w-full min-h-screen flex flex-col items-center justify-center bg-muted/10 px-2 sm:px-4 md:px-6 py-4 sm:py-8">
+      <div className="w-full max-w-md sm:max-w-2xl">
+        <CheckoutWizard defaultPlanId={planId ?? undefined} />
       </div>
-      
-      <h1 className="text-2xl font-bold mb-6">Finalizar Assinatura</h1>
-      <CheckoutWizard 
-        defaultPlanId={planId} 
-        onSuccess={() => {
-          toast.success('Assinatura criada com sucesso!');
-          router.push('/dashboard?subscription=success');
-        }} 
-      />
     </div>
   );
 } 

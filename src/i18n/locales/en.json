@@ -201,14 +201,7 @@
       "cardNameRequired": "Cardholder name is required",
       "invalidCpf": "Invalid CPF",
       "invalidExpiry": "Invalid expiry date",
-      "invalidCvv": "Invalid CVV"
-    },
-    "authRequired": "Authentication Required",
-    "authRequiredDescription": "Please login to continue with the subscription",
-    "login": "Login",
-    "progressRestored": "Progress restored",
-    "addressFound": "Address found",
-    "error": {
+      "invalidCvv": "Invalid CVV",
       "timeout": "Request timed out. Please try again.",
       "sessionExpired": "Your session has expired. Please login again.",
       "incompleteUserData": "Incomplete user data",
@@ -218,6 +211,11 @@
       "cardDeclined": "Card declined",
       "contactSupport": "Please contact support"
     },
+    "authRequired": "Authentication Required",
+    "authRequiredDescription": "Please login to continue with the subscription",
+    "login": "Login",
+    "progressRestored": "Progress restored",
+    "addressFound": "Address found",
     "retry": "Try Again",
     "tryAnotherCard": "Try another card",
     "contactSupport": "Contact Support",

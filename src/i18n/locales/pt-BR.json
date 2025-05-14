@@ -201,14 +201,7 @@
       "cardNameRequired": "Nome no cartão é obrigatório",
       "invalidCpf": "CPF inválido",
       "invalidExpiry": "Validade inválida",
-      "invalidCvv": "CVV inválido"
-    },
-    "authRequired": "Autenticação Necessária",
-    "authRequiredDescription": "Por favor, faça login para continuar com a assinatura",
-    "login": "Fazer Login",
-    "progressRestored": "Progresso restaurado",
-    "addressFound": "Endereço encontrado",
-    "error": {
+      "invalidCvv": "CVV inválido",
       "timeout": "Tempo limite excedido. Por favor, tente novamente.",
       "sessionExpired": "Sua sessão expirou. Por favor, faça login novamente.",
       "incompleteUserData": "Dados do usuário incompletos",
@@ -218,6 +211,11 @@
       "cardDeclined": "Cartão recusado",
       "contactSupport": "Por favor, entre em contato com o suporte"
     },
+    "authRequired": "Autenticação Necessária",
+    "authRequiredDescription": "Por favor, faça login para continuar com a assinatura",
+    "login": "Fazer Login",
+    "progressRestored": "Progresso restaurado",
+    "addressFound": "Endereço encontrado",
     "retry": "Tentar Novamente",
     "tryAnotherCard": "Tentar outro cartão",
     "contactSupport": "Contatar Suporte",
