@@ -452,15 +452,30 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       
       try {
         // Validate session and user data
-        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
+        let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
         
-        if (sessionError) {
-          throw new Error(safeT('checkout.error.sessionError'))
+        // Tentar refresh se não houver sessão mas também não houver erro explícito
+        if (!session && !sessionError) {
+          const { data: refreshed, error: refreshError } = await supabaseClient.auth.refreshSession();
+          if (!refreshError && refreshed.session) {
+            session = refreshed.session;
+          } else {
+            sessionError = refreshError;
+          }
         }
-        
-        if (!session) {
-          throw new Error(safeT('checkout.error.sessionExpired'))
+
+        // Tratamento de erro de cookie corrompido
+        if (sessionError && sessionError.message && (
+          sessionError.message.includes('parse cookie') ||
+          sessionError.message.includes('JSON') ||
+          sessionError.message.includes('token')
+        )) {
+          window.location.href = '/auth-recovery';
+          return;
         }
+
+        if (sessionError) throw new Error(safeT('checkout.error.sessionError'))
+        if (!session) throw new Error('SESSION_EXPIRED');
 
         if (!user?.id || !user?.email) {
           throw new Error(safeT('checkout.error.incompleteUserData'))
@@ -552,11 +567,28 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         }
       } catch (err) {
         if (mounted) {
-          const errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
+          let errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
+          let showLoginButton = false;
+          if (errorMessage === 'SESSION_EXPIRED') {
+            errorMessage = safeT('checkout.error.sessionExpired');
+            showLoginButton = true;
+          }
           setResult({ success: false, message: errorMessage })
           toast.error(errorMessage)
-          // Move to the result step even on error
           setStep(step + 1)
+          // Exibir botão de login novamente na tela de erro
+          if (showLoginButton) {
+            setTimeout(() => {
+              const btn = document.createElement('button');
+              btn.innerText = safeT('checkout.login');
+              btn.className = 'mt-4 px-4 py-2 rounded bg-primary text-primary-foreground font-medium';
+              btn.onclick = () => {
+                window.location.href = `/auth/login?redirect=/checkout`;
+              };
+              const errorDiv = document.querySelector('.checkout-error-actions');
+              if (errorDiv) errorDiv.appendChild(btn);
+            }, 100);
+          }
         }
       } finally {
         if (mounted) {
