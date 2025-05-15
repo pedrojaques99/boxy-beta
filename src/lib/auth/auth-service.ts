@@ -394,8 +394,18 @@ export class AuthService {
   signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
       const state = sessionStorage.getItem('oauth_state');
-      if (!state) {
+      const stateTimestamp = sessionStorage.getItem('oauth_state_timestamp');
+      
+      if (!state || !stateTimestamp) {
         throw new Error('Missing OAuth state');
+      }
+
+      // Check if state is expired (older than 5 minutes)
+      const stateAge = Date.now() - parseInt(stateTimestamp);
+      if (stateAge > 5 * 60 * 1000) {
+        sessionStorage.removeItem('oauth_state');
+        sessionStorage.removeItem('oauth_state_timestamp');
+        throw new Error('OAuth state expired');
       }
 
       const { data, error } = await this.supabase.auth.signInWithOAuth({

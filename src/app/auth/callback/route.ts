@@ -5,12 +5,12 @@ import { handleError } from '@/lib/error-handler'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  // Check for redirectTo parameter
+  const state = searchParams.get('state')
   const redirectTo = searchParams.get('redirectTo') || '/'
   const error = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
 
-  console.log('Auth callback iniciado:', { code, error, errorDescription })
+  console.log('Auth callback iniciado:', { code, state, error, errorDescription })
 
   // Handle OAuth errors
   if (error) {
@@ -112,15 +112,14 @@ export async function GET(request: Request) {
     // Redirect to the specified path or homepage
     const redirectResponse = NextResponse.redirect(`${baseUrl}${redirectTo}`)
     
-    // Adicione cookies de debug para entender melhor o que está acontecendo
+    // Add debug cookies
     redirectResponse.cookies.set('auth_debug', 'callback_completed', {
       path: '/',
       maxAge: 60 * 5, // 5 minutes
-      httpOnly: false, // Tornando visível do lado do cliente para debug
+      httpOnly: false,
       sameSite: 'lax'
     });
     
-    // Adicione timestamp para debug
     redirectResponse.cookies.set('auth_timestamp', Date.now().toString(), {
       path: '/',
       maxAge: 60 * 5, // 5 minutes

@@ -114,9 +114,18 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
-      // Add CSRF token to state
+      // Generate a secure random state
       const state = crypto.randomUUID();
+      
+      // Store state in sessionStorage with timestamp
       sessionStorage.setItem('oauth_state', state);
+      sessionStorage.setItem('oauth_state_timestamp', Date.now().toString());
+
+      // Clear any existing state after 5 minutes
+      setTimeout(() => {
+        sessionStorage.removeItem('oauth_state');
+        sessionStorage.removeItem('oauth_state_timestamp');
+      }, 5 * 60 * 1000);
 
       const { error } = await authService.signInWithOAuth(provider);
       if (error) throw error;

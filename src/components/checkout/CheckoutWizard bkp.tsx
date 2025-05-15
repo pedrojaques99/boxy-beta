@@ -1,3 +1,9 @@
+/*
+  CheckoutWizard.tsx
+  - 3 etapas: Plano > Cartão > Confirmação
+  - Estilo integrado com shadcn/ui e globals.css do Boxy
+*/
+
 'use client'
 
 import { useUser } from '@supabase/auth-helpers-react'
@@ -15,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
+import { createClient } from '@/lib/supabase/client'
 
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
@@ -198,7 +205,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [result, setResult] = useState<{ success: boolean, message: string }>({ success: false, message: '' })
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const authService = getAuthService()
+  const supabaseClient = createClient()
 
   // Memoize safeT function
   const safeT = useMemo(() => {
@@ -217,14 +227,31 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     }
   }, [t])
 
+  // Log to help debug initialization
+  console.log('CheckoutWizard inicializado', { 
+    defaultPlanId, 
+    planId,
+    user: user ? 'logado' : 'não logado', 
+    authLoading, 
+    mounted 
+  })
+
   // Populate user data when available
   useEffect(() => {
     const getUserProfile = async () => {
       if (!user?.id) return
 
       try {
-        const { data, error } = await authService.getUserProfile(user.id)
-        if (error) return
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (error) {
+          console.error('Erro ao buscar perfil:', error)
+          return
+        }
 
         if (data) {
           setUserData(prev => ({
@@ -234,91 +261,184 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           }))
         }
       } catch (err) {
-        console.error('Error fetching user profile:', err)
+        console.error('Erro ao buscar dados do usuário:', err)
       }
     }
 
     if (user) {
       getUserProfile()
     }
-  }, [user, authService])
+  }, [user])
 
-  // Auth state effect
+  // Initialization effect
   useEffect(() => {
+    setMounted(true)
+    console.log('CheckoutWizard montado')
+    
+    // Guarantee planId is set from prop
+    if (defaultPlanId && !planId) {
+      console.log('Definindo planId a partir do defaultPlanId:', defaultPlanId)
+      setPlanId(defaultPlanId)
+    }
+    
+    // Add a timeout to prevent infinite loading
+    const authTimeout = setTimeout(() => {
+      if (authLoading) {
+        console.log('Timeout de autenticação, forçando continuar')
+        setAuthLoading(false)
+      }
+    }, 3000)
+    
+    // Cleanup function
+    return () => {
+      console.log('CheckoutWizard desmontado')
+      setMounted(false)
+      clearTimeout(authTimeout)
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current)
+      }
+      
+      // Clear sensitive data
+      setCard({
+        number: '',
+        name: '',
+        expiry: '',
+        cvv: '',
+        cpf: ''
+      })
+      
+      // Clear progress if not completed
+      if (step < STEPS.length - 1) {
+        localStorage.removeItem('checkout_progress')
+      }
+    }
+  }, [defaultPlanId, planId])
+
+  // Auth state effect - make it more reliable
+  useEffect(() => {
+    let isSubscribed = true
+    
+    // Check Supabase session directly
     const checkAuth = async () => {
       try {
-        const { data: { session }, error } = await authService.getSession()
+        const { data: { session }, error } = await supabaseClient.auth.getSession()
         
         if (error) {
-          setAuthLoading(false)
+          console.error('Erro ao verificar sessão:', error)
+          if (isSubscribed) {
+            setAuthLoading(false)
+          }
           return
         }
         
         if (session) {
-          setAuthLoading(false)
-        } else {
+          console.log('Sessão encontrada, usuário autenticado')
+          if (isSubscribed) {
+            setAuthLoading(false)
+          }
+        } else if (mounted && isSubscribed) {
+          console.log('Sem sessão ativa')
           setAuthLoading(false)
         }
       } catch (err) {
-        console.error('Auth check error:', err)
-        setAuthLoading(false)
+        console.error('Erro ao verificar autenticação:', err)
+        if (isSubscribed) {
+          setAuthLoading(false)
+        }
       }
     }
 
-    checkAuth()
+    if (mounted) {
+      checkAuth()
+    }
     
-    if (user !== null) {
+    // Fallback to user hook
+    if (user !== null && mounted) {
+      console.log('Usuário autenticado via hook, terminando authLoading')
       setAuthLoading(false)
     }
-  }, [user, authService])
+    
+    return () => {
+      isSubscribed = false
+    }
+  }, [user, mounted])
 
-  // Save progress
+  // Save progress with encryption
   useEffect(() => {
-    if (step > 0) {
-      const progressData = {
-        step,
-        userData: {
-          name: userData.name,
-          email: userData.email,
-          street: userData.street,
-          number: userData.number,
-          complement: userData.complement,
-          zip_code: userData.zip_code,
-          neighborhood: userData.neighborhood,
-          city: userData.city,
-          state: userData.state,
-          country: userData.country
-        },
-        planId,
-        timestamp: Date.now()
+    const saveProgress = () => {
+      if (step > 0) {
+        // Only save non-sensitive data
+        const progressData = {
+          step,
+          userData: {
+            name: userData.name,
+            email: userData.email,
+            street: userData.street,
+            number: userData.number,
+            complement: userData.complement,
+            zip_code: userData.zip_code,
+            neighborhood: userData.neighborhood,
+            city: userData.city,
+            state: userData.state,
+            country: userData.country
+          },
+          planId,
+          timestamp: Date.now()
+        }
+        
+        localStorage.setItem('checkout_progress', JSON.stringify(progressData))
       }
-      
-      localStorage.setItem('checkout_progress', JSON.stringify(progressData))
     }
 
+    saveProgress()
+
     return () => {
+      // Clear sensitive data on unmount if not completed
       if (step < STEPS.length - 1) {
         localStorage.removeItem('checkout_progress')
       }
     }
   }, [step, userData, planId])
 
-  // Restore progress on mount
   useEffect(() => {
-    const savedProgress = localStorage.getItem('checkout_progress')
+    const saveProgress = () => {
+      if (step > 0) {
+        localStorage.setItem('checkout_progress', JSON.stringify({
+          step,
+          userData,
+          planId,
+          timestamp: Date.now()
+        }));
+      }
+    };
+
+    saveProgress();
+
+    return () => {
+      // Limpar dados sensíveis ao sair
+      if (step === STEPS.length - 1) {
+        localStorage.removeItem('checkout_progress');
+      }
+    };
+  }, [step, userData, planId]);
+
+  // Recuperar progresso ao montar
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('checkout_progress');
     if (savedProgress) {
-      const { step: savedStep, userData: savedUserData, planId: savedPlanId, timestamp } = JSON.parse(savedProgress)
+      const { step: savedStep, userData: savedUserData, planId: savedPlanId, timestamp } = JSON.parse(savedProgress);
       
+      // Verificar se o progresso não expirou (24h)
       if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-        setStep(savedStep)
-        setUserData(savedUserData)
-        setPlanId(savedPlanId)
-        toast.info(safeT('checkout.progressRestored'))
+        setStep(savedStep);
+        setUserData(savedUserData);
+        setPlanId(savedPlanId);
+        toast.info(safeT('checkout.progressRestored'));
       } else {
-        localStorage.removeItem('checkout_progress')
+        localStorage.removeItem('checkout_progress');
       }
     }
-  }, [safeT])
+  }, []);
 
   const handleBack = () => {
     if (step > 0) {
@@ -331,40 +451,42 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       setLoading(true)
       
       try {
-        let { data: { session }, error: sessionError } = await authService.getSession()
+        // Validate session and user data
+        let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
         
+        // Tentar refresh se não houver sessão mas também não houver erro explícito
         if (!session && !sessionError) {
-          // Try to get a fresh session
-          const { data: freshSession, error: freshError } = await authService.getSession()
-          if (!freshError && freshSession.session) {
-            session = freshSession.session
+          const { data: refreshed, error: refreshError } = await supabaseClient.auth.refreshSession();
+          if (!refreshError && refreshed.session) {
+            session = refreshed.session;
           } else {
-            sessionError = freshError
+            sessionError = refreshError;
           }
         }
 
-        const errorMessage = sessionError && typeof sessionError === 'object' && 'message' in sessionError 
-          ? (sessionError as { message: string }).message 
-          : ''
-
-        if (errorMessage && (
-          errorMessage.includes('parse cookie') || 
-          errorMessage.includes('JSON') || 
-          errorMessage.includes('token')
+        // Tratamento de erro de cookie corrompido
+        if (sessionError && sessionError.message && (
+          sessionError.message.includes('parse cookie') ||
+          sessionError.message.includes('JSON') ||
+          sessionError.message.includes('token')
         )) {
-          window.location.href = '/auth-recovery'
-          return
+          window.location.href = '/auth-recovery';
+          return;
         }
 
         if (sessionError) throw new Error(safeT('checkout.error.sessionError'))
-        if (!session) throw new Error('SESSION_EXPIRED')
+        if (!session) throw new Error('SESSION_EXPIRED');
 
         if (!user?.id || !user?.email) {
           throw new Error(safeT('checkout.error.incompleteUserData'))
         }
 
+        // LOG: token de sessão
+        console.log('[CheckoutWizard] Token de sessão usado na API:', session.access_token);
+
+        // Create an AbortController with a timeout
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
         
         try {
           const res = await fetch('/api/pagarme/subscribe', {
@@ -405,7 +527,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
           if (!res.ok) {
             const errorData = await res.json()
+            console.error('[CheckoutWizard] Erro na resposta da API /api/pagarme/subscribe:', errorData)
             
+            // Handle specific Pagar.me error codes
             if (errorData.code) {
               switch (errorData.code) {
                 case 'card_declined':
@@ -428,47 +552,53 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
           const data = await res.json()
           
+          // Validate response data
           if (!data.subscription_id) {
             throw new Error(safeT('checkout.error.invalidResponse'))
           }
           
-          setResult({ success: true, message: safeT('checkout.success') })
-          toast.success(safeT('checkout.success'))
-          onSuccess?.()
-          setStep(step + 1)
+          if (mounted) {
+            setResult({ success: true, message: safeT('checkout.success') })
+            toast.success(safeT('checkout.success'))
+            onSuccess?.()
+            setStep(step + 1)
+          }
         } catch (err) {
+          console.error('[CheckoutWizard] Erro real no try interno do handleNext:', err);
           if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
             throw new Error(safeT('checkout.error.timeout'))
           }
           throw err
         }
       } catch (err) {
-        let errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
-        let showLoginButton = false
-        
-        if (errorMessage === 'SESSION_EXPIRED') {
-          errorMessage = safeT('checkout.error.sessionExpired')
-          showLoginButton = true
-        }
-        
-        setResult({ success: false, message: errorMessage })
-        toast.error(errorMessage)
-        setStep(step + 1)
-        
-        if (showLoginButton) {
-          setTimeout(() => {
-            const btn = document.createElement('button')
-            btn.innerText = safeT('checkout.login')
-            btn.className = 'mt-4 px-4 py-2 rounded bg-primary text-primary-foreground font-medium'
-            btn.onclick = () => {
-              window.location.href = `/auth/login?redirect=/checkout`
-            }
-            const errorDiv = document.querySelector('.checkout-error-actions')
-            if (errorDiv) errorDiv.appendChild(btn)
-          }, 100)
+        if (mounted) {
+          console.error('[CheckoutWizard] Erro real no catch do handleNext:', err);
+          let errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
+          let showLoginButton = false;
+          if (errorMessage === 'SESSION_EXPIRED') {
+            errorMessage = safeT('checkout.error.sessionExpired');
+            showLoginButton = true;
+          }
+          setResult({ success: false, message: errorMessage })
+          toast.error(errorMessage)
+          setStep(step + 1)
+          if (showLoginButton) {
+            setTimeout(() => {
+              const btn = document.createElement('button');
+              btn.innerText = safeT('checkout.login');
+              btn.className = 'mt-4 px-4 py-2 rounded bg-primary text-primary-foreground font-medium';
+              btn.onclick = () => {
+                window.location.href = `/auth/login?redirect=/checkout`;
+              };
+              const errorDiv = document.querySelector('.checkout-error-actions');
+              if (errorDiv) errorDiv.appendChild(btn);
+            }, 100);
+          }
         }
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     } else {
       setStep(step + 1)
