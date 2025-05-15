@@ -63,7 +63,7 @@ export default function AuthDiagnosticsPage() {
               id: testId,
               name: 'Verificação de sessão',
               status: 'error',
-              message: `Erro ao verificar sessão: ${error.message}`
+              message: `Erro ao verificar sessão: ${(error as Error).message}`
             }
           }
           return newTests
@@ -338,7 +338,7 @@ export default function AuthDiagnosticsPage() {
               name: 'Verificação da implementação de autenticação',
               status: error ? 'error' : 'success',
               message: error 
-                ? `Erro ao acessar sessão: ${error.message}` 
+                ? `Erro ao acessar sessão: ${(error as Error).message}` 
                 : 'Implementação do cliente Supabase funcionando corretamente'
             };
           }

@@ -13,6 +13,7 @@ export function LogoutButton() {
   const logout = async () => {
     await authService.signOut()
     router.push('/auth/login')
+    router.refresh()
   }
 
   if (!t) return null

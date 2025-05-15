@@ -92,6 +92,7 @@ export function Navigation() {
   const handleSignOut = async () => {
     await authService.signOut();
     router.push('/');
+    router.refresh();
   };
 
   const toggleLanguage = async () => {
