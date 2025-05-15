@@ -418,26 +418,19 @@ export class AuthService {
    */
   signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
-      // Clear any existing state first
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('oauth_state');
-        sessionStorage.removeItem('oauth_state_timestamp');
-      }
-
       // Generate a new secure random state
       const state = crypto.randomUUID();
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('oauth_state', state);
-        sessionStorage.setItem('oauth_state_timestamp', Date.now().toString());
+      
+      // Store state in cookies instead of sessionStorage
+      if (typeof document !== 'undefined') {
+        // Clear any existing state first
+        document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Set new state cookies
+        document.cookie = `oauth_state=${state}; path=/; max-age=600; samesite=lax`;
+        document.cookie = `oauth_state_timestamp=${Date.now()}; path=/; max-age=600; samesite=lax`;
       }
-
-      // Clear any existing state after 10 minutes
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('oauth_state');
-          sessionStorage.removeItem('oauth_state_timestamp');
-        }
-      }, 10 * 60 * 1000);
 
       // Ensure we have a valid redirectTo URL
       const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;

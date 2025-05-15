@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { handleError } from '@/lib/error-handler'
+import { cookies } from 'next/headers'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -17,6 +18,30 @@ export async function GET(request: Request) {
     console.error('Erro de autenticação recebido:', { error, errorDescription })
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || '')}`)
   }
+
+  // Validate state
+  const cookieStore = cookies()
+  const storedState = cookieStore.get('oauth_state')?.value
+  const stateTimestamp = cookieStore.get('oauth_state_timestamp')?.value
+
+  if (!state || !storedState || state !== storedState) {
+    console.error('Invalid OAuth state:', { received: state, stored: storedState })
+    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('Invalid OAuth state')}`)
+  }
+
+  // Check if state is expired (older than 10 minutes)
+  if (stateTimestamp) {
+    const stateAge = Date.now() - parseInt(stateTimestamp)
+    if (stateAge > 10 * 60 * 1000) {
+      console.error('OAuth state expired:', { age: stateAge })
+      return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('OAuth state expired')}`)
+    }
+  }
+
+  // Clear the state cookies
+  const response = NextResponse.redirect(`${origin}${redirectTo}`)
+  response.cookies.delete('oauth_state')
+  response.cookies.delete('oauth_state_timestamp')
 
   if (!code) {
     console.error('Nenhum código de autorização recebido')
