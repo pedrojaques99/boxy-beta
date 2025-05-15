@@ -427,9 +427,9 @@ export class AuthService {
         document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         
-        // Set new state cookies
-        document.cookie = `oauth_state=${state}; path=/; max-age=600; samesite=lax`;
-        document.cookie = `oauth_state_timestamp=${Date.now()}; path=/; max-age=600; samesite=lax`;
+        // Set new state cookies with secure flags
+        document.cookie = `oauth_state=${state}; path=/; max-age=600; samesite=lax; secure`;
+        document.cookie = `oauth_state_timestamp=${Date.now()}; path=/; max-age=600; samesite=lax; secure`;
       }
 
       // Ensure we have a valid redirectTo URL
@@ -445,6 +445,9 @@ export class AuthService {
             prompt: 'consent',
           },
           skipBrowserRedirect: false,
+          // Add these options to ensure proper redirect flow
+          flowType: 'pkce',
+          scopes: 'email profile',
         },
       });
 

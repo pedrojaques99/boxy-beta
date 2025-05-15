@@ -24,6 +24,14 @@ export async function GET(request: Request) {
   const storedState = cookieStore.get('oauth_state')?.value
   const stateTimestamp = cookieStore.get('oauth_state_timestamp')?.value
 
+  // Log state validation details
+  console.log('State validation:', { 
+    received: state, 
+    stored: storedState,
+    timestamp: stateTimestamp,
+    age: stateTimestamp ? Date.now() - parseInt(stateTimestamp) : null
+  })
+
   if (!state || !storedState || state !== storedState) {
     console.error('Invalid OAuth state:', { received: state, stored: storedState })
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('Invalid OAuth state')}`)
@@ -38,11 +46,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // Clear the state cookies
-  const response = NextResponse.redirect(`${origin}${redirectTo}`)
-  response.cookies.delete('oauth_state')
-  response.cookies.delete('oauth_state_timestamp')
-
   if (!code) {
     console.error('Nenhum código de autorização recebido')
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('No authorization code received')}`)
@@ -51,6 +54,8 @@ export async function GET(request: Request) {
   try {
     console.log('Iniciando troca de código por sessão')
     const supabase = await createClient()
+    
+    // Exchange code for session
     const { data, error: authError } = await supabase.auth.exchangeCodeForSession(code)
     
     console.log('Resultado da troca de código:', { 
@@ -68,6 +73,28 @@ export async function GET(request: Request) {
       console.error('Erro ao trocar código por sessão:', errorMessage);
       return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(errorMessage)}`)
     }
+
+    // Clear the state cookies after successful authentication
+    const response = NextResponse.redirect(`${origin}${redirectTo}`)
+    response.cookies.delete('oauth_state')
+    response.cookies.delete('oauth_state_timestamp')
+
+    // Add debug cookies
+    response.cookies.set('auth_debug', 'callback_completed', {
+      path: '/',
+      maxAge: 60 * 5, // 5 minutes
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: true
+    });
+    
+    response.cookies.set('auth_timestamp', Date.now().toString(), {
+      path: '/',
+      maxAge: 60 * 5, // 5 minutes
+      httpOnly: false,
+      sameSite: 'lax',
+      secure: true
+    });
 
     // Verificar se é um usuário novo e criar perfil, se necessário
     if (data?.user) {
