@@ -44,7 +44,10 @@ export class AuthService {
   getSession = async () => {
     try {
       const { data, error } = await this.supabase.auth.getSession();
-      if (error) throw error;
+      if (error) {
+        console.error('Session error:', error);
+        throw error;
+      }
 
       // Check if session is about to expire
       if (data.session) {
@@ -54,15 +57,32 @@ export class AuthService {
 
         // If session expires in less than 5 minutes, refresh it
         if (timeUntilExpiry < 5 * 60 * 1000) {
-          const { data: refreshData, error: refreshError } = await this.supabase.auth.refreshSession();
-          if (refreshError) throw refreshError;
-          return { data: refreshData, error: null };
+          try {
+            const { data: refreshData, error: refreshError } = await this.supabase.auth.refreshSession();
+            if (refreshError) {
+              console.error('Session refresh error:', refreshError);
+              throw refreshError;
+            }
+            return { data: refreshData, error: null };
+          } catch (refreshError) {
+            console.error('Failed to refresh session:', refreshError);
+            // If refresh fails, try to repair cookies
+            await this.checkAndRepairAuthCookies();
+            throw refreshError;
+          }
         }
       }
 
       return { data, error: null };
     } catch (error) {
       console.error('Error getting session:', error);
+      // Try to repair cookies if session error
+      if (error instanceof Error && 
+          (error.message.includes('parse cookie') || 
+           error.message.includes('JSON') || 
+           error.message.includes('token'))) {
+        await this.checkAndRepairAuthCookies();
+      }
       throw this.handleError(error, 'Failed to get session');
     }
   };
@@ -240,12 +260,17 @@ export class AuthService {
         }
       });
 
-      // If no secure cookies found, set them
-      if (!secureCookies) {
-        const { data: session } = await this.getSession();
-        if (session?.session) {
-          // Force a session refresh to get secure cookies
-          await this.supabase.auth.refreshSession();
+      // If no secure cookies found or found corrupted ones, try to refresh session
+      if (!secureCookies || foundCorruptedCookies) {
+        try {
+          const { data: session } = await this.getSession();
+          if (session?.session) {
+            // Force a session refresh to get secure cookies
+            await this.supabase.auth.refreshSession();
+            return { fixed: true, message: 'Cookies repaired and session refreshed' };
+          }
+        } catch (error) {
+          console.error('Failed to refresh session during cookie repair:', error);
         }
       }
       
@@ -393,35 +418,58 @@ export class AuthService {
    */
   signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
-      const state = sessionStorage.getItem('oauth_state');
-      const stateTimestamp = sessionStorage.getItem('oauth_state_timestamp');
-      
-      if (!state || !stateTimestamp) {
-        throw new Error('Missing OAuth state');
-      }
-
-      // Check if state is expired (older than 5 minutes)
-      const stateAge = Date.now() - parseInt(stateTimestamp);
-      if (stateAge > 5 * 60 * 1000) {
+      // Clear any existing state first
+      if (typeof window !== 'undefined') {
         sessionStorage.removeItem('oauth_state');
         sessionStorage.removeItem('oauth_state_timestamp');
-        throw new Error('OAuth state expired');
       }
+
+      // Generate a new secure random state
+      const state = crypto.randomUUID();
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('oauth_state', state);
+        sessionStorage.setItem('oauth_state_timestamp', Date.now().toString());
+      }
+
+      // Clear any existing state after 10 minutes
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('oauth_state');
+          sessionStorage.removeItem('oauth_state_timestamp');
+        }
+      }, 10 * 60 * 1000);
+
+      // Ensure we have a valid redirectTo URL
+      const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;
 
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo,
+          redirectTo: finalRedirectTo,
           queryParams: {
             state,
+            access_type: 'offline',
+            prompt: 'consent',
           },
+          skipBrowserRedirect: false,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('OAuth sign in error:', error);
+        throw error;
+      }
+
       return { data, error: null };
     } catch (error) {
       console.error('Error signing in with OAuth:', error);
+      // Try to repair cookies if OAuth error
+      if (error instanceof Error && 
+          (error.message.includes('parse cookie') || 
+           error.message.includes('JSON') || 
+           error.message.includes('token'))) {
+        await this.checkAndRepairAuthCookies();
+      }
       throw this.handleError(error, 'Failed to sign in with OAuth');
     }
   };
