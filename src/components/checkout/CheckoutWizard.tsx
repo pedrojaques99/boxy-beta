@@ -1,6 +1,5 @@
 'use client'
 
-import { useUser } from '@supabase/auth-helpers-react'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +14,7 @@ import { useRouter } from 'next/navigation'
 import { PlanId, PLANS } from '@/lib/plans'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
+import { useAuth } from '@/hooks/use-auth'
 
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
@@ -171,7 +171,6 @@ const StepIcon = ({
 };
 
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
-  const user = useUser()
   const router = useRouter()
   const { t, locale } = useTranslations()
   const [step, setStep] = useState(0)
@@ -199,6 +198,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const authService = getAuthService()
+  const { user, loading: userLoading } = useAuth()
 
   // Memoize safeT function
   const safeT = useMemo(() => {
@@ -629,7 +629,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     }
   };
 
-  if (authLoading) {
+  if (authLoading || userLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

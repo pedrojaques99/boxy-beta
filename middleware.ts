@@ -28,6 +28,16 @@ export async function middleware(req: NextRequest) {
   // Handle internationalization first
   const response = intlMiddleware(req);
   
+  // Skip auth check for the OAuth callback and other auth-related paths
+  // This prevents interference with the OAuth flow
+  if (
+    req.nextUrl.pathname.startsWith('/auth/oauth') || 
+    req.nextUrl.pathname === '/auth/callback' ||
+    req.nextUrl.pathname.includes('callback')
+  ) {
+    return response;
+  }
+  
   // Create the Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

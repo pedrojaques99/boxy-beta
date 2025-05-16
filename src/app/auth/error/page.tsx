@@ -1,49 +1,59 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Metadata } from 'next'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { OAuthErrorDisplay } from '@/components/auth/oauth-error'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default async function Page({ searchParams }: { searchParams: { error: string } }) {
-  const error = searchParams?.error
+export const metadata: Metadata = {
+  title: 'Erro de Autenticação | Boxy',
+  description: 'Ocorreu um erro durante o processo de autenticação',
+}
 
+export default function AuthErrorPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  const error = searchParams.error as string || 'unknown'
+  
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Card className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-foreground">Authentication Error</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-md bg-destructive/10 p-3">
-              <p className="text-sm text-destructive">
-                {error ? (
-                  <>
-                    <span className="font-medium">Error code:</span> {error}
-                  </>
-                ) : (
-                  'An unspecified error occurred during authentication.'
-                )}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-muted-foreground">
-                Please try signing in again or contact support if the problem persists.
-              </p>
-              <div className="flex justify-center gap-2">
-                <Link href="/auth/login">
-                  <Button variant="outline" className="w-full">
-                    Back to Login
-                  </Button>
-                </Link>
-                <Link href="/">
-                  <Button variant="ghost" className="w-full">
-                    Go Home
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="container flex items-center justify-center min-h-[80vh]">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <CardTitle className="text-center">Erro de Autenticação</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <OAuthErrorDisplay />
+          
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            <p>
+              Você pode{' '}
+              <Link
+                href="/auth/login"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                tentar fazer login novamente
+              </Link>{' '}
+              ou voltar para a{' '}
+              <Link
+                href="/"
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                página inicial
+              </Link>
+              .
+            </p>
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/auth/login">Login</Link>
+          </Button>
+          <Button asChild variant="default">
+            <Link href="/">Página Inicial</Link>
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

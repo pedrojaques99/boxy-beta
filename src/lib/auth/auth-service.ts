@@ -2,6 +2,13 @@ import { Router } from 'next/router';
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { createClient } from '@/lib/supabase/client';
 import { Database } from '@/types/supabase';
+import { 
+  AuthError, 
+  AuthErrorCategory, 
+  createAuthError, 
+  mapSupabaseErrorToCategory 
+} from './auth-errors';
+import { authLogger } from '../logging/auth-logger';
 
 // Singleton instance
 let authServiceInstance: AuthService | null = null;
@@ -19,11 +26,6 @@ type AdminCheckResult = {
 };
 
 type OAuthProvider = 'github' | 'google';
-
-type AuthError = {
-  message: string;
-  code?: string;
-};
 
 /**
  * A centralized service for all authentication-related operations
@@ -83,7 +85,14 @@ export class AuthService {
            error.message.includes('token'))) {
         await this.checkAndRepairAuthCookies();
       }
-      throw this.handleError(error, 'Failed to get session');
+      
+      const authError = this.handleError(error, 'Failed to get session');
+      const userId = await this.getCurrentUserId();
+      
+      // Log o erro
+      authLogger.logAuthError(authError, userId);
+      
+      throw authError;
     }
   };
 
@@ -96,9 +105,26 @@ export class AuthService {
       return await this.supabase.auth.getUser();
     } catch (error) {
       console.error('Error getting user:', error);
-      throw this.handleError(error, 'Failed to get user');
+      
+      const authError = this.handleError(error, 'Failed to get user');
+      authLogger.logAuthError(authError);
+      
+      throw authError;
     }
   };
+
+  /**
+   * Get current user ID if available
+   * @returns User ID or undefined
+   */
+  private async getCurrentUserId(): Promise<string | undefined> {
+    try {
+      const { data } = await this.supabase.auth.getUser();
+      return data.user?.id;
+    } catch {
+      return undefined;
+    }
+  }
 
   /**
    * Check if user is authenticated
@@ -121,11 +147,25 @@ export class AuthService {
    */
   signOut = async () => {
     try {
+      const userId = await this.getCurrentUserId();
       this.clearCachedAdminStatus();
-      return await this.supabase.auth.signOut();
+      
+      const result = await this.supabase.auth.signOut();
+      
+      // Log a ação de logout bem-sucedida
+      if (!result.error) {
+        authLogger.logAuthAction('User signed out', userId);
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error signing out:', error);
-      throw this.handleError(error, 'Failed to sign out');
+      const authError = this.handleError(error, 'Failed to sign out');
+      const userId = await this.getCurrentUserId();
+      
+      authLogger.logAuthError(authError, userId);
+      
+      throw authError;
     }
   };
 
@@ -151,6 +191,9 @@ export class AuthService {
     
     console.log('Redirecting to auth page:', redirectPath);
     router.push(redirectPath);
+    
+    // Log a redireção para fins de diagnóstico
+    authLogger.logAuthAction('Redirected to auth page', undefined, { redirectPath, reason });
   };
 
   /**
@@ -179,7 +222,15 @@ export class AuthService {
       return data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      throw this.handleError(error, 'Failed to fetch user profile');
+      
+      const authError = this.handleError(
+        error, 
+        'Failed to fetch user profile',
+        AuthErrorCategory.UNEXPECTED_ERROR
+      );
+      authLogger.logAuthError(authError, userId);
+      
+      throw authError;
     }
   };
   
@@ -209,6 +260,10 @@ export class AuthService {
           .single();
           
         if (error) throw error;
+        
+        // Log atualização bem-sucedida
+        authLogger.logAuthAction('Profile updated', profile.id);
+        
         return data;
       } else {
         // Insert new profile
@@ -219,11 +274,23 @@ export class AuthService {
           .single();
           
         if (error) throw error;
+        
+        // Log criação bem-sucedida
+        authLogger.logAuthAction('Profile created', profile.id);
+        
         return data;
       }
     } catch (error) {
       console.error('Error saving user profile:', error);
-      throw error;
+      
+      const authError = this.handleError(
+        error, 
+        'Failed to save user profile',
+        AuthErrorCategory.UNEXPECTED_ERROR
+      );
+      authLogger.logAuthError(authError, profile.id);
+      
+      throw authError;
     }
   };
   
@@ -295,10 +362,23 @@ export class AuthService {
         await this.supabase.auth.signOut({ scope: 'local' });
       }
       
+      // Log a tentativa de reparo
+      const userId = await this.getCurrentUserId();
+      authLogger.logAuthAction('Auth cookies repair attempted', userId, { success: !error });
+      
       return { success: true };
     } catch (error) {
       console.error('Error during auth cookie repair:', error);
-      return { success: false, error };
+      
+      const authError = this.handleError(
+        error, 
+        'Failed to repair auth cookies',
+        AuthErrorCategory.COOKIE_ERROR
+      );
+      const userId = await this.getCurrentUserId();
+      authLogger.logAuthError(authError, userId);
+      
+      return { success: false, error: authError };
     }
   };
 
@@ -323,15 +403,26 @@ export class AuthService {
         
       if (profileError) {
         console.error('AuthService - Erro ao buscar perfil:', profileError);
+        
+        const authError = this.handleError(
+          profileError,
+          `Erro ao buscar perfil: ${profileError.message}`,
+          AuthErrorCategory.UNEXPECTED_ERROR
+        );
+        authLogger.logAuthError(authError, userId);
+        
         return { 
           isAdmin: false, 
           profile: null, 
-          error: `Erro ao buscar perfil: ${profileError.message}` 
+          error: authError.message 
         };
       }
       
       console.log('AuthService - Perfil obtido:', profile);
       const isAdmin = profile?.role === 'admin';
+      
+      // Log verificação de admin
+      authLogger.logAuthAction('Admin status checked', userId, { isAdmin });
       
       return { 
         isAdmin, 
@@ -340,12 +431,18 @@ export class AuthService {
       };
     } catch (error) {
       console.error('AuthService - Erro ao verificar status admin:', error);
-      const errorMessage = `Erro ao verificar status: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+      
+      const authError = this.handleError(
+        error,
+        'Erro ao verificar status admin',
+        AuthErrorCategory.UNEXPECTED_ERROR
+      );
+      authLogger.logAuthError(authError, userId);
       
       return { 
         isAdmin: false, 
         profile: null, 
-        error: errorMessage 
+        error: authError.message
       };
     }
   };
@@ -406,7 +503,15 @@ export class AuthService {
   signInWithPassword = async (email: string, password: string) => {
     try {
       if (this.isRateLimited(email)) {
-        throw new Error('Too many login attempts. Please try again later.');
+        const rateLimitError = createAuthError(
+          'Too many login attempts. Please try again later.',
+          AuthErrorCategory.RATE_LIMITED
+        );
+        
+        // Log tentativa bloqueada por rate limit
+        authLogger.logLoginAttempt(email, false, 'password_rate_limited');
+        
+        throw rateLimitError;
       }
 
       const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -416,14 +521,35 @@ export class AuthService {
 
       if (error) {
         this.recordLoginAttempt(email);
+        
+        // Log falha de login
+        authLogger.logLoginAttempt(email, false, 'password');
+        
         throw error;
       }
 
+      // Login bem-sucedido
       this.clearLoginAttempts(email);
+      authLogger.logLoginAttempt(email, true, 'password');
+      
+      if (data.user) {
+        authLogger.logAuthAction('User signed in', data.user.id, { method: 'password' });
+      }
+      
       return { data, error: null };
     } catch (error) {
       console.error('Error signing in:', error);
-      throw this.handleError(error, 'Failed to sign in');
+      
+      const category = error instanceof Error && 
+        error.message.includes('rate limit') ? 
+        AuthErrorCategory.RATE_LIMITED : 
+        AuthErrorCategory.INVALID_CREDENTIALS;
+        
+      const authError = this.handleError(error, 'Failed to sign in', category);
+      
+      // Não registramos novamente aqui porque já registramos acima no caso de falha
+      
+      throw authError;
     }
   };
   
@@ -433,52 +559,39 @@ export class AuthService {
    * @param redirectTo Optional URL to redirect after login
    * @returns The result of the sign in operation
    */
-  signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/callback`) => {
+  signInWithOAuth = async (provider: OAuthProvider, redirectTo = `${window.location.origin}/auth/oauth`) => {
     try {
+      // Check if we're in a browser environment
+      const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+      if (!isBrowser) {
+        const browserError = createAuthError(
+          'OAuth sign in can only be initiated from the browser',
+          AuthErrorCategory.UNEXPECTED_ERROR
+        );
+        
+        authLogger.logAuthError(browserError);
+        throw browserError;
+      }
+
       // Generate a new secure random state
       const state = crypto.randomUUID();
       
-      // Store state in cookies with more secure settings
-      if (typeof document !== 'undefined') {
-        // Clear any existing state first
-        document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        
-        // Set new state cookies with enhanced security - ensure domain compatibility
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const domain = isLocalhost ? '' : window.location.hostname.includes('.')
-          ? window.location.hostname.split('.').slice(-2).join('.')
-          : window.location.hostname;
-        
-        const cookieOptions = {
-          path: '/',
-          maxAge: 600, // 10 minutes
-          sameSite: 'lax' as const,
-          secure: window.location.protocol === 'https:',
-          domain: domain || undefined,
-          httpOnly: false // Must be false to be accessible by JavaScript
-        };
-        
-        // Clean up domain if empty
-        if (!cookieOptions.domain) {
-          delete cookieOptions.domain;
-        }
-        
-        const cookieString = Object.entries(cookieOptions)
-          .filter(([_, value]) => value !== undefined)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('; ');
-        
-        document.cookie = `oauth_state=${state}; ${cookieString}`;
-        document.cookie = `oauth_state_timestamp=${Date.now()}; ${cookieString}`;
-        document.cookie = `auth_debug=oauth_initiated; ${cookieString}`;
-      }
-
+      // Store state in localStorage (more reliable than cookies for OAuth flow)
+      localStorage.setItem('supabase_oauth_state', state);
+      localStorage.setItem('supabase_oauth_state_timestamp', Date.now().toString());
+      
       // Ensure we have a valid redirectTo URL
-      const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;
+      const finalRedirectTo = redirectTo || `${window.location.origin}/auth/oauth`;
       
       console.log('OAuth flow initiated with state:', state);
       console.log('Redirect URL:', finalRedirectTo);
+      
+      // Log início do fluxo OAuth
+      authLogger.logAuthAction('OAuth flow initiated', undefined, { 
+        provider, 
+        redirectTo: finalRedirectTo,
+        state: state.substring(0, 8) + '...' // Apenas parte do state por segurança
+      });
 
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider,
@@ -497,17 +610,20 @@ export class AuthService {
 
       if (error) {
         console.error('OAuth sign in error:', error);
-        // Clear state cookies on error
-        if (typeof document !== 'undefined') {
-          document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-          document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        }
+        // Clear state on error
+        localStorage.removeItem('supabase_oauth_state');
+        localStorage.removeItem('supabase_oauth_state_timestamp');
+        
+        // Log falha no início do OAuth
+        authLogger.logLoginAttempt('oauth_user', false, `oauth_${provider}`);
+        
         throw error;
       }
 
       return { data, error: null };
     } catch (error) {
       console.error('Error signing in with OAuth:', error);
+      
       // Try to repair cookies if OAuth error
       if (error instanceof Error && 
           (error.message.includes('parse cookie') || 
@@ -515,7 +631,11 @@ export class AuthService {
            error.message.includes('token'))) {
         await this.checkAndRepairAuthCookies();
       }
-      throw this.handleError(error, 'Failed to sign in with OAuth');
+      
+      const authError = this.handleError(error, 'Failed to sign in with OAuth', AuthErrorCategory.OAUTH_ERROR);
+      authLogger.logAuthError(authError);
+      
+      throw authError;
     }
   };
   
@@ -528,16 +648,37 @@ export class AuthService {
    */
   signUp = async (email: string, password: string, redirectTo = `${window.location.origin}/auth/callback`) => {
     try {
-      return await this.supabase.auth.signUp({
+      const result = await this.supabase.auth.signUp({
         email,
         password,
         options: {
           redirectTo,
         },
       });
+      
+      if (result.error) {
+        // Log falha no signup
+        authLogger.logAuthAction('Sign up failed', undefined, { 
+          email: email.split('@')[1], // Apenas o domínio por segurança
+          error: result.error.message
+        });
+        
+        throw result.error;
+      }
+      
+      // Log signup bem-sucedido
+      authLogger.logAuthAction('User signed up', result.data?.user?.id, { 
+        email: email.split('@')[1] // Apenas o domínio por segurança
+      });
+      
+      return result;
     } catch (error) {
       console.error('Error signing up:', error);
-      throw error;
+      
+      const authError = this.handleError(error, 'Failed to sign up');
+      authLogger.logAuthError(authError);
+      
+      throw authError;
     }
   };
   
@@ -549,12 +690,32 @@ export class AuthService {
    */
   resetPasswordForEmail = async (email: string, redirectTo = `${window.location.origin}/auth/update-password`) => {
     try {
-      return await this.supabase.auth.resetPasswordForEmail(email, {
+      const result = await this.supabase.auth.resetPasswordForEmail(email, {
         redirectTo,
       });
+      
+      if (result.error) {
+        // Log falha no reset de senha
+        authLogger.logAuthAction('Password reset failed', undefined, { 
+          error: result.error.message 
+        });
+        
+        throw result.error;
+      }
+      
+      // Log reset de senha iniciado
+      authLogger.logAuthAction('Password reset initiated', undefined, { 
+        email: email.split('@')[1] // Apenas o domínio por segurança
+      });
+      
+      return result;
     } catch (error) {
       console.error('Error resetting password:', error);
-      throw error;
+      
+      const authError = this.handleError(error, 'Failed to reset password');
+      authLogger.logAuthError(authError);
+      
+      throw authError;
     }
   };
   
@@ -565,10 +726,33 @@ export class AuthService {
    */
   updateUser = async (userData: { password?: string; email?: string; data?: object }) => {
     try {
-      return await this.supabase.auth.updateUser(userData);
+      const userId = await this.getCurrentUserId();
+      const result = await this.supabase.auth.updateUser(userData);
+      
+      if (result.error) {
+        // Log falha na atualização
+        authLogger.logAuthAction('User update failed', userId, { 
+          error: result.error.message,
+          fields: Object.keys(userData)
+        });
+        
+        throw result.error;
+      }
+      
+      // Log atualização bem-sucedida
+      authLogger.logAuthAction('User updated', userId, { 
+        fields: Object.keys(userData)
+      });
+      
+      return result;
     } catch (error) {
       console.error('Error updating user:', error);
-      throw error;
+      
+      const userId = await this.getCurrentUserId();
+      const authError = this.handleError(error, 'Failed to update user');
+      authLogger.logAuthError(authError, userId);
+      
+      throw authError;
     }
   };
 
@@ -599,11 +783,25 @@ export class AuthService {
       const { data: { publicUrl } } = this.supabase.storage
         .from(bucket)
         .getPublicUrl(path);
+        
+      // Log upload bem-sucedido
+      const userId = await this.getCurrentUserId();
+      authLogger.logAuthAction('File uploaded', userId, { 
+        bucket,
+        path,
+        fileSize: file.size,
+        fileType: file.type
+      });
 
       return publicUrl;
     } catch (error) {
       console.error('Error uploading file:', error);
-      throw error;
+      
+      const userId = await this.getCurrentUserId();
+      const authError = this.handleError(error, 'Failed to upload file');
+      authLogger.logAuthError(authError, userId);
+      
+      throw authError;
     }
   };
 
@@ -619,9 +817,19 @@ export class AuthService {
         .remove([path]);
 
       if (error) throw error;
+      
+      // Log remoção bem-sucedida
+      const userId = await this.getCurrentUserId();
+      authLogger.logAuthAction('File removed', userId, { bucket, path });
+      
     } catch (error) {
       console.error('Error removing file:', error);
-      throw error;
+      
+      const userId = await this.getCurrentUserId();
+      const authError = this.handleError(error, 'Failed to remove file');
+      authLogger.logAuthError(authError, userId);
+      
+      throw authError;
     }
   };
 
@@ -666,6 +874,10 @@ export class AuthService {
       return data;
     } catch (error) {
       console.error('Error fetching recent downloads:', error);
+      
+      const authError = this.handleError(error, 'Failed to fetch recent downloads');
+      authLogger.logAuthError(authError, userId);
+      
       return [];
     }
   };
@@ -674,18 +886,32 @@ export class AuthService {
    * Handle errors consistently across the service
    * @param error The error to handle
    * @param defaultMessage Default error message if none provided
-   * @returns Formatted error object
+   * @param category Optional error category override
+   * @returns Formatted and detailed auth error object
    */
-  private handleError(error: unknown, defaultMessage: string): AuthError {
+  private handleError(
+    error: unknown, 
+    defaultMessage: string,
+    category?: AuthErrorCategory
+  ): AuthError {
+    let errorMessage = defaultMessage;
+    let errorCode: string | undefined;
+    
     if (error instanceof Error) {
-      return {
-        message: error.message || defaultMessage,
-        code: (error as any).code
-      };
+      errorMessage = error.message || defaultMessage;
+      errorCode = (error as any).code;
     }
-    return {
-      message: defaultMessage
-    };
+    
+    // Determinar a categoria com base no código/mensagem se não fornecida
+    const errorCategory = category || mapSupabaseErrorToCategory(errorCode, errorMessage);
+    
+    // Criar objeto de erro detalhado
+    return createAuthError(
+      errorMessage,
+      errorCategory,
+      error,
+      errorCode
+    );
   }
 
   private isRateLimited(email: string): boolean {
