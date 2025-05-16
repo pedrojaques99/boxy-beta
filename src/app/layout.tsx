@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   title: "Boxy",
   description: "The only need-to-have toolbox for creators and designers",
   other: {
-    "cache-control": "no-cache, no-store, must-revalidate, max-age=0",
-    "pragma": "no-cache",
-    "expires": "0"
+    "cache-control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+    "pragma": "public",
+    "expires": "3600"
   }
 }
 

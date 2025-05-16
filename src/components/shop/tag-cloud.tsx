@@ -5,7 +5,7 @@ import { Dictionary } from '@/i18n/types'
 
 interface TagCloudProps {
   tags: {
-    type: 'type' | 'category' | 'software' | 'status'
+    type: 'type' | 'category' | 'software' | 'status' | 'tags'
     value: string
     count: number
   }[]
@@ -14,8 +14,9 @@ interface TagCloudProps {
     category?: string
     software?: string
     status?: string
+    tags?: string
   }
-  onTagClick: (type: 'type' | 'category' | 'software' | 'status', value: string) => void
+  onTagClick: (type: 'type' | 'category' | 'software' | 'status' | 'tags', value: string) => void
   t: Dictionary
 }
 
@@ -69,7 +70,8 @@ export function TagCloud({ tags, activeFilters, onTagClick, t }: TagCloudProps) 
                 tag.type === 'type' && "border-secondary-foreground/20",
                 tag.type === 'category' && "border-muted-foreground/20",
                 tag.type === 'software' && "border-primary/20",
-                tag.type === 'status' && "border-stone-400/20"
+                tag.type === 'status' && "border-stone-400/20",
+                tag.type === 'tags' && "border-blue-400/20"
               )}
               onClick={() => onTagClick(tag.type, tag.value)}
             >

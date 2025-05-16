@@ -28,6 +28,15 @@ export async function middleware(req: NextRequest) {
   // Create a response object that we can modify
   let res = NextResponse.next()
 
+  // Check if the request is from a search engine crawler
+  const userAgent = req.headers.get('user-agent') || ''
+  const isSearchEngine = /bot|googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|slackbot/i.test(userAgent)
+
+  // If it's a search engine, allow access to public routes
+  if (isSearchEngine) {
+    return res
+  }
+
   // Create the Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
