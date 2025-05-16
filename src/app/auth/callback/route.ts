@@ -32,9 +32,15 @@ export async function GET(request: Request) {
     age: stateTimestamp ? Date.now() - parseInt(stateTimestamp) : null
   })
 
-  if (!state || !storedState || state !== storedState) {
-    console.error('Invalid OAuth state:', { received: state, stored: storedState })
-    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('Invalid OAuth state')}`)
+  // Enhanced state validation
+  if (!state || !storedState) {
+    console.error('Missing OAuth state:', { received: state, stored: storedState })
+    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('Missing OAuth state')}`)
+  }
+
+  if (state !== storedState) {
+    console.error('OAuth state mismatch:', { received: state, stored: storedState })
+    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('OAuth state mismatch')}`)
   }
 
   // Check if state is expired (older than 10 minutes)

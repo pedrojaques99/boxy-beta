@@ -421,15 +421,33 @@ export class AuthService {
       // Generate a new secure random state
       const state = crypto.randomUUID();
       
-      // Store state in cookies instead of sessionStorage
+      // Store state in cookies with more secure settings
       if (typeof document !== 'undefined') {
         // Clear any existing state first
         document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         
-        // Set new state cookies with secure flags
-        document.cookie = `oauth_state=${state}; path=/; max-age=600; samesite=lax; secure`;
-        document.cookie = `oauth_state_timestamp=${Date.now()}; path=/; max-age=600; samesite=lax; secure`;
+        // Set new state cookies with enhanced security
+        const cookieOptions = {
+          path: '/',
+          maxAge: 600, // 10 minutes
+          sameSite: 'lax' as const,
+          secure: true,
+          httpOnly: false // Must be false to be accessible by JavaScript
+        };
+        
+        document.cookie = `oauth_state=${state}; ${Object.entries(cookieOptions)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('; ')}`;
+          
+        document.cookie = `oauth_state_timestamp=${Date.now()}; ${Object.entries(cookieOptions)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('; ')}`;
+          
+        // Add debug cookie
+        document.cookie = `auth_debug=oauth_initiated; ${Object.entries(cookieOptions)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('; ')}`;
       }
 
       // Ensure we have a valid redirectTo URL
@@ -445,7 +463,6 @@ export class AuthService {
             prompt: 'consent',
           },
           skipBrowserRedirect: false,
-          // Add these options to ensure proper redirect flow
           flowType: 'pkce',
           scopes: 'email profile',
         },
@@ -453,6 +470,11 @@ export class AuthService {
 
       if (error) {
         console.error('OAuth sign in error:', error);
+        // Clear state cookies on error
+        if (typeof document !== 'undefined') {
+          document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
         throw error;
       }
 
