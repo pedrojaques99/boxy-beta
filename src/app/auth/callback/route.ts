@@ -11,7 +11,14 @@ export async function GET(request: Request) {
   const error = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
 
-  console.log('Auth callback iniciado:', { code, state, error, errorDescription })
+  console.log('OAuth callback initiated:', {
+    code,
+    state,
+    error,
+    errorDescription,
+    redirectTo,
+    origin
+  })
 
   // Handle OAuth errors
   if (error) {
@@ -25,11 +32,17 @@ export async function GET(request: Request) {
   const stateTimestamp = cookieStore.get('oauth_state_timestamp')?.value
 
   // Log state validation details
-  console.log('State validation:', { 
-    received: state, 
-    stored: storedState,
-    timestamp: stateTimestamp,
-    age: stateTimestamp ? Date.now() - parseInt(stateTimestamp) : null
+  console.log('State validation details:', {
+    receivedState: state,
+    storedState,
+    stateTimestamp,
+    stateAge: stateTimestamp ? Date.now() - parseInt(stateTimestamp) : null
+  })
+
+  // Log cookie management
+  console.log('Cookie management:', {
+    oauthStateCookie: cookieStore.get('oauth_state'),
+    oauthStateTimestampCookie: cookieStore.get('oauth_state_timestamp')
   })
 
   // Enhanced state validation
