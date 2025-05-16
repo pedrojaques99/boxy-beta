@@ -76,10 +76,16 @@ export default function ProfilePage() {
         setLoading(true);
         const { data, error: userError } = await authService.getUser();
         
-        if (userError) throw userError;
+        if (userError) {
+          console.error('User error:', userError);
+          authService.redirectToAuthPage(router, '/profile', 'user_error');
+          return;
+        }
         
         if (!data.user) {
-          throw new Error('User not found');
+          console.error('User not found');
+          authService.redirectToAuthPage(router, '/profile', 'user_not_found');
+          return;
         }
         
         // Get or create user profile using AuthService

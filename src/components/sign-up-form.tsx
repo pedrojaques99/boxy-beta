@@ -77,11 +77,20 @@ export function SignUpForm() {
     setIsSocialLoading(true)
 
     try {
-      const { error } = await authService.signInWithOAuth(provider);
-      if (error) throw error
+      // Let the authService handle storing the state in cookies
+      const finalRedirectTo = `${window.location.origin}/auth/callback`;
+      
+      console.log('Starting OAuth flow for sign-up');
+      
+      const { error } = await authService.signInWithOAuth(provider, finalRedirectTo);
+      if (error) {
+        console.error('OAuth signup error:', error);
+        throw error;
+      }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Social sign-up failed'
-      toast.error(errorMessage)
+      console.error('Social signup error:', error);
+      const { error: errorMessage } = handleError(error, 'Social sign-up failed');
+      toast.error(errorMessage);
     } finally {
       setIsSocialLoading(false)
     }

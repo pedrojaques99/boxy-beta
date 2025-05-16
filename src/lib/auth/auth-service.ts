@@ -130,13 +130,34 @@ export class AuthService {
   };
 
   /**
-   * Redirect to login page with an optional redirect URL
+   * Redirect to login page with a standard format for the redirect URL
    * @param router Next.js router
    * @param redirectTo Optional URL to redirect after login
+   * @param reason Optional reason for the redirect
+   */
+  redirectToAuthPage = (router: AppRouterInstance | Router, redirectTo = '', reason = '') => {
+    const searchParams = new URLSearchParams();
+    
+    if (redirectTo) {
+      searchParams.set('redirectTo', encodeURIComponent(redirectTo));
+    }
+    
+    if (reason) {
+      searchParams.set('reason', encodeURIComponent(reason));
+    }
+    
+    const queryString = searchParams.toString();
+    const redirectPath = `/auth/login${queryString ? `?${queryString}` : ''}`;
+    
+    console.log('Redirecting to auth page:', redirectPath);
+    router.push(redirectPath);
+  };
+
+  /**
+   * Backward compatibility for redirectToLogin, uses redirectToAuthPage
    */
   redirectToLogin = (router: AppRouterInstance | Router, redirectTo = '') => {
-    const redirectParam = redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : '';
-    router.push(`/auth/login${redirectParam}`);
+    return this.redirectToAuthPage(router, redirectTo);
   };
 
   /**

@@ -30,7 +30,7 @@ export default function CheckoutPage() {
         if (sessionError || !session) {
           console.error('Erro de autenticação:', sessionError);
           toast.error('Por favor, faça login para continuar');
-          router.push(`/auth/login?redirect=/checkout/${params.plan}`);
+          authService.redirectToAuthPage(router, `/checkout/${params.plan}`, 'login_required');
           return;
         }
         
@@ -53,7 +53,7 @@ export default function CheckoutPage() {
         if (userError || !user?.id) {
           console.error('Erro ao buscar dados do usuário:', userError);
           toast.error('Erro ao carregar dados do usuário');
-          router.push('/auth/login');
+          authService.redirectToAuthPage(router, `/checkout/${params.plan}`, 'user_error');
           return;
         }
         

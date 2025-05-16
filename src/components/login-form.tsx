@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { getAuthService } from '@/lib/auth/auth-service'
+import { handleError } from '@/lib/error-handler'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -114,30 +115,23 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
-      // Clear any existing state first
-      sessionStorage.removeItem('oauth_state');
-      sessionStorage.removeItem('oauth_state_timestamp');
-
-      // Generate a new secure random state
-      const state = crypto.randomUUID();
-      sessionStorage.setItem('oauth_state', state);
-      sessionStorage.setItem('oauth_state_timestamp', Date.now().toString());
-
-      // Clear any existing state after 10 minutes
-      setTimeout(() => {
-        sessionStorage.removeItem('oauth_state');
-        sessionStorage.removeItem('oauth_state_timestamp');
-      }, 10 * 60 * 1000);
-
-      const { error } = await authService.signInWithOAuth(provider);
+      // The redirectTo parameter for after authentication
+      const finalRedirectTo = redirectTo 
+        ? `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`
+        : `${window.location.origin}/auth/callback`;
+      
+      console.log('Starting OAuth flow with redirectTo:', finalRedirectTo);
+      
+      // Let the authService handle storing the state in cookies
+      const { error } = await authService.signInWithOAuth(provider, finalRedirectTo);
       
       if (error) {
-        console.error('OAuth error:', error);
+        console.error('OAuth login error:', error);
         throw error;
       }
     } catch (error: unknown) {
       console.error('Social login error:', error);
-      const errorMessage = error instanceof Error ? error.message : t?.auth?.error?.description || 'Authentication failed'
+      const { error: errorMessage } = handleError(error, 'Authentication failed');
       setError({ message: errorMessage, code: 'oauth_error' })
       setIsLoading(false)
     }
