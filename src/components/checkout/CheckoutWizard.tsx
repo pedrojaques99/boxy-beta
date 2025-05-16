@@ -216,6 +216,43 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       return typeof value === 'string' ? value : key
     }
   }, [t])
+  
+  // Handles successful subscription completion
+  const handleSuccessfulSubscription = (subscriptionData: {
+    subscription: { id: string }
+  }) => {
+    // Save subscription data to local storage for reference
+    try {
+      localStorage.setItem('subscription_success', JSON.stringify({
+        timestamp: Date.now(),
+        plan: planId,
+        subscription_id: subscriptionData.subscription.id
+      }));
+    } catch (e) {
+      console.error('Failed to save subscription data to local storage:', e);
+    }
+    
+    // Update UI
+    setResult({ 
+      success: true, 
+      message: safeT('checkout.success')
+    });
+    
+    // Show success toast
+    toast.success(safeT('checkout.success'), {
+      duration: 5000,
+      action: {
+        label: safeT('profile.viewSubscription'),
+        onClick: () => router.push('/profile/subscription')
+      }
+    });
+    
+    // Call success callback if provided
+    onSuccess?.();
+    
+    // Move to next step
+    setStep(step + 1);
+  };
 
   // Populate user data when available
   useEffect(() => {
@@ -331,118 +368,145 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       setLoading(true)
       
       try {
-        let { data: { session }, error: sessionError } = await authService.getSession()
+        // Get session with a single call and proper error handling
+        const { data: sessionData, error: sessionError } = await authService.getSession();
         
-        if (!session && !sessionError) {
-          // Try to get a fresh session
-          const { data: freshSession, error: freshError } = await authService.getSession()
-          if (!freshError && freshSession.session) {
-            session = freshSession.session
-          } else {
-            sessionError = freshError
+        if (sessionError) {
+          // Check for specific cookie/JSON errors that require repair
+          const errorMessage = typeof sessionError === 'object' && sessionError !== null
+            ? (sessionError as any).message || String(sessionError)
+            : String(sessionError);
+            
+          if (errorMessage.includes('parse cookie') || 
+             errorMessage.includes('JSON') || 
+             errorMessage.includes('token')) {
+            console.error('Cookie error detected, redirecting to recovery page');
+            window.location.href = '/auth-recovery';
+            return;
           }
+          throw new Error(safeT('checkout.error.sessionError'));
         }
-
-        const errorMessage = sessionError && typeof sessionError === 'object' && 'message' in sessionError 
-          ? (sessionError as { message: string }).message 
-          : ''
-
-        if (errorMessage && (
-          errorMessage.includes('parse cookie') || 
-          errorMessage.includes('JSON') || 
-          errorMessage.includes('token')
-        )) {
-          window.location.href = '/auth-recovery'
-          return
+        
+        if (!sessionData.session) {
+          console.error('No active session found');
+          throw new Error('SESSION_EXPIRED');
         }
+        
+        const session = sessionData.session;
 
-        if (sessionError) throw new Error(safeT('checkout.error.sessionError'))
-        if (!session) throw new Error('SESSION_EXPIRED')
-
+        // Continue with user validation
         if (!user?.id || !user?.email) {
-          throw new Error(safeT('checkout.error.incompleteUserData'))
+          throw new Error(safeT('checkout.error.incompleteUserData'));
         }
 
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 30000)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
         
-        try {
-          const res = await fetch('/api/pagarme/subscribe', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-              user_id: user.id,
-              email: user.email,
-              name: userData.name || user.email?.split('@')[0] || 'User',
-              plan_id: planId,
-              payment_method: 'credit_card',
-              card: {
-                holder_name: card.name,
-                number: card.number.replace(/\s/g, ''),
-                exp_month: parseInt(card.expiry.split('/')[0]),
-                exp_year: parseInt('20' + card.expiry.split('/')[1]),
-                cvv: card.cvv,
-                cpf: card.cpf.replace(/\D/g, '')
-              },
-              billing_address: {
-                street: userData.street,
-                number: userData.number,
-                complement: userData.complement,
-                zip_code: userData.zip_code.replace(/\D/g, ''),
-                neighborhood: userData.neighborhood,
-                city: userData.city,
-                state: userData.state,
-                country: userData.country
-              }
-            }),
-            signal: controller.signal
-          })
+        // Format and validate card data before submission
+        const formattedCardData = {
+          holder_name: card.name.trim(),
+          number: card.number.replace(/\s/g, ''),
+          exp_month: parseInt(card.expiry.split('/')[0]),
+          exp_year: parseInt('20' + card.expiry.split('/')[1]),
+          cvv: card.cvv,
+          cpf: card.cpf.replace(/\D/g, '')
+        };
 
-          clearTimeout(timeoutId)
-
-          if (!res.ok) {
-            const errorData = await res.json()
-            
-            if (errorData.code) {
-              switch (errorData.code) {
-                case 'card_declined':
-                  throw new Error(safeT('checkout.error.cardDeclined'))
-                case 'insufficient_funds':
-                  throw new Error(safeT('checkout.error.insufficientFunds'))
-                case 'expired_card':
-                  throw new Error(safeT('checkout.error.expiredCard'))
-                case 'invalid_card':
-                  throw new Error(safeT('checkout.error.invalidCard'))
-                case 'processing_error':
-                  throw new Error(safeT('checkout.error.processingError'))
-                default:
-                  throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
-              }
-            }
-            
-            throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
-          }
-
-          const data = await res.json()
-          
-          if (!data.subscription_id) {
-            throw new Error(safeT('checkout.error.invalidResponse'))
-          }
-          
-          setResult({ success: true, message: safeT('checkout.success') })
-          toast.success(safeT('checkout.success'))
-          onSuccess?.()
-          setStep(step + 1)
-        } catch (err) {
-          if (err && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
-            throw new Error(safeT('checkout.error.timeout'))
-          }
-          throw err
+        // Final validation before API call
+        if (
+          !formattedCardData.holder_name ||
+          !formattedCardData.number ||
+          isNaN(formattedCardData.exp_month) ||
+          isNaN(formattedCardData.exp_year) ||
+          !formattedCardData.cvv ||
+          !formattedCardData.cpf
+        ) {
+          throw new Error(safeT('checkout.error.invalidCardData'));
         }
+
+        // Format billing address data
+        const formattedAddress = {
+          street: userData.street.trim(),
+          number: userData.number.trim(),
+          complement: userData.complement.trim(),
+          zip_code: userData.zip_code.replace(/\D/g, ''),
+          neighborhood: userData.neighborhood.trim(),
+          city: userData.city.trim(),
+          state: userData.state.trim().toUpperCase(),
+          country: userData.country
+        };
+
+        const res = await fetch('/api/pagarme/subscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            email: user.email,
+            name: userData.name || user.email?.split('@')[0] || 'User',
+            plan_id: planId,
+            payment_method: 'credit_card',
+            card: formattedCardData,
+            billing_address: formattedAddress
+          }),
+          signal: controller.signal
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!res.ok) {
+          const errorData = await res.json()
+          
+          if (errorData.code) {
+            switch (errorData.code) {
+              case 'card_declined':
+                throw new Error(safeT('checkout.error.cardDeclined'))
+              case 'insufficient_funds':
+                throw new Error(safeT('checkout.error.insufficientFunds'))
+              case 'expired_card':
+                throw new Error(safeT('checkout.error.expiredCard'))
+              case 'invalid_card':
+                throw new Error(safeT('checkout.error.invalidCard'))
+              case 'processing_error':
+                throw new Error(safeT('checkout.error.processingError'))
+              default:
+                throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
+            }
+          }
+          
+          throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
+        }
+
+        const responseData = await res.json()
+        
+        // Validate response contains subscription data
+        if (!responseData.subscription || !responseData.subscription.id) {
+          console.error('Invalid API response:', responseData);
+          throw new Error(safeT('checkout.error.invalidResponse'));
+        }
+        
+        // Handle success - ensure the responseData matches expected structure
+        handleSuccessfulSubscription({
+          subscription: {
+            id: responseData.subscription.id
+          }
+        });
       } catch (err) {
+        // Handle request timeout
+        if (err && typeof err === 'object' && 'name' in err && (err as any).name === 'AbortError') {
+          console.error('Request timed out:', err);
+          setResult({ 
+            success: false, 
+            message: safeT('checkout.error.timeout')
+          });
+          toast.error(safeT('checkout.error.timeout'));
+          setStep(step + 1);
+          setLoading(false);
+          return;
+        }
+
         let errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
         let showLoginButton = false
         
@@ -491,20 +555,25 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           userData.state.length === 2
         )
       case 2:
-        const cardValidation = {
-          numberLength: card.number.length === 16,
-          luhnCheck: luhnCheck(card.number),
-          nameLength: card.name.length > 0,
-          expiryLength: card.expiry.length === 5,
-          expiryValid: validateExpiryDate(card.expiry),
-          cvvLength: card.cvv.length >= 3,
-          cpfLength: card.cpf.length === 11,
-          cpfValid: validateCPF(card.cpf)
-        };
+        // Enhanced validation for card details with proper error logging
+        const numberValid = card.number.replace(/\s/g, '').length === 16 && luhnCheck(card.number);
+        const expiryValid = card.expiry.length === 5 && validateExpiryDate(card.expiry);
+        const cvvValid = card.cvv.length >= 3;
+        const cpfValid = card.cpf.replace(/\D/g, '').length === 11 && validateCPF(card.cpf);
+        const nameValid = card.name.trim().length >= 3;
+
+        // Log validation issues for debugging
+        if (!numberValid || !expiryValid || !cvvValid || !cpfValid || !nameValid) {
+          console.log('Card validation failed:', {
+            numberValid,
+            expiryValid,
+            cvvValid,
+            cpfValid,
+            nameValid
+          });
+        }
         
-        console.log('Card validation details:', cardValidation);
-        
-        return Object.values(cardValidation).every(Boolean);
+        return numberValid && expiryValid && cvvValid && cpfValid && nameValid;
       case 3:
         return true
       default:
