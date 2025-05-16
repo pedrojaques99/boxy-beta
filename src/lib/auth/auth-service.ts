@@ -253,56 +253,52 @@ export class AuthService {
   };
   
   /**
-   * Check and repair auth cookies if needed
-   * @returns Object with status of repair operation
+   * Check for and repair auth-related cookies
+   * This is used as a fallback for handling cookie issues
    */
   checkAndRepairAuthCookies = async () => {
-    if (typeof document === 'undefined') return { fixed: false, message: 'Not in browser environment' };
+    if (typeof document === 'undefined') return;
     
     try {
-      const cookies = document.cookie.split(';');
-      let foundCorruptedCookies = false;
-      let secureCookies = false;
+      console.log('Running auth cookie repair process');
       
-      cookies.forEach(cookie => {
-        const [name, value] = cookie.split('=').map(part => part.trim());
-        
-        // Check for corrupted auth cookies
-        if ((name.includes('supabase') || name.includes('sb-')) && 
-            (!value || value === 'undefined' || value === 'null')) {
-          // Clear corrupted cookie with secure flags
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; samesite=strict`;
-          foundCorruptedCookies = true;
-        }
-
-        // Check if we have secure cookies
-        if (name.includes('supabase') || name.includes('sb-')) {
-          secureCookies = true;
-        }
+      // Clear all potential problematic cookies
+      const cookiesToClear = [
+        'sb-access-token',
+        'sb-refresh-token',
+        'supabase-auth-token',
+        'oauth_state',
+        'oauth_state_timestamp',
+        'auth_debug',
+        'auth_timestamp',
+        'auth_error'
+      ];
+      
+      cookiesToClear.forEach(name => {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        // Also try with domain
+        const domain = window.location.hostname.includes('.')
+          ? window.location.hostname.split('.').slice(-2).join('.')
+          : window.location.hostname;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`;
       });
-
-      // If no secure cookies found or found corrupted ones, try to refresh session
-      if (!secureCookies || foundCorruptedCookies) {
-        try {
-          const { data: session } = await this.getSession();
-          if (session?.session) {
-            // Force a session refresh to get secure cookies
-            await this.supabase.auth.refreshSession();
-            return { fixed: true, message: 'Cookies repaired and session refreshed' };
-          }
-        } catch (error) {
-          console.error('Failed to refresh session during cookie repair:', error);
-        }
+      
+      // Create a debug cookie to indicate repair was attempted
+      document.cookie = `auth_repair_attempted=${Date.now()}; path=/; max-age=300; SameSite=Lax`;
+      
+      // Force refresh the auth state
+      const { error } = await this.supabase.auth.refreshSession();
+      if (error) {
+        console.log('Session refresh failed during repair:', error);
+        
+        // If refresh failed, try to sign out to clean state
+        await this.supabase.auth.signOut({ scope: 'local' });
       }
       
-      return { 
-        fixed: foundCorruptedCookies,
-        message: foundCorruptedCookies ? 'Corrupted cookies cleared' : 'No corrupted cookies found',
-        secureCookies
-      };
-    } catch (err) {
-      console.error('Error checking cookies:', err);
-      return { fixed: false, message: 'Error checking cookies', secureCookies: false };
+      return { success: true };
+    } catch (error) {
+      console.error('Error during auth cookie repair:', error);
+      return { success: false, error };
     }
   };
 
@@ -448,31 +444,41 @@ export class AuthService {
         document.cookie = 'oauth_state=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'oauth_state_timestamp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         
-        // Set new state cookies with enhanced security
+        // Set new state cookies with enhanced security - ensure domain compatibility
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const domain = isLocalhost ? '' : window.location.hostname.includes('.')
+          ? window.location.hostname.split('.').slice(-2).join('.')
+          : window.location.hostname;
+        
         const cookieOptions = {
           path: '/',
           maxAge: 600, // 10 minutes
           sameSite: 'lax' as const,
-          secure: true,
+          secure: window.location.protocol === 'https:',
+          domain: domain || undefined,
           httpOnly: false // Must be false to be accessible by JavaScript
         };
         
-        document.cookie = `oauth_state=${state}; ${Object.entries(cookieOptions)
+        // Clean up domain if empty
+        if (!cookieOptions.domain) {
+          delete cookieOptions.domain;
+        }
+        
+        const cookieString = Object.entries(cookieOptions)
+          .filter(([_, value]) => value !== undefined)
           .map(([key, value]) => `${key}=${value}`)
-          .join('; ')}`;
-          
-        document.cookie = `oauth_state_timestamp=${Date.now()}; ${Object.entries(cookieOptions)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('; ')}`;
-          
-        // Add debug cookie
-        document.cookie = `auth_debug=oauth_initiated; ${Object.entries(cookieOptions)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('; ')}`;
+          .join('; ');
+        
+        document.cookie = `oauth_state=${state}; ${cookieString}`;
+        document.cookie = `oauth_state_timestamp=${Date.now()}; ${cookieString}`;
+        document.cookie = `auth_debug=oauth_initiated; ${cookieString}`;
       }
 
       // Ensure we have a valid redirectTo URL
       const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;
+      
+      console.log('OAuth flow initiated with state:', state);
+      console.log('Redirect URL:', finalRedirectTo);
 
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider,

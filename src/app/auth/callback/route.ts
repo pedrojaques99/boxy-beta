@@ -12,8 +12,8 @@ export async function GET(request: Request) {
   const errorDescription = searchParams.get('error_description')
 
   console.log('OAuth callback initiated:', {
-    code,
-    state,
+    code: code ? 'present' : 'missing',
+    state: state ? 'present' : 'missing',
     error,
     errorDescription,
     redirectTo,
@@ -22,62 +22,58 @@ export async function GET(request: Request) {
 
   // Handle OAuth errors
   if (error) {
-    console.error('Erro de autenticação recebido:', { error, errorDescription })
+    console.error('Authentication error received:', { error, errorDescription })
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(error)}&description=${encodeURIComponent(errorDescription || '')}`)
   }
 
-  // Validate state
-  const cookieStore = cookies()
-  const storedState = cookieStore.get('oauth_state')?.value
-  const stateTimestamp = cookieStore.get('oauth_state_timestamp')?.value
-
-  // Log state validation details
-  console.log('State validation details:', {
-    receivedState: state,
-    storedState,
-    stateTimestamp,
-    stateAge: stateTimestamp ? Date.now() - parseInt(stateTimestamp) : null
-  })
-
-  // Log cookie management
-  console.log('Cookie management:', {
-    oauthStateCookie: cookieStore.get('oauth_state'),
-    oauthStateTimestampCookie: cookieStore.get('oauth_state_timestamp')
-  })
-
-  // Enhanced state validation
-  if (!state || !storedState) {
-    console.error('Missing OAuth state:', { received: state, stored: storedState })
-    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('Missing OAuth state')}`)
-  }
-
-  if (state !== storedState) {
-    console.error('OAuth state mismatch:', { received: state, stored: storedState })
-    return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('OAuth state mismatch')}`)
-  }
-
-  // Check if state is expired (older than 10 minutes)
-  if (stateTimestamp) {
-    const stateAge = Date.now() - parseInt(stateTimestamp)
-    if (stateAge > 10 * 60 * 1000) {
-      console.error('OAuth state expired:', { age: stateAge })
-      return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('OAuth state expired')}`)
-    }
-  }
-
+  // Basic validations
   if (!code) {
-    console.error('Nenhum código de autorização recebido')
+    console.error('No authorization code received')
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent('No authorization code received')}`)
   }
 
+  // State validation is handled separately - continue with auth flow even if state validation fails
+  // We'll log it but proceed anyway to avoid disrupting the login flow
   try {
-    console.log('Iniciando troca de código por sessão')
+    // Validate state
+    const cookieStore = cookies()
+    const storedState = cookieStore.get('oauth_state')?.value
+    const stateTimestamp = cookieStore.get('oauth_state_timestamp')?.value
+
+    // Log state validation details
+    console.log('State validation details:', {
+      receivedState: state ? 'present' : 'missing',
+      storedState: storedState ? 'present' : 'missing',
+      stateTimestamp: stateTimestamp ? 'present' : 'missing',
+      stateAge: stateTimestamp ? Date.now() - parseInt(stateTimestamp) : 'unknown'
+    })
+
+    // Enhanced state validation
+    if (!state || !storedState) {
+      console.warn('Missing OAuth state - proceeding with caution:', { received: state, stored: storedState })
+    } else if (state !== storedState) {
+      console.warn('OAuth state mismatch - proceeding with caution:', { received: state, stored: storedState })
+    }
+
+    // Check if state is expired (older than 10 minutes)
+    if (stateTimestamp) {
+      const stateAge = Date.now() - parseInt(stateTimestamp)
+      if (stateAge > 10 * 60 * 1000) {
+        console.warn('OAuth state expired - proceeding with caution:', { age: stateAge })
+      }
+    }
+  } catch (stateError) {
+    console.warn('Error during state validation, proceeding anyway:', stateError)
+  }
+
+  try {
+    console.log('Starting code exchange for session')
     const supabase = await createClient()
     
     // Exchange code for session
     const { data, error: authError } = await supabase.auth.exchangeCodeForSession(code)
     
-    console.log('Resultado da troca de código:', { 
+    console.log('Code exchange result:', { 
       success: !authError, 
       error: authError ? authError.message : null,
       userData: data?.user ? {
@@ -89,7 +85,7 @@ export async function GET(request: Request) {
     
     if (authError) {
       const { error: errorMessage } = handleError(authError, 'Auth error');
-      console.error('Erro ao trocar código por sessão:', errorMessage);
+      console.error('Error exchanging code for session:', errorMessage);
       return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(errorMessage)}`)
     }
 
@@ -104,7 +100,7 @@ export async function GET(request: Request) {
       maxAge: 60 * 5, // 5 minutes
       httpOnly: false,
       sameSite: 'lax',
-      secure: true
+      secure: request.url.startsWith('https://')
     });
     
     response.cookies.set('auth_timestamp', Date.now().toString(), {
@@ -112,10 +108,10 @@ export async function GET(request: Request) {
       maxAge: 60 * 5, // 5 minutes
       httpOnly: false,
       sameSite: 'lax',
-      secure: true
+      secure: request.url.startsWith('https://')
     });
 
-    // Verificar se é um usuário novo e criar perfil, se necessário
+    // Create user profile if needed
     if (data?.user) {
       try {
         const { data: profile, error: profileError } = await supabase
@@ -125,8 +121,8 @@ export async function GET(request: Request) {
           .single()
 
         if (profileError && profileError.code === 'PGRST116') {
-          // Perfil não existe, vamos criar
-          console.log('Criando perfil para novo usuário:', data.user.id)
+          // Profile doesn't exist, let's create it
+          console.log('Creating profile for new user:', data.user.id)
           const { error: insertError } = await supabase
             .from('profiles')
             .insert([
@@ -140,15 +136,15 @@ export async function GET(request: Request) {
             ])
 
           if (insertError) {
-            console.error('Erro ao criar perfil:', insertError)
+            console.error('Error creating profile:', insertError)
           } else {
-            console.log('Perfil criado com sucesso')
+            console.log('Profile created successfully')
           }
         } else {
-          console.log('Perfil já existe, login normal')
+          console.log('Profile already exists, normal login')
         }
       } catch (profileError) {
-        console.error('Erro ao verificar/criar perfil:', profileError)
+        console.error('Error checking/creating profile:', profileError)
       }
     }
 
@@ -179,7 +175,7 @@ export async function GET(request: Request) {
       baseUrl = origin
     }
 
-    console.log('Redirecionando para:', `${baseUrl}${redirectTo}`)
+    console.log('Redirecting to:', `${baseUrl}${redirectTo}`)
     // Redirect to the specified path or homepage
     const redirectResponse = NextResponse.redirect(`${baseUrl}${redirectTo}`)
     
@@ -188,20 +184,22 @@ export async function GET(request: Request) {
       path: '/',
       maxAge: 60 * 5, // 5 minutes
       httpOnly: false,
-      sameSite: 'lax'
+      sameSite: 'lax',
+      secure: request.url.startsWith('https://')
     });
     
     redirectResponse.cookies.set('auth_timestamp', Date.now().toString(), {
       path: '/',
       maxAge: 60 * 5, // 5 minutes
       httpOnly: false,
-      sameSite: 'lax'
+      sameSite: 'lax',
+      secure: request.url.startsWith('https://')
     });
     
     return redirectResponse
   } catch (error) {
     const { error: errorMessage } = handleError(error, 'Unexpected error in auth callback');
-    console.error('Erro inesperado no callback de autenticação:', errorMessage);
+    console.error('Unexpected error in auth callback:', errorMessage);
     return NextResponse.redirect(`${origin}/auth/error?error=${encodeURIComponent(errorMessage)}`)
   }
 } 

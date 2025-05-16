@@ -115,6 +115,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     setError(null)
 
     try {
+      // Clear any existing error cookies to give a fresh start
+      document.cookie = 'auth_error=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      
       // The redirectTo parameter for after authentication
       const finalRedirectTo = redirectTo 
         ? `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`
@@ -129,11 +132,24 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         console.error('OAuth login error:', error);
         throw error;
       }
+      
+      // Success - will redirect. Add a cookie to prevent the component from
+      // re-rendering and clearing the state cookie before redirect happens
+      document.cookie = `auth_pending=true; path=/; max-age=60; SameSite=Lax`;
     } catch (error: unknown) {
       console.error('Social login error:', error);
       const { error: errorMessage } = handleError(error, 'Authentication failed');
+      
+      // Store error in cookie for debugging
+      document.cookie = `auth_error=${encodeURIComponent(errorMessage)}; path=/; max-age=300; SameSite=Lax`;
+      
       setError({ message: errorMessage, code: 'oauth_error' })
       setIsLoading(false)
+      
+      // If this is a cookie-related error, redirect to cookie repair
+      if (errorMessage.includes('cookie') || errorMessage.includes('token') || errorMessage.includes('JWT')) {
+        window.location.href = '/cookie-repair?source=login';
+      }
     }
   }
 
