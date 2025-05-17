@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { getAuthServiceDebugger, OAuthProvider } from '@/lib/auth/auth-service-debugger'
+import { Loader2 } from 'lucide-react'
 
-export default function AuthDebugPage() {
+function AuthDebugContent() {
   const { user, loading } = useAuth()
   const authService = getAuthService()
   const authDebugger = getAuthServiceDebugger()
@@ -21,7 +22,7 @@ export default function AuthDebugPage() {
   const [cookies, setCookies] = useState<string[]>([])
   const [oauthState, setOauthState] = useState<string | null>(null)
   const [diagnosticLogs, setDiagnosticLogs] = useState<string[]>([])
-  const [oauthProviders] = useState<OAuthProvider[]>(['google', 'github', 'facebook'])
+  const [oauthProviders] = useState<OAuthProvider[]>(['google', 'github'])
   const [storageHealth, setStorageHealth] = useState<any>(null)
   const [debugHistory, setDebugHistory] = useState<any[]>([])
   const [errorAnalysis, setErrorAnalysis] = useState<{
@@ -588,5 +589,20 @@ export default function AuthDebugPage() {
         </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+export default function AuthDebugPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 flex justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    }>
+      <AuthDebugContent />
+    </Suspense>
   )
 } 
