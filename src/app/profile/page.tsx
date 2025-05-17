@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUser } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { useTranslations } from '@/hooks/use-translations';
 
@@ -44,13 +44,13 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const user = useUser();
+  const { user, loading: userLoading } = useAuth();
   const { t } = useTranslations();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [cpf, setCpf] = useState(user?.user_metadata?.cpf || '');
+  const [cpf, setCpf] = useState('');
   const authService = getAuthService();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -70,32 +70,34 @@ export default function ProfilePage() {
     return typeof value === 'string' ? value : key;
   };
 
+  // Atualizar o CPF quando o usuário for carregado
+  useEffect(() => {
+    if (user?.user_metadata?.cpf) {
+      setCpf(user.user_metadata.cpf);
+    }
+  }, [user]);
+
   useEffect(() => {
     const fetchProfile = async () => {
+      if (userLoading) return;
+      
       try {
         setLoading(true);
-        const { data, error: userError } = await authService.getUser();
         
-        if (userError) {
-          console.error('User error:', userError);
-          authService.redirectToAuthPage(router, '/profile', 'user_error');
-          return;
-        }
-        
-        if (!data.user) {
+        if (!user?.id) {
           console.error('User not found');
           authService.redirectToAuthPage(router, '/profile', 'user_not_found');
           return;
         }
         
         // Get or create user profile using AuthService
-        let existingProfile = await authService.getUserProfile(data.user.id);
+        let existingProfile = await authService.getUserProfile(user.id);
 
         // If no profile exists, create one
         if (!existingProfile) {
           const newProfile = {
-            id: data.user.id,
-            name: data.user.email?.split('@')[0] || 'User',
+            id: user.id,
+            name: user.email?.split('@')[0] || 'User',
             role: 'user',
             bio: '',
             avatar_url: '',
@@ -107,7 +109,7 @@ export default function ProfilePage() {
         }
 
         // Fetch recent downloads
-        const downloads = await authService.getRecentDownloads(data.user.id, 5);
+        const downloads = await authService.getRecentDownloads(user.id, 5);
 
         setProfile({
           ...existingProfile,
@@ -123,7 +125,7 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [router, authService]);
+  }, [router, authService, user, userLoading]);
 
   const handleAvatarClick = () => {
     if (fileInputRef.current) {

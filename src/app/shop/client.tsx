@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { HeroSection } from '@/components/ui/hero-section'
+import { getAuthService } from '@/lib/auth/auth-service'
+import { useAuth } from '@/hooks/use-auth'
 
 // Animation variants
 const containerVariants = {
@@ -65,10 +67,11 @@ const ITEMS_PER_PAGE = 20
 export default function ShopClient() {
   // 1. All hooks declarations
   const { t } = useTranslations() || { t: null }
-  const [userId, setUserId] = useState<string | null>(null)
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const authService = getAuthService()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
@@ -146,8 +149,8 @@ export default function ShopClient() {
     setShowOnlyFree(checked)
   }, [router, searchParams])
 
-  const handleTagClick = useCallback((type: 'type' | 'category' | 'software' | 'status', value: string) => {
-    if (type === 'status') return
+  const handleTagClick = useCallback((type: 'type' | 'category' | 'software' | 'status' | 'tags', value: string) => {
+    if (type === 'status' || type === 'tags') return
     
     const params = new URLSearchParams(searchParams.toString())
     const currentValue = params.get(type)
@@ -224,18 +227,6 @@ export default function ShopClient() {
   }, [page, loading, hasMore, buildFilteredQuery])
 
   // 5. All effects
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUserId(user?.id || null)
-    }
-    getUser()
-  }, [supabase])
-
-  useEffect(() => {
-    setShowOnlyFree(isFreeFilter)
-  }, [isFreeFilter])
-
   useEffect(() => {
     const fetchTagCounts = async () => {
       setTagLoading(true)
@@ -465,7 +456,7 @@ export default function ShopClient() {
                         isTagActive={(key, value) => activeFilters[key] === value}
                         showFooterLink={true}
                         viewDetailsText={t.shop.viewDetails}
-                        userId={userId}
+                        userId={user?.id || null}
                       />
                     </motion.div>
                   ))

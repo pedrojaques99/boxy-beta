@@ -1,17 +1,24 @@
 'use client';
 
-import { useUser } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/hooks/use-auth';
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function ProfileLayout({ children }: PropsWithChildren) {
-  const user = useUser();
+  const { user, loading, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-  // Only show the loading state briefly on initial load
+  // Verificar autenticação e redirecionar se necessário
   useEffect(() => {
-    if (user !== null) {
+    if (!loading && !isAuthenticated) {
+      router.push('/auth/login?redirectTo=/profile');
+      return;
+    }
+    
+    if (!loading) {
       setIsLoading(false);
     }
     
@@ -21,7 +28,7 @@ export default function ProfileLayout({ children }: PropsWithChildren) {
     }, 2000);
     
     return () => clearTimeout(timeout);
-  }, [user]);
+  }, [loading, isAuthenticated, router]);
 
   if (isLoading) {
     return (

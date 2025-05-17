@@ -17,6 +17,8 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import { HeroSection } from '@/components/ui/hero-section'
+import { getAuthService } from '@/lib/auth/auth-service'
+import { useAuth } from '@/hooks/use-auth'
 
 interface FilterOption {
   type: 'category' | 'subcategory' | 'software'
@@ -74,7 +76,7 @@ const filterVariants = {
 export default function MindyClient() {
   const { t } = useTranslations()
   const [resources, setResources] = useState<Resource[]>([])
-  const [userId, setUserId] = useState<string | null>(null)
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -87,6 +89,7 @@ export default function MindyClient() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const observerTarget = useRef<HTMLDivElement>(null)
+  const authService = getAuthService()
 
   // Fetch unique filter values
   useEffect(() => {
@@ -150,13 +153,6 @@ export default function MindyClient() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [userResponse] = await Promise.all([
-          supabase.auth.getUser(),
-        ])
-
-        const { data: { user } } = userResponse
-        setUserId(user?.id || null)
-
         await fetchResources()
       } catch (error) {
         console.error('Error fetching initial data:', error)
@@ -166,7 +162,7 @@ export default function MindyClient() {
     }
 
     fetchInitialData()
-  }, [supabase])
+  }, [user])
 
   // Cache key generation
   const getCacheKey = (search?: string) => {
