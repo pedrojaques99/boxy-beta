@@ -1085,6 +1085,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   )}
                 </Button>
               )}
+              {step === 4 && !result.success && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    localStorage.removeItem('checkout_progress');
+                    window.location.reload();
+                  }}
+                  className="gap-2 border-2 w-full sm:w-auto"
+                >
+                  Resetar Checkout
+                </Button>
+              )}
             </div>
           </Card>
         </motion.div>
