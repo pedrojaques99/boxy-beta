@@ -10,6 +10,8 @@ import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
 import { handleError } from '@/lib/error-handler'
 import { createClient } from '@/lib/supabase/client'
+import { Badge } from '@/components/ui/badge'
+import { Edit2, Trash2, Image as ImageIcon, Search } from 'lucide-react'
 
 interface Product {
   id: string
@@ -61,6 +63,8 @@ export function ProductsCRUD() {
     thumb: '',
     id: ''
   })
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
 
   const authService = getAuthService()
   const supabase = createClient()
@@ -165,33 +169,72 @@ export function ProductsCRUD() {
     }
   }
 
+  // Filtro e busca
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.tags.join(',').toLowerCase().includes(search.toLowerCase())
+    const matchesType = typeFilter === 'all' || p.type === typeFilter
+    return matchesSearch && matchesType
+  })
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">{t?.admin?.products?.title || 'Products CRUD'}</h2>
-      <div className="grid gap-2">
-        <Input placeholder={t?.admin?.products?.name || 'Name'} value={newProduct.name} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} />
-        <Textarea placeholder={t?.admin?.products?.description || 'Description'} value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} />
-        <Input placeholder={t?.admin?.products?.type || 'Type'} value={newProduct.type} onChange={(e) => setNewProduct({ ...newProduct, type: e.target.value })} />
-        <Input placeholder={t?.admin?.products?.category || 'Category'} value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} />
-        <Input placeholder={t?.admin?.products?.software || 'Software'} value={newProduct.software} onChange={(e) => setNewProduct({ ...newProduct, software: e.target.value })} />
-        <Input placeholder={t?.admin?.products?.tags || 'Tags (comma separated)'} value={newProduct.tags} onChange={(e) => setNewProduct({ ...newProduct, tags: e.target.value })} />
-        <Input placeholder={t?.admin?.products?.file_url || 'File URL'} value={newProduct.file_url} onChange={(e) => setNewProduct({ ...newProduct, file_url: e.target.value })} />
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium">{t?.admin?.products?.thumb?.label || 'Thumb (direct upload)'}</label>
-          <Input type="file" accept="image/*" onChange={handleThumbUpload} />
-          {uploading ? <p className="text-sm text-muted-foreground">{t?.admin?.products?.thumb?.uploading || 'Uploading...'}</p> : newProduct.thumb && (
-            <img src={newProduct.thumb} alt={t?.admin?.products?.thumb?.alt || 'Thumb preview'} className="mt-2 w-32 h-32 object-cover rounded" />
-          )}
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">{t?.admin?.products?.title || 'Gerenciar Produtos'}</h2>
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <div className="relative w-full md:w-1/2">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou tags..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-10"
+          />
         </div>
-
-        <Button onClick={handleAddProduct}>{t?.admin?.products?.add || 'Add Product'}</Button>
+        <select
+          className="border rounded px-3 py-2 text-sm bg-background"
+          value={typeFilter}
+          onChange={e => setTypeFilter(e.target.value)}
+        >
+          <option value="all">Todos os tipos</option>
+          <option value="free">Free</option>
+          <option value="premium">Premium</option>
+        </select>
       </div>
-
-      <div className="grid gap-4 pt-4">
-        {products.map((p) => (
-          <Card key={p.id}>
-            <CardContent className="p-4">
+      <div className="bg-muted rounded-lg p-6 mb-6">
+        <h3 className="font-semibold mb-2">Adicionar novo produto</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          <Input placeholder="Nome" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+          <Input placeholder="Tipo (free/premium)" value={newProduct.type} onChange={e => setNewProduct({ ...newProduct, type: e.target.value })} />
+          <Input placeholder="Categoria" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
+          <Input placeholder="Software" value={newProduct.software} onChange={e => setNewProduct({ ...newProduct, software: e.target.value })} />
+          <Input placeholder="Tags (separadas por vírgula)" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} />
+          <Input placeholder="File URL" value={newProduct.file_url} onChange={e => setNewProduct({ ...newProduct, file_url: e.target.value })} />
+          <Textarea placeholder="Descrição" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="md:col-span-2" />
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-sm font-medium">Thumb (upload)</label>
+            <Input type="file" accept="image/*" onChange={handleThumbUpload} />
+            {uploading ? <p className="text-sm text-muted-foreground">Enviando imagem...</p> : newProduct.thumb && (
+              <img src={newProduct.thumb} alt="Thumb preview" className="mt-2 w-24 h-24 object-cover rounded border" />
+            )}
+          </div>
+        </div>
+        <Button onClick={handleAddProduct} className="mt-4 w-full md:w-auto">Adicionar Produto</Button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {filteredProducts.map((p) => (
+          <Card key={p.id} className="group relative overflow-hidden shadow-sm hover:shadow-lg transition-shadow border-0 bg-card">
+            <div className="aspect-video w-full bg-muted flex items-center justify-center overflow-hidden">
+              {p.thumb ? (
+                <img src={p.thumb} alt={p.name} className="object-cover w-full h-full transition-transform group-hover:scale-105" />
+              ) : (
+                <div className="flex flex-col items-center justify-center w-full h-full text-muted-foreground">
+                  <ImageIcon className="h-10 w-10 mb-2" />
+                  <span className="text-xs">Sem imagem</span>
+                </div>
+              )}
+            </div>
+            <CardContent className="p-4 flex flex-col gap-2">
               {editingId === p.id ? (
                 <div className="space-y-2">
                   <Input placeholder="Nome" value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} />
@@ -208,19 +251,26 @@ export function ProductsCRUD() {
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">{p.name}</h3>
-                    <p className="text-sm text-muted-foreground">{p.description}</p>
-                    <div className="text-xs">{p.tags.join(', ')}</div>
+                <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-lg truncate flex-1" title={p.name}>{p.name}</span>
+                    <Badge variant={p.type === 'premium' ? 'destructive' : 'default'}>{p.type}</Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={() => startEdit(p)} variant="outline">Editar</Button>
-                    <Button variant="destructive" onClick={() => handleDeleteProduct(p.id)}>
-                      {t?.admin?.products?.delete || 'Delete'}
+                  <div className="text-xs text-muted-foreground line-clamp-2 mb-1">{p.description}</div>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {p.tags.map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5">{tag}</Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-auto">
+                    <Button size="icon" variant="outline" onClick={() => startEdit(p)} title="Editar">
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="destructive" onClick={() => handleDeleteProduct(p.id)} title="Deletar">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
