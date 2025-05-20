@@ -38,7 +38,13 @@ interface UserProfile {
     id: string;
     title: string;
     description: string;
-    image_url: string;
+    thumbnail_url: string;
+  }>;
+  liked_products?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    thumb: string;
   }>;
   downloads?: Download[];
 }
@@ -108,12 +114,18 @@ export default function ProfilePage() {
           existingProfile = await authService.saveUserProfile(newProfile);
         }
 
-        // Fetch recent downloads
-        const downloads = await authService.getRecentDownloads(user.id, 5);
+        // Fetch recent downloads, liked resources, and liked products in parallel
+        const [downloads, likedResources, likedProducts] = await Promise.all([
+          authService.getRecentDownloads(user.id, 5),
+          authService.getUserLikedResources(user.id),
+          authService.getUserLikedProducts(user.id)
+        ]);
 
         setProfile({
           ...existingProfile,
-          downloads: downloads || []
+          downloads: downloads || [],
+          liked_resources: likedResources || [],
+          liked_products: likedProducts || []
         });
       } catch (error) {
         console.error('Profile error:', error);
@@ -430,7 +442,7 @@ export default function ProfilePage() {
                   <Card key={resource.id} className="overflow-hidden hover:shadow-md transition-shadow">
                     <div className="aspect-video relative">
                       <img
-                        src={resource.image_url}
+                        src={resource.thumbnail_url}
                         alt={resource.title}
                         className="object-cover w-full h-full"
                       />
@@ -451,6 +463,48 @@ export default function ProfilePage() {
                   className="mt-4"
                 >
                   {safeT('profile.browseResources')}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Liked Products Section */}
+        <Card className="bg-card border-0 shadow-sm md:col-span-2">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+              <Heart className="h-5 w-5" />
+              {safeT('profile.likedProducts') || 'Liked Products'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profile.liked_products && profile.liked_products.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {profile.liked_products.map((product) => (
+                  <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="aspect-video relative">
+                      <img
+                        src={product.thumb}
+                        alt={product.name}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                      <p className="text-muted-foreground text-sm line-clamp-2">{product.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">{safeT('profile.noLikedProducts') || 'No liked products yet.'}</p>
+                <Button
+                  onClick={() => router.push('/shop')}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  {safeT('profile.browseProducts') || 'Browse Products'}
                 </Button>
               </div>
             )}

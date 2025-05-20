@@ -882,6 +882,68 @@ export class AuthService {
   };
 
   /**
+   * Get liked resources (from resources table) for a user
+   * @param userId User ID to fetch likes for
+   * @returns Array of liked resources
+   */
+  getUserLikedResources = async (userId: string) => {
+    if (!userId) return [];
+    try {
+      const { data, error } = await this.supabase
+        .from('likes')
+        .select(`
+          id,
+          created_at,
+          resource:resource_id (
+            id,
+            title,
+            description,
+            thumbnail_url
+          )
+        `)
+        .eq('user_id', userId)
+        .not('resource_id', 'is', null);
+      if (error) throw error;
+      // Only return resources that exist (resource may be null if deleted)
+      return (data ?? []).map((like: any) => like.resource).filter(Boolean);
+    } catch (error) {
+      console.error('Error fetching liked resources:', error);
+      return [];
+    }
+  };
+
+  /**
+   * Get liked products (from products table) for a user
+   * @param userId User ID to fetch likes for
+   * @returns Array of liked products
+   */
+  getUserLikedProducts = async (userId: string) => {
+    if (!userId) return [];
+    try {
+      const { data, error } = await this.supabase
+        .from('likes')
+        .select(`
+          id,
+          created_at,
+          product:product_id (
+            id,
+            name,
+            description,
+            thumb
+          )
+        `)
+        .eq('user_id', userId)
+        .not('product_id', 'is', null);
+      if (error) throw error;
+      // Only return products that exist (product may be null if deleted)
+      return (data ?? []).map((like: any) => like.product).filter(Boolean);
+    } catch (error) {
+      console.error('Error fetching liked products:', error);
+      return [];
+    }
+  };
+
+  /**
    * Handle errors consistently across the service
    * @param error The error to handle
    * @param defaultMessage Default error message if none provided

@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 
-export const dynamic = 'force-dynamic'
+// Remove force-dynamic as it's not needed for a static 404 page
+// export const dynamic = 'force-dynamic'
 
 export default function NotFound() {
   return (
@@ -14,7 +15,8 @@ export default function NotFound() {
           fill
           className="object-cover"
           priority
-          quality={100}
+          quality={75} // Reduced quality for better performance
+          sizes="100vw" // Add sizes prop for better optimization
         />
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       </div>
