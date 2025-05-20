@@ -180,7 +180,6 @@ export function ProductsCRUD() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{t?.admin?.products?.title || 'Gerenciar Produtos'}</h2>
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="relative w-full md:w-1/2">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -204,13 +203,34 @@ export function ProductsCRUD() {
       <div className="bg-muted rounded-lg p-6 mb-6">
         <h3 className="font-semibold mb-2">Adicionar novo produto</h3>
         <div className="grid md:grid-cols-2 gap-4">
-          <Input placeholder="Nome" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
-          <Input placeholder="Tipo (free/premium)" value={newProduct.type} onChange={e => setNewProduct({ ...newProduct, type: e.target.value })} />
-          <Input placeholder="Categoria" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
-          <Input placeholder="Software" value={newProduct.software} onChange={e => setNewProduct({ ...newProduct, software: e.target.value })} />
-          <Input placeholder="Tags (separadas por vírgula)" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} />
-          <Input placeholder="File URL" value={newProduct.file_url} onChange={e => setNewProduct({ ...newProduct, file_url: e.target.value })} />
-          <Textarea placeholder="Descrição" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="md:col-span-2" />
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Nome</label>
+            <Input placeholder="Ex: Caixa de ferramentas" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Tipo</label>
+            <Input placeholder="free ou premium" value={newProduct.type} onChange={e => setNewProduct({ ...newProduct, type: e.target.value })} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Categoria</label>
+            <Input placeholder="Ex: Design" value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Software</label>
+            <Input placeholder="Ex: Figma, Photoshop..." value={newProduct.software} onChange={e => setNewProduct({ ...newProduct, software: e.target.value })} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">Tags</label>
+            <Input placeholder="Ex: ui, ux, wireframe" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">File URL</label>
+            <Input placeholder="Link do arquivo" value={newProduct.file_url} onChange={e => setNewProduct({ ...newProduct, file_url: e.target.value })} />
+          </div>
+          <div className="flex flex-col gap-1 md:col-span-2">
+            <label className="text-sm font-medium">Descrição</label>
+            <Textarea placeholder="Breve descrição do produto" value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} />
+          </div>
           <div className="space-y-1 md:col-span-2">
             <label className="text-sm font-medium">Thumb (upload)</label>
             <Input type="file" accept="image/*" onChange={handleThumbUpload} />
@@ -237,14 +257,38 @@ export function ProductsCRUD() {
             <CardContent className="p-4 flex flex-col gap-2">
               {editingId === p.id ? (
                 <div className="space-y-2">
-                  <Input placeholder="Nome" value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} />
-                  <Textarea placeholder="Descrição" value={editProduct.description} onChange={e => setEditProduct({ ...editProduct, description: e.target.value })} />
-                  <Input placeholder="Tipo" value={editProduct.type} onChange={e => setEditProduct({ ...editProduct, type: e.target.value })} />
-                  <Input placeholder="Categoria" value={editProduct.category} onChange={e => setEditProduct({ ...editProduct, category: e.target.value })} />
-                  <Input placeholder="Software" value={editProduct.software} onChange={e => setEditProduct({ ...editProduct, software: e.target.value })} />
-                  <Input placeholder="Tags (separadas por vírgula)" value={editProduct.tags} onChange={e => setEditProduct({ ...editProduct, tags: e.target.value })} />
-                  <Input placeholder="File URL" value={editProduct.file_url} onChange={e => setEditProduct({ ...editProduct, file_url: e.target.value })} />
-                  <Input placeholder="Thumb URL" value={editProduct.thumb} onChange={e => setEditProduct({ ...editProduct, thumb: e.target.value })} />
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Nome</label>
+                    <Input placeholder="Ex: Caixa de ferramentas" value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Descrição</label>
+                    <Textarea placeholder="Breve descrição do produto" value={editProduct.description} onChange={e => setEditProduct({ ...editProduct, description: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Tipo</label>
+                    <Input placeholder="free ou premium" value={editProduct.type} onChange={e => setEditProduct({ ...editProduct, type: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Categoria</label>
+                    <Input placeholder="Ex: Design" value={editProduct.category} onChange={e => setEditProduct({ ...editProduct, category: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Software</label>
+                    <Input placeholder="Ex: Figma, Photoshop..." value={editProduct.software} onChange={e => setEditProduct({ ...editProduct, software: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Tags</label>
+                    <Input placeholder="Ex: ui, ux, wireframe" value={editProduct.tags} onChange={e => setEditProduct({ ...editProduct, tags: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">File URL</label>
+                    <Input placeholder="Link do arquivo" value={editProduct.file_url} onChange={e => setEditProduct({ ...editProduct, file_url: e.target.value })} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium">Thumb URL</label>
+                    <Input placeholder="Link da imagem" value={editProduct.thumb} onChange={e => setEditProduct({ ...editProduct, thumb: e.target.value })} />
+                  </div>
                   <div className="flex gap-2 mt-2">
                     <Button onClick={handleSaveEdit} variant="default">Salvar</Button>
                     <Button onClick={() => setEditingId(null)} variant="outline">Cancelar</Button>
