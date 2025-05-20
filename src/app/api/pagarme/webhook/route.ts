@@ -69,6 +69,20 @@ export async function POST(req: NextRequest) {
             updated_at: new Date().toISOString()
           })
           .eq('pagarme_subscription_id', data.subscription.id)
+        // Set user profile to free after cancellation
+        {
+          const { data: sub } = await supabase
+            .from('subscriptions')
+            .select('user_id')
+            .eq('pagarme_subscription_id', data.subscription.id)
+            .maybeSingle();
+          if (sub && sub.user_id) {
+            await supabase
+              .from('profiles')
+              .update({ subscription_type: 'free' })
+              .eq('id', sub.user_id);
+          }
+        }
         break
 
       case WEBHOOK_EVENTS.subscription_payment_failed:

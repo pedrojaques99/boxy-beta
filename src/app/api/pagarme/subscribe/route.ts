@@ -100,6 +100,17 @@ export async function POST(request: Request) {
       }
     }
 
+    // Prevent duplicate active subscriptions
+    const { data: existingSubscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user_id)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (existingSubscription) {
+      return NextResponse.json({ error: 'User already has an active subscription' }, { status: 400 });
+    }
+
     // First create the customer
     const customerResponse = await axios.post(
       'https://api.sandbox.pagar.me/core/v5/customers',
@@ -160,6 +171,12 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString()
       })
 
+    // Update user profile to premium and store CPF if not present
+    await supabase
+      .from('profiles')
+      .update({ subscription_type: 'premium', cpf: cpf })
+      .eq('id', user_id);
+
     return NextResponse.json({ success: true, subscription })
   } catch (err) {
     const { error: errorMessage } = handleError(err, 'Error creating subscription');
@@ -167,3 +184,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+
+// TODO: Handle subscription cancellation/expiration webhook to revert subscription_type to 'free' in the user's profile.
+// This should be implemented in the webhook handler for Pagar.me events.
