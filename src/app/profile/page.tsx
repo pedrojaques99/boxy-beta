@@ -214,6 +214,45 @@ export default function ProfilePage() {
     }
   };
 
+  if (userLoading) {
+    return <div className="container mx-auto px-4 py-8 max-w-6xl"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>;
+  }
+
+  if (!user) {
+    // Redirect to login if not authenticated
+    useEffect(() => {
+      router.push('/login?redirect=/profile');
+    }, [router]);
+    return null;
+  }
+
+  // Show force logout button on auth/session errors
+  if (error && (error.includes('Auth session missing') || error.includes('AuthApiError'))) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-10">
+            <p className="text-destructive text-center mb-4">{error}</p>
+            <Button
+              onClick={() => {
+                localStorage.clear();
+                sessionStorage.clear();
+                // Attempt to clear cookies (best effort)
+                document.cookie.split(';').forEach(function(c) {
+                  document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+                });
+                router.push('/login?redirect=/profile');
+              }}
+              variant="destructive"
+            >
+              Fazer login novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
