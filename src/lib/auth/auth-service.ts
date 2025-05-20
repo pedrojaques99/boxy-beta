@@ -391,57 +391,54 @@ export class AuthService {
     if (!userId) {
       return { isAdmin: false, profile: null, error: 'No user ID provided' };
     }
-    
     try {
       console.log('AuthService - Verificando status de admin para usuário:', userId);
-      
       const { data: profile, error: profileError } = await this.supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
-        
+        .maybeSingle();
       if (profileError) {
-        console.error('AuthService - Erro ao buscar perfil:', profileError);
-        
+        console.error('AuthService - Erro ao buscar perfil:', profileError, 'userId:', userId);
         const authError = this.handleError(
           profileError,
           `Erro ao buscar perfil: ${profileError.message}`,
           AuthErrorCategory.UNEXPECTED_ERROR
         );
         authLogger.logAuthError(authError, userId);
-        
-        return { 
-          isAdmin: false, 
-          profile: null, 
-          error: authError.message 
+        return {
+          isAdmin: false,
+          profile: null,
+          error: authError.message
         };
       }
-      
+      if (!profile) {
+        console.warn('AuthService - Nenhum perfil encontrado para userId:', userId);
+        return {
+          isAdmin: false,
+          profile: null,
+          error: 'Perfil não encontrado'
+        };
+      }
       console.log('AuthService - Perfil obtido:', profile);
       const isAdmin = profile?.role === 'admin';
-      
-      // Log verificação de admin
       authLogger.logAuthAction('Admin status checked', userId, { isAdmin });
-      
-      return { 
-        isAdmin, 
-        profile, 
-        error: null 
+      return {
+        isAdmin,
+        profile,
+        error: null
       };
     } catch (error) {
       console.error('AuthService - Erro ao verificar status admin:', error);
-      
       const authError = this.handleError(
         error,
         'Erro ao verificar status admin',
         AuthErrorCategory.UNEXPECTED_ERROR
       );
       authLogger.logAuthError(authError, userId);
-      
-      return { 
-        isAdmin: false, 
-        profile: null, 
+      return {
+        isAdmin: false,
+        profile: null,
         error: authError.message
       };
     }

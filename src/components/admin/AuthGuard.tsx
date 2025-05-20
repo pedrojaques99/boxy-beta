@@ -34,6 +34,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && user?.id) {
+        console.log('[AuthGuard] Tab focused, checking admin for user:', user.id)
         checkAdminAccess(user.id)
       }
     }
@@ -42,55 +43,60 @@ export function AuthGuard({ children }: AuthGuardProps) {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user])
+  }, [user?.id])
 
   // Check for cached admin status on mount
   useEffect(() => {
     setIsMounted(true)
-    
-    // First try to recover from any potential cookie issues
     authService.checkAndRepairAuthCookies()
-    
+
     if (user?.id) {
-      // First check cached status for quicker initial render
       if (authService.getCachedAdminStatus(user.id)) {
         setAuth(true)
         setIsAdmin(true)
         setIsLoading(false)
       } else {
-        // Then verify with server
+        console.log('[AuthGuard] Checking admin status for user:', user.id)
         checkAdminAccess(user.id)
       }
     } else if (isMounted) {
-      // If we're mounted but have no user, stop loading
       setIsLoading(false)
     }
-    
-    // Set a maximum loading time to prevent infinite loading
+
+    // Reset admin state if user.id becomes undefined
+    if (!user?.id) {
+      setAuth(false)
+      setIsAdmin(false)
+      setProfileData(null)
+      setError(null)
+    }
+
     const timeoutId = setTimeout(() => {
       setIsLoading(false)
-    }, 5000) // 5 seconds maximum loading time
-    
+    }, 5000)
     return () => {
       clearTimeout(timeoutId)
     }
-  }, [user, isMounted, authService])
+  }, [user?.id, isMounted, authService])
 
   // Core function to check admin access
   const checkAdminAccess = async (userId: string) => {
-    if (!userId) return
-    
+    if (!userId) {
+      console.warn('[AuthGuard] checkAdminAccess called with empty userId')
+      setIsLoading(false)
+      setIsAdmin(false)
+      setAuth(false)
+      setProfileData(null)
+      setError('Usuário não autenticado')
+      return
+    }
     setIsLoading(true)
     setError(null)
-    
     try {
-      // Use AuthService to check admin status
       const result = await authService.checkAdminStatus(userId)
-      
       setProfileData(result.profile)
       setIsAdmin(result.isAdmin)
       setError(result.error)
-      
       if (result.isAdmin) {
         setAuth(true)
         authService.saveCachedAdminStatus(userId, true)
@@ -98,9 +104,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
         authService.clearCachedAdminStatus()
       }
     } catch (error) {
-      console.error('Error checking admin status:', error)
+      console.error('[AuthGuard] Error checking admin status:', error)
       setError(`Unexpected error: ${error instanceof Error ? error.message : 'Unknown error'}`)
       setIsAdmin(false)
+      setAuth(false)
       authService.clearCachedAdminStatus()
     } finally {
       setIsLoading(false)
@@ -118,7 +125,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || (user && !user.id)) {
     return (
       <div className="flex flex-col items-center justify-center p-10 h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin mb-4" />
