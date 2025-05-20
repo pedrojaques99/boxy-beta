@@ -274,6 +274,16 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {profile?.role === 'admin' && (
+        <Button
+          variant="default"
+          className="mb-4 flex items-center gap-2"
+          onClick={() => router.push('/admin')}
+        >
+          <Crown className="h-4 w-4" />
+          Painel Admin
+        </Button>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Profile Section */}
         <Card className="bg-card border-0 shadow-sm">
@@ -432,7 +442,7 @@ export default function ProfilePage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-              {safeT('profile.likedResources')}
+              {safeT('profile.likedResources.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -474,7 +484,7 @@ export default function ProfilePage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl font-semibold flex items-center gap-2">
               <Heart className="h-5 w-5" />
-              {safeT('profile.likedProducts') || 'Liked Products'}
+              {safeT('profile.likedProducts.title') || 'Liked Products'}
             </CardTitle>
           </CardHeader>
           <CardContent>

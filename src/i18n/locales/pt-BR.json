@@ -150,6 +150,9 @@
         "addedAt": "Adicionado em",
         "actions": "Ações"
       }
+    },
+    "likedProducts": {
+      "title": "Produtos Favoritos 💖"
     }
   },
   "checkout": {
