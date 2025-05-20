@@ -59,8 +59,7 @@ export default function AdminDownloadsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      // Buscar downloads com informações do usuário e produto
+      // Buscar downloads com informações do produto
       const { data: downloadsData, error: downloadsError } = await supabase
         .from('downloads')
         .select(`
@@ -72,16 +71,27 @@ export default function AdminDownloadsPage() {
           products (
             name,
             type
-          ),
-          auth.users!downloads_user_id_fkey (
-            email
           )
         `)
         .order('download_date', { ascending: false });
-
       if (downloadsError) throw downloadsError;
-
-      // Buscar assinantes com informações do usuário
+      // Buscar usuários em lote
+      const userIds = [...new Set((downloadsData || []).map((d: any) => d.user_id).filter(Boolean))];
+      let users: any[] = [];
+      if (userIds.length > 0) {
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, email')
+          .in('id', userIds);
+        if (!usersError) users = usersData || [];
+      }
+      // Merge dos dados
+      const downloadsWithUser = (downloadsData || []).map((d: any) => ({
+        ...d,
+        user: users.find(u => u.id === d.user_id) || { email: d.user_id }
+      }));
+      setDownloads(downloadsWithUser);
+      // Buscar assinantes com informações do usuário (mantém como estava)
       const { data: subscribersData, error: subscribersError } = await supabase
         .from('subscriptions')
         .select(`
@@ -90,16 +100,10 @@ export default function AdminDownloadsPage() {
           plan_id,
           status,
           started_at,
-          current_period_end,
-          auth.users!subscriptions_user_id_fkey (
-            email
-          )
+          current_period_end
         `)
         .order('started_at', { ascending: false });
-
       if (subscribersError) throw subscribersError;
-
-      setDownloads(downloadsData || []);
       setSubscribers(subscribersData || []);
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -178,7 +182,7 @@ export default function AdminDownloadsPage() {
                       <TableCell>
                         {format(new Date(download.download_date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </TableCell>
-                      <TableCell>{download.auth?.users?.email}</TableCell>
+                      <TableCell>{download.user.email}</TableCell>
                       <TableCell>{download.products?.name}</TableCell>
                       <TableCell>{download.products?.type}</TableCell>
                       <TableCell>

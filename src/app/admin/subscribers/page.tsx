@@ -53,19 +53,29 @@ export default function SubscribersPage() {
   const fetchSubscribers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      // Buscar assinaturas normalmente
+      const { data: subscriptions, error } = await supabase
         .from('subscriptions')
-        .select(`
-          *,
-          user:user_id (
-            email,
-            user_metadata
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
-
       if (error) throw error;
-      setSubscribers(data || []);
+      // Buscar usuários em lote
+      const userIds = [...new Set((subscriptions || []).map(sub => sub.user_id).filter(Boolean))];
+      let users: any[] = [];
+      if (userIds.length > 0) {
+        // Tenta buscar do schema auth.users (pode precisar de policy)
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, email, user_metadata')
+          .in('id', userIds);
+        if (!usersError) users = usersData || [];
+      }
+      // Merge dos dados
+      const subscribersWithUser = (subscriptions || []).map(sub => ({
+        ...sub,
+        user: users.find(u => u.id === sub.user_id) || { email: sub.user_id, user_metadata: {} }
+      }));
+      setSubscribers(subscribersWithUser);
     } catch (error) {
       console.error('Error fetching subscribers:', error);
       toast.error('Erro ao carregar assinantes');
