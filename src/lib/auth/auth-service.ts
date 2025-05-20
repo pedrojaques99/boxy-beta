@@ -598,7 +598,6 @@ export class AuthService {
         options: {
           redirectTo: finalRedirectTo,
           queryParams: {
-            state,
             access_type: 'offline',
             prompt: 'consent',
           },
