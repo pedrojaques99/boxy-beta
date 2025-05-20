@@ -370,29 +370,14 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       try {
         // Get session with a single call and proper error handling
         const { data: sessionData, error: sessionError } = await authService.getSession();
-        
-        if (sessionError) {
-          // Check for specific cookie/JSON errors that require repair
-          const errorMessage = typeof sessionError === 'object' && sessionError !== null
-            ? (sessionError as any).message || String(sessionError)
-            : String(sessionError);
-            
-          if (errorMessage.includes('parse cookie') || 
-             errorMessage.includes('JSON') || 
-             errorMessage.includes('token')) {
-            console.error('Cookie error detected, redirecting to recovery page');
-            window.location.href = '/auth-recovery';
-            return;
-          }
-          throw new Error(safeT('checkout.error.sessionError'));
+        console.log('Session Data:', sessionData);
+        console.log('Session Error:', sessionError);
+        if (!sessionData?.session) {
+          toast.error('Sua sessão expirou. Por favor, faça login novamente.');
+          return;
         }
-        
-        if (!sessionData.session) {
-          console.error('No active session found');
-          throw new Error('SESSION_EXPIRED');
-        }
-        
-        const session = sessionData.session;
+        const token = sessionData.session.access_token;
+        console.log('Token sent to API:', token);
 
         // Continue with user validation
         if (!user?.id || !user?.email) {
@@ -440,7 +425,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             user_id: user.id,
