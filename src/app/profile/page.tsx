@@ -383,7 +383,7 @@ export default function ProfilePage() {
                   ) : (
                     <Lock className="h-4 w-4" />
                   )}
-                  {safeT('profile.subscription')}
+                  {safeT('profile.subscription.title')}
                 </h3>
                 <div className="flex flex-col gap-2">
                   <p className="text-muted-foreground">

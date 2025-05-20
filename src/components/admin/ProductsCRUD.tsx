@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,6 +9,7 @@ import { getAuthService } from '@/lib/auth/auth-service'
 import { toast } from 'sonner'
 import { useTranslations } from '@/hooks/use-translations'
 import { handleError } from '@/lib/error-handler'
+import { createClient } from '@/lib/supabase/client'
 
 interface Product {
   id: string
@@ -48,8 +49,25 @@ export function ProductsCRUD() {
     tags: '',
     thumb: ''
   })
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editProduct, setEditProduct] = useState<NewProduct & { id?: string }>({
+    name: '',
+    description: '',
+    type: '',
+    file_url: '',
+    category: '',
+    software: '',
+    tags: '',
+    thumb: '',
+    id: ''
+  })
 
   const authService = getAuthService()
+  const supabase = createClient()
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })
@@ -107,6 +125,46 @@ export function ProductsCRUD() {
     }
   }
 
+  const startEdit = (product: Product) => {
+    setEditingId(product.id)
+    setEditProduct({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      type: product.type,
+      file_url: product.file_url,
+      category: product.category,
+      software: product.software,
+      tags: product.tags.join(', '),
+      thumb: product.thumb || ''
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      if (!editProduct.id) return
+      const tagsArray = editProduct.tags.split(',').map((t) => t.trim())
+      const { error } = await supabase.from('products').update({
+        name: editProduct.name,
+        description: editProduct.description,
+        type: editProduct.type,
+        file_url: editProduct.file_url,
+        category: editProduct.category,
+        software: editProduct.software,
+        tags: tagsArray,
+        thumb: editProduct.thumb
+      }).eq('id', editProduct.id)
+      if (error) throw error
+      setEditingId(null)
+      setEditProduct({ name: '', description: '', type: '', file_url: '', category: '', software: '', tags: '', thumb: '', id: '' })
+      fetchProducts()
+      toast.success('Produto atualizado!')
+    } catch (error) {
+      const { error: errorMessage } = handleError(error, 'Erro ao atualizar produto')
+      toast.error(errorMessage)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">{t?.admin?.products?.title || 'Products CRUD'}</h2>
@@ -134,15 +192,36 @@ export function ProductsCRUD() {
         {products.map((p) => (
           <Card key={p.id}>
             <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="font-medium">{p.name}</h3>
-                  <p className="text-sm text-muted-foreground">{p.description}</p>
+              {editingId === p.id ? (
+                <div className="space-y-2">
+                  <Input placeholder="Nome" value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} />
+                  <Textarea placeholder="Descrição" value={editProduct.description} onChange={e => setEditProduct({ ...editProduct, description: e.target.value })} />
+                  <Input placeholder="Tipo" value={editProduct.type} onChange={e => setEditProduct({ ...editProduct, type: e.target.value })} />
+                  <Input placeholder="Categoria" value={editProduct.category} onChange={e => setEditProduct({ ...editProduct, category: e.target.value })} />
+                  <Input placeholder="Software" value={editProduct.software} onChange={e => setEditProduct({ ...editProduct, software: e.target.value })} />
+                  <Input placeholder="Tags (separadas por vírgula)" value={editProduct.tags} onChange={e => setEditProduct({ ...editProduct, tags: e.target.value })} />
+                  <Input placeholder="File URL" value={editProduct.file_url} onChange={e => setEditProduct({ ...editProduct, file_url: e.target.value })} />
+                  <Input placeholder="Thumb URL" value={editProduct.thumb} onChange={e => setEditProduct({ ...editProduct, thumb: e.target.value })} />
+                  <div className="flex gap-2 mt-2">
+                    <Button onClick={handleSaveEdit} variant="default">Salvar</Button>
+                    <Button onClick={() => setEditingId(null)} variant="outline">Cancelar</Button>
+                  </div>
                 </div>
-                <Button variant="destructive" onClick={() => handleDeleteProduct(p.id)}>
-                  {t?.admin?.products?.delete || 'Delete'}
-                </Button>
-              </div>
+              ) : (
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium">{p.name}</h3>
+                    <p className="text-sm text-muted-foreground">{p.description}</p>
+                    <div className="text-xs">{p.tags.join(', ')}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={() => startEdit(p)} variant="outline">Editar</Button>
+                    <Button variant="destructive" onClick={() => handleDeleteProduct(p.id)}>
+                      {t?.admin?.products?.delete || 'Delete'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
