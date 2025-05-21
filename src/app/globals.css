@@ -79,6 +79,16 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
+  /* Placeholder color for good contrast */
+  input::placeholder, textarea::placeholder {
+    color: #444 !important; /* dark gray for light backgrounds */
+    opacity: 1;
+  }
+  .dark input::placeholder, .dark textarea::placeholder {
+    color: #bbb !important; /* light gray for dark backgrounds */
+    opacity: 1;
+  }
+  
   /* Dark mode specific styles */
   .dark body {
     background: linear-gradient(180deg, hsl(0 0% 0%) 0%, hsl(0 0% 0% / 0.9) 100%);
