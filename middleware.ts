@@ -25,6 +25,14 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 export async function middleware(req: NextRequest) {
+  // Skip all logic for 404 and not-found routes to prevent reload loop
+  if (
+    req.nextUrl.pathname === '/404' ||
+    req.nextUrl.pathname === '/not-found'
+  ) {
+    return NextResponse.next();
+  }
+
   // Handle internationalization first
   const response = intlMiddleware(req);
   
