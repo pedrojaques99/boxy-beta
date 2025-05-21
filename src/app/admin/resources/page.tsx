@@ -59,7 +59,7 @@ export default function ResourcesAdminPage() {
 
   const fetchResources = async () => {
     const { data, error } = await supabase.from('resources').select('*').order('created_at', { ascending: false })
-    if (!error) setResources(data || [])
+    if (!error) setResources(data ?? [])
   }
 
   const handleAddResource = async () => {
@@ -144,7 +144,7 @@ export default function ResourcesAdminPage() {
   const filteredResources = resources.filter(r => {
     const matchesSearch =
       r.title.toLowerCase().includes(search.toLowerCase()) ||
-      r.tags.join(',').toLowerCase().includes(search.toLowerCase())
+      (r.tags || []).join(',').toLowerCase().includes(search.toLowerCase())
     const matchesApproved = approvedFilter === 'all' || (approvedFilter === 'approved' ? r.approved : !r.approved)
     return matchesSearch && matchesApproved
   })
@@ -286,7 +286,7 @@ export default function ResourcesAdminPage() {
                   </div>
                   <div className="text-xs text-muted-foreground line-clamp-2 mb-1">{r.description}</div>
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {r.tags.map((tag) => (
+                    {(r.tags || []).map((tag) => (
                       <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5">{tag}</Badge>
                     ))}
                   </div>
