@@ -16,7 +16,7 @@ export const PLANS = {
   },
   monthly: {
     id: 'monthly',
-    name: 'Monthly',
+    name: 'Mensal',
     price: 37.90,
     interval: 'month',
     interval_count: 1,
@@ -31,7 +31,7 @@ export const PLANS = {
   },
   annual: {
     id: 'annual',
-    name: 'Annual',
+    name: 'Anual',
     price: 379.00,
     interval: 'year',
     interval_count: 1,

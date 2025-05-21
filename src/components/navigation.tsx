@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { handleError } from '@/lib/error-handler';
 import { getAuthService } from '@/lib/auth/auth-service';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 type UserStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -54,6 +55,7 @@ export function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const { t, locale } = useTranslations();
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -68,12 +70,16 @@ export function Navigation() {
           const { data } = await authService.getUser();
           setUserName(data.user?.email?.split('@')[0] || 'User');
           setUserStatus('authenticated');
+          const profile = await authService.getUserProfile(data.user.id);
+          setUserAvatar(profile?.avatar_url || null);
         } else {
           setUserStatus('unauthenticated');
+          setUserAvatar(null);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
         setUserStatus('unauthenticated');
+        setUserAvatar(null);
       }
     };
 
@@ -305,7 +311,10 @@ export function Navigation() {
                       pathname === "/profile" && "bg-primary/90"
                     )}
                   >
-                    <User className="h-4 w-4" />
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={userAvatar || undefined} />
+                      <AvatarFallback>{userName?.[0] || 'U'}</AvatarFallback>
+                    </Avatar>
                     {t?.navigation?.myAccount}
                   </Link>
                   <Button
@@ -392,7 +401,10 @@ export function Navigation() {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-2"
                     >
-                      <User className="h-4 w-4 mr-2" />
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={userAvatar || undefined} />
+                        <AvatarFallback>{userName?.[0] || 'U'}</AvatarFallback>
+                      </Avatar>
                       {t?.navigation?.myAccount}
                     </Link>
                     <Button
