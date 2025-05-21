@@ -46,6 +46,14 @@ interface CheckoutWizardProps {
   onSuccess?: () => void
 }
 
+interface SubscriptionResult {
+  id: string;
+  status: string;
+  plan_id: string;
+  payment_method: string;
+  current_period?: { start_at?: number; end_at?: number };
+}
+
 // Utility functions
 const luhnCheck = (num: string): boolean => {
   let arr = (num + '')
@@ -170,6 +178,12 @@ const StepIcon = ({
   );
 };
 
+const PAYMENT_METHODS = [
+  { value: 'credit_card', label: 'Cartão de Crédito' },
+  { value: 'boleto', label: 'Boleto Bancário' },
+  { value: 'pix', label: 'Pix' }
+];
+
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
   const router = useRouter()
   const { t, locale } = useTranslations()
@@ -194,11 +208,12 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     cvv: '',
     cpf: ''
   })
-  const [result, setResult] = useState<{ success: boolean, message: string }>({ success: false, message: '' })
+  const [result, setResult] = useState<{ success: boolean, message: string, subscription?: SubscriptionResult }>({ success: false, message: '' })
   const [loading, setLoading] = useState(false)
   const [authLoading, setAuthLoading] = useState(true)
   const authService = getAuthService()
   const { user, loading: userLoading } = useAuth()
+  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'boleto' | 'pix'>('credit_card')
 
   // Memoize safeT function
   const safeT = useMemo(() => {
@@ -235,7 +250,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
     // Update UI
     setResult({ 
       success: true, 
-      message: safeT('checkout.success')
+      message: safeT('checkout.success'),
+      subscription: subscriptionData.subscription as SubscriptionResult
     });
     
     // Show success toast
@@ -421,6 +437,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           country: userData.country
         };
 
+        // Enviar método de pagamento selecionado
         const res = await fetch('/api/pagarme/subscribe', {
           method: 'POST',
           headers: {
@@ -432,8 +449,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             email: user.email,
             name: userData.name || user.email?.split('@')[0] || 'User',
             plan_id: planId,
-            payment_method: 'credit_card',
-            card: formattedCardData,
+            payment_method: paymentMethod,
+            card: paymentMethod === 'credit_card' ? formattedCardData : undefined,
             billing_address: formattedAddress
           }),
           signal: controller.signal
@@ -472,11 +489,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           throw new Error(safeT('checkout.error.invalidResponse'));
         }
         
-        // Handle success - ensure the responseData matches expected structure
+        // Handle success - mostrar detalhes do pagamento
         handleSuccessfulSubscription({
-          subscription: {
-            id: responseData.subscription.id
-          }
+          subscription: responseData.subscription
         });
       } catch (err) {
         // Handle request timeout
@@ -903,73 +918,98 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   animate={{ opacity: 1, y: 0 }}
                   className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6"
                 >
-                  <div className="space-y-2">
-                    <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
-                    <Input
-                      id="card-number"
-                      placeholder={safeT('checkout.cardNumberPlaceholder')}
-                      value={card.number}
-                      onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
-                      maxLength={16}
-                      className={cn('text-foreground bg-background', card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
-                    />
-                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
+                  <div className="space-y-2 col-span-2">
+                    <Label>Método de Pagamento</Label>
+                    <div className="flex gap-2">
+                      {PAYMENT_METHODS.map((m) => (
+                        <Button
+                          key={m.value}
+                          variant={paymentMethod === m.value ? 'default' : 'outline'}
+                          onClick={() => setPaymentMethod(m.value as any)}
+                          className="flex-1"
+                        >
+                          {m.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-name">{safeT('checkout.cardName')}</Label>
-                    <Input
-                      id="card-name"
-                      placeholder={safeT('checkout.cardNamePlaceholder')}
-                      value={card.name}
-                      onChange={(e) => setCard({ ...card, name: e.target.value })}
-                      className={cn('text-foreground bg-background', card.name.length === 0 && 'border-red-500')}
-                    />
-                    {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cardNameRequired')}</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-cpf">{safeT('checkout.cpf')}</Label>
-                    <Input
-                      id="card-cpf"
-                      placeholder={safeT('checkout.cpfPlaceholder')}
-                      value={card.cpf}
-                      onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
-                      maxLength={11}
-                      className={cn('text-foreground bg-background', card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
-                    />
-                    {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCpf')}</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-expiry">{safeT('checkout.expiryDate')}</Label>
-                    <Input
-                      id="card-expiry"
-                      placeholder={safeT('checkout.expiryDatePlaceholder')}
-                      value={card.expiry}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '')
-                        if (value.length <= 4) {
-                          setCard({
-                            ...card,
-                            expiry: value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
-                          })
-                        }
-                      }}
-                      maxLength={5}
-                      className={cn('text-foreground bg-background', card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
-                    />
-                    {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidExpiry')}</span>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="card-cvv">{safeT('checkout.cvv')}</Label>
-                    <Input
-                      id="card-cvv"
-                      placeholder={safeT('checkout.cvvPlaceholder')}
-                      value={card.cvv}
-                      onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
-                      maxLength={4}
-                      className={cn('text-foreground bg-background', card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
-                    />
-                    {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCvv')}</span>}
-                  </div>
+                  {paymentMethod === 'credit_card' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
+                        <Input
+                          id="card-number"
+                          placeholder={safeT('checkout.cardNumberPlaceholder')}
+                          value={card.number}
+                          onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
+                          maxLength={16}
+                          className={cn('text-foreground bg-background', card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
+                        />
+                        {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="card-name">{safeT('checkout.cardName')}</Label>
+                        <Input
+                          id="card-name"
+                          placeholder={safeT('checkout.cardNamePlaceholder')}
+                          value={card.name}
+                          onChange={(e) => setCard({ ...card, name: e.target.value })}
+                          className={cn('text-foreground bg-background', card.name.length === 0 && 'border-red-500')}
+                        />
+                        {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cardNameRequired')}</span>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="card-cpf">{safeT('checkout.cpf')}</Label>
+                        <Input
+                          id="card-cpf"
+                          placeholder={safeT('checkout.cpfPlaceholder')}
+                          value={card.cpf}
+                          onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
+                          maxLength={11}
+                          className={cn('text-foreground bg-background', card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
+                        />
+                        {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCpf')}</span>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="card-expiry">{safeT('checkout.expiryDate')}</Label>
+                        <Input
+                          id="card-expiry"
+                          placeholder={safeT('checkout.expiryDatePlaceholder')}
+                          value={card.expiry}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '')
+                            if (value.length <= 4) {
+                              setCard({
+                                ...card,
+                                expiry: value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
+                              })
+                            }
+                          }}
+                          maxLength={5}
+                          className={cn('text-foreground bg-background', card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
+                        />
+                        {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidExpiry')}</span>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="card-cvv">{safeT('checkout.cvv')}</Label>
+                        <Input
+                          id="card-cvv"
+                          placeholder={safeT('checkout.cvvPlaceholder')}
+                          value={card.cvv}
+                          onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
+                          maxLength={4}
+                          className={cn('text-foreground bg-background', card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
+                        />
+                        {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCvv')}</span>}
+                      </div>
+                    </>
+                  )}
+                  {paymentMethod !== 'credit_card' && (
+                    <div className="col-span-2 text-sm text-muted-foreground p-2 bg-muted/30 rounded">
+                      {paymentMethod === 'boleto' && 'Você receberá o boleto após a confirmação.'}
+                      {paymentMethod === 'pix' && 'Você receberá o QR Code Pix após a confirmação.'}
+                    </div>
+                  )}
                 </motion.div>
               )}
 
@@ -1018,6 +1058,16 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       <Check className="mx-auto mb-4 h-10 w-10 text-green-500" />
                       <div className="text-xl font-semibold mb-4">{safeT('auth.signUpSuccess.title')}</div>
                       <div className="text-muted-foreground">{safeT('auth.signUpSuccess.description')}</div>
+                      {result.subscription && (
+                        <div className="mt-4 text-left text-xs bg-muted/30 p-3 rounded">
+                          <div><b>ID Assinatura:</b> {result.subscription.id}</div>
+                          <div><b>Status:</b> {result.subscription.status}</div>
+                          <div><b>Método:</b> {result.subscription.payment_method}</div>
+                          <div><b>Plano:</b> {result.subscription.plan_id}</div>
+                          <div><b>Início:</b> {result.subscription.current_period?.start_at && new Date(result.subscription.current_period.start_at * 1000).toLocaleString()}</div>
+                          <div><b>Fim:</b> {result.subscription.current_period?.end_at && new Date(result.subscription.current_period.end_at * 1000).toLocaleString()}</div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>

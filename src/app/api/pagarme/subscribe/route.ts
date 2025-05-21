@@ -111,51 +111,67 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User already has an active subscription' }, { status: 400 });
     }
 
-    // First create the customer
+    // 1. Criar ou buscar customer
+    const customerPayload = {
+      name,
+      email,
+      type: 'individual',
+      code: user_id,
+      document_type: 'cpf',
+      document: cpf,
+      address: billing_address
+    };
     const customerResponse = await axios.post(
-      'https://api.sandbox.pagar.me/core/v5/customers',
+      'https://api.pagar.me/core/v5/customers',
+      customerPayload,
       {
-        name,
-        email,
-        type: 'individual',
-        code: user_id,
-        document_type: 'cpf',
-        document: cpf,
+        headers: {
+          Authorization: `Basic ${Buffer.from(pagarmeApiKey + ':').toString('base64')}`
+        }
+      }
+    );
+    const customer = customerResponse.data;
+
+    // 2. Criar assinatura conforme doc oficial
+    const subscriptionPayload: any = {
+      plan_id: plan.pagarme_plan_id,
+      payment_method,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        type: customer.type,
+        document: customer.document,
+        phones: customer.phones || undefined
+      },
+      billing: {
         address: billing_address
       },
-      {
-        headers: {
-          Authorization: `Basic ${Buffer.from(pagarmeApiKey + ':').toString('base64')}`
-        }
+      metadata: {
+        supabase_user_id: user_id,
+        plan_id: plan.id
       }
-    )
+    };
+    if (payment_method === 'credit_card') {
+      subscriptionPayload.card = {
+        ...card,
+        holder_document: cpf
+      };
+    }
 
-    const customer = customerResponse.data
+    // Suporte a boleto e pix (sem card)
+    // (Se precisar de campos extras, adicionar aqui)
 
-    // Then create the subscription
     const subscriptionResponse = await axios.post(
-      'https://api.sandbox.pagar.me/core/v5/subscriptions',
-      {
-        plan_id: plan.pagarme_plan_id,
-        payment_method,
-        customer_id: customer.id,
-        card: payment_method === 'credit_card' ? {
-          ...card,
-          holder_document: cpf
-        } : undefined,
-        metadata: {
-          supabase_user_id: user_id,
-          plan_id: plan.id
-        }
-      },
+      'https://api.pagar.me/core/v5/subscriptions',
+      subscriptionPayload,
       {
         headers: {
           Authorization: `Basic ${Buffer.from(pagarmeApiKey + ':').toString('base64')}`
         }
       }
-    )
-
-    const subscription = subscriptionResponse.data
+    );
+    const subscription = subscriptionResponse.data;
 
     // Save subscription in Supabase
     await supabase
@@ -177,7 +193,24 @@ export async function POST(request: Request) {
       .update({ subscription_type: 'premium', cpf: cpf })
       .eq('id', user_id);
 
-    return NextResponse.json({ success: true, subscription })
+    // Retornar todos os campos relevantes da assinatura criada
+    return NextResponse.json({
+      success: true,
+      subscription: {
+        id: subscription.id,
+        status: subscription.status,
+        plan_id: subscription.plan_id,
+        payment_method: subscription.payment_method,
+        current_period: subscription.current_period,
+        customer: subscription.customer,
+        billing: subscription.billing,
+        created_at: subscription.created_at,
+        updated_at: subscription.updated_at,
+        charges: subscription.charges,
+        items: subscription.items,
+        metadata: subscription.metadata
+      }
+    })
   } catch (err) {
     const { error: errorMessage } = handleError(err, 'Error creating subscription');
     console.error('Subscription creation error:', errorMessage);
