@@ -77,8 +77,18 @@ export async function POST() {
           return {
             id: response.data.id,
             name: response.data.name,
+            description: response.data.description,
             interval: response.data.interval,
-            status: response.data.status
+            interval_count: response.data.interval_count,
+            billing_type: response.data.billing_type,
+            installments: response.data.installments,
+            minimum_price: response.data.minimum_price,
+            status: response.data.status,
+            created_at: response.data.created_at,
+            updated_at: response.data.updated_at,
+            items: response.data.items,
+            payment_methods: response.data.payment_methods,
+            ...response.data
           }
         } catch (error) {
           const axiosError = error as AxiosError

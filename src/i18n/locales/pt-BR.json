@@ -410,8 +410,9 @@
     "plans": {
       "title": "Planos",
       "create": "Criar planos",
-      "created": "Planos criados com sucesso",
-      "error": "Erro ao criar planos"
+      "created": "Planos criados com sucesso!",
+      "error": "Erro ao criar planos",
+      "creating": "Criando planos..."
     },
     "products": {
       "title": "Produtos 📦",

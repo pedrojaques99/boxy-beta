@@ -415,8 +415,9 @@
     "plans": {
       "title": "Plans",
       "create": "Create plans",
-      "created": "Plans created successfully",
-      "error": "Error creating plans"
+      "created": "Plans created successfully!",
+      "error": "Error creating plans",
+      "creating": "Creating plans..."
     },
     "products": {
       "title": "Products",
