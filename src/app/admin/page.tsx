@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { InfoIcon, Loader2, Users, Download } from 'lucide-react'
+import { InfoIcon, Loader2, Users, Download, Package, Layers, ListChecks } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Suspense, useState, useEffect } from 'react'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
@@ -107,27 +107,7 @@ export default function AdminPage() {
       <div className="container mx-auto py-8 space-y-8">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">{t?.admin?.title || 'Admin Dashboard'}</h1>
-          <div className="space-x-4">
-            <Link href="/admin/subscribers">
-              <Button variant="outline">
-                <Users className="h-4 w-4 mr-2" />
-                {t?.admin?.subscribers?.title || 'Subscribers'}
-              </Button>
-            </Link>
-            <Link href="/admin/downloads">
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                {t?.admin?.downloads?.title || 'Downloads'}
-              </Button>
-            </Link>
-            <Link href="/admin/crud">
-              <Button variant="outline">
-                {t?.admin?.products?.title || 'Manage Products'}
-              </Button>
-            </Link>
-          </div>
         </div>
-        
         <Alert className="mb-6">
           <InfoIcon className="h-4 w-4" />
           <AlertTitle>Acesso admin</AlertTitle>
@@ -135,138 +115,53 @@ export default function AdminPage() {
             Se você está vendo esta página, sua conta tem permissões de administrador configuradas corretamente.
           </AlertDescription>
         </Alert>
-
-        <Tabs defaultValue="plans" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="plans">Gerenciar Planos</TabsTrigger>
-            <TabsTrigger value="subscribers">Assinantes</TabsTrigger>
-            <TabsTrigger value="downloads">Downloads</TabsTrigger>
-            <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="settings">Configurações</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="plans" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Planos Pagar.me</CardTitle>
-                <CardDescription>
-                  Crie e gerencie planos para assinaturas na plataforma Pagar.me.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ErrorBoundary FallbackComponent={ErrorFallback}>
-                  <Suspense fallback={<div className="animate-pulse h-10 bg-gray-200 rounded" />}>
-                    <PlanCreation />
-                  </Suspense>
-                </ErrorBoundary>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Link href="/admin/crud">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Package className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-semibold text-lg">Produtos</div>
+                <div className="text-sm text-muted-foreground text-center">Gerencie todos os produtos da plataforma.</div>
               </CardContent>
             </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Planos existentes</CardTitle>
-                <CardDescription>
-                  Visualize e gerencie os planos existentes na plataforma Pagar.me.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ErrorBoundary FallbackComponent={ErrorFallback}>
-                  <Suspense fallback={<div className="animate-pulse h-32 bg-gray-200 rounded" />}>
-                    <PlansList />
-                  </Suspense>
-                </ErrorBoundary>
+          </Link>
+          <Link href="/admin/plans">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <ListChecks className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-semibold text-lg">Planos</div>
+                <div className="text-sm text-muted-foreground text-center">Crie e gerencie planos de assinatura.</div>
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="subscribers">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciamento de Assinantes</CardTitle>
-                <CardDescription>
-                  Visualize e gerencie os assinantes da plataforma.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Acesse a página completa de gerenciamento de assinantes para:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 text-sm">
-                    <li>Visualizar lista completa de assinantes</li>
-                    <li>Filtrar por status e pesquisar</li>
-                    <li>Exportar dados para CSV</li>
-                    <li>Gerenciar status das assinaturas</li>
-                  </ul>
-                  <Link href="/admin/subscribers">
-                    <Button className="mt-4">
-                      <Users className="h-4 w-4 mr-2" />
-                      Gerenciar Assinantes
-                    </Button>
-                  </Link>
-                </div>
+          </Link>
+          <Link href="/admin/downloads">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Download className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-semibold text-lg">Downloads</div>
+                <div className="text-sm text-muted-foreground text-center">Veja e gerencie os downloads realizados.</div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="downloads">
-            <Card>
-              <CardHeader>
-                <CardTitle>Relatório de Downloads</CardTitle>
-                <CardDescription>
-                  Acompanhe e analise os downloads de recursos da plataforma.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Acesse a página completa de relatórios de downloads para:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 text-sm">
-                    <li>Visualizar estatísticas de downloads</li>
-                    <li>Filtrar por tipo de recurso</li>
-                    <li>Exportar relatórios em CSV</li>
-                    <li>Acompanhar downloads por usuário</li>
-                  </ul>
-                  <Link href="/admin/downloads">
-                    <Button className="mt-4">
-                      <Download className="h-4 w-4 mr-2" />
-                      Ver Relatório de Downloads
-                    </Button>
-                  </Link>
-                </div>
+          </Link>
+          <Link href="/admin/subscribers">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Users className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-semibold text-lg">Assinantes</div>
+                <div className="text-sm text-muted-foreground text-center">Acompanhe todos os assinantes da plataforma.</div>
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciamento de Usuários</CardTitle>
-                <CardDescription>
-                  Visualize e gerencie os usuários do sistema.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Este recurso será implementado em breve.</p>
+          </Link>
+          <Link href="/admin/resources">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer group">
+              <CardContent className="flex flex-col items-center justify-center p-6">
+                <Layers className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                <div className="font-semibold text-lg">Recursos</div>
+                <div className="text-sm text-muted-foreground text-center">Gerencie recursos e materiais extras.</div>
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações</CardTitle>
-                <CardDescription>
-                  Gerencie as configurações do sistema.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Este recurso será implementado em breve.</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </Link>
+        </div>
       </div>
     </AuthGuard>
   )
