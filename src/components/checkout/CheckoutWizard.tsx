@@ -179,9 +179,7 @@ const StepIcon = ({
 };
 
 const PAYMENT_METHODS = [
-  { value: 'credit_card', label: 'Cartão de Crédito' },
-  { value: 'boleto', label: 'Boleto Bancário' },
-  { value: 'pix', label: 'Pix' }
+  { value: 'credit_card', label: 'Cartão de Crédito' }
 ];
 
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
@@ -213,7 +211,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const [authLoading, setAuthLoading] = useState(true)
   const authService = getAuthService()
   const { user, loading: userLoading } = useAuth()
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'boleto' | 'pix'>('credit_card')
+  const [paymentMethod, setPaymentMethod] = useState<'credit_card'>('credit_card')
 
   // Memoize safeT function
   const safeT = useMemo(() => {
@@ -921,95 +919,84 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                   <div className="space-y-2 col-span-2">
                     <Label>Método de Pagamento</Label>
                     <div className="flex gap-2">
-                      {PAYMENT_METHODS.map((m) => (
-                        <Button
-                          key={m.value}
-                          variant={paymentMethod === m.value ? 'default' : 'outline'}
-                          onClick={() => setPaymentMethod(m.value as any)}
-                          className="flex-1"
-                        >
-                          {m.label}
-                        </Button>
-                      ))}
+                      <Button
+                        key="credit_card"
+                        variant="default"
+                        className="flex-1"
+                        disabled
+                      >
+                        Cartão de Crédito
+                      </Button>
                     </div>
                   </div>
-                  {paymentMethod === 'credit_card' && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
-                        <Input
-                          id="card-number"
-                          placeholder={safeT('checkout.cardNumberPlaceholder')}
-                          value={card.number}
-                          onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
-                          maxLength={16}
-                          className={cn('text-foreground bg-background', card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
-                        />
-                        {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="card-name">{safeT('checkout.cardName')}</Label>
-                        <Input
-                          id="card-name"
-                          placeholder={safeT('checkout.cardNamePlaceholder')}
-                          value={card.name}
-                          onChange={(e) => setCard({ ...card, name: e.target.value })}
-                          className={cn('text-foreground bg-background', card.name.length === 0 && 'border-red-500')}
-                        />
-                        {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cardNameRequired')}</span>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="card-cpf">{safeT('checkout.cpf')}</Label>
-                        <Input
-                          id="card-cpf"
-                          placeholder={safeT('checkout.cpfPlaceholder')}
-                          value={card.cpf}
-                          onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
-                          maxLength={11}
-                          className={cn('text-foreground bg-background', card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
-                        />
-                        {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCpf')}</span>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="card-expiry">{safeT('checkout.expiryDate')}</Label>
-                        <Input
-                          id="card-expiry"
-                          placeholder={safeT('checkout.expiryDatePlaceholder')}
-                          value={card.expiry}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '')
-                            if (value.length <= 4) {
-                              setCard({
-                                ...card,
-                                expiry: value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
-                              })
-                            }
-                          }}
-                          maxLength={5}
-                          className={cn('text-foreground bg-background', card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
-                        />
-                        {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidExpiry')}</span>}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="card-cvv">{safeT('checkout.cvv')}</Label>
-                        <Input
-                          id="card-cvv"
-                          placeholder={safeT('checkout.cvvPlaceholder')}
-                          value={card.cvv}
-                          onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
-                          maxLength={4}
-                          className={cn('text-foreground bg-background', card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
-                        />
-                        {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCvv')}</span>}
-                      </div>
-                    </>
-                  )}
-                  {paymentMethod !== 'credit_card' && (
-                    <div className="col-span-2 text-sm text-muted-foreground p-2 bg-muted/30 rounded">
-                      {paymentMethod === 'boleto' && 'Você receberá o boleto após a confirmação.'}
-                      {paymentMethod === 'pix' && 'Você receberá o QR Code Pix após a confirmação.'}
-                    </div>
-                  )}
+                  {/* Campos de cartão de crédito sempre visíveis */}
+                  <div className="space-y-2">
+                    <Label htmlFor="card-number">{safeT('checkout.cardNumber')}</Label>
+                    <Input
+                      id="card-number"
+                      placeholder={safeT('checkout.cardNumberPlaceholder')}
+                      value={card.number}
+                      onChange={(e) => setCard({ ...card, number: e.target.value.replace(/\D/g, '') })}
+                      maxLength={16}
+                      className={cn('text-foreground bg-background', card.number.length > 0 && card.number.length < 16 && 'border-red-500')}
+                    />
+                    {card.number.length > 0 && card.number.length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-name">{safeT('checkout.cardName')}</Label>
+                    <Input
+                      id="card-name"
+                      placeholder={safeT('checkout.cardNamePlaceholder')}
+                      value={card.name}
+                      onChange={(e) => setCard({ ...card, name: e.target.value })}
+                      className={cn('text-foreground bg-background', card.name.length === 0 && 'border-red-500')}
+                    />
+                    {card.name.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cardNameRequired')}</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-cpf">{safeT('checkout.cpf')}</Label>
+                    <Input
+                      id="card-cpf"
+                      placeholder={safeT('checkout.cpfPlaceholder')}
+                      value={card.cpf}
+                      onChange={e => setCard({ ...card, cpf: e.target.value.replace(/\D/g, '') })}
+                      maxLength={11}
+                      className={cn('text-foreground bg-background', card.cpf.length > 0 && card.cpf.length < 11 && 'border-red-500')}
+                    />
+                    {card.cpf.length > 0 && card.cpf.length < 11 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCpf')}</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-expiry">{safeT('checkout.expiryDate')}</Label>
+                    <Input
+                      id="card-expiry"
+                      placeholder={safeT('checkout.expiryDatePlaceholder')}
+                      value={card.expiry}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '')
+                        if (value.length <= 4) {
+                          setCard({
+                            ...card,
+                            expiry: value.replace(/(\d{2})(\d{0,2})/, '$1/$2')
+                          })
+                        }
+                      }}
+                      maxLength={5}
+                      className={cn('text-foreground bg-background', card.expiry.length > 0 && card.expiry.length < 5 && 'border-red-500')}
+                    />
+                    {card.expiry.length > 0 && card.expiry.length < 5 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidExpiry')}</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="card-cvv">{safeT('checkout.cvv')}</Label>
+                    <Input
+                      id="card-cvv"
+                      placeholder={safeT('checkout.cvvPlaceholder')}
+                      value={card.cvv}
+                      onChange={(e) => setCard({ ...card, cvv: e.target.value.replace(/\D/g, '') })}
+                      maxLength={4}
+                      className={cn('text-foreground bg-background', card.cvv.length > 0 && card.cvv.length < 3 && 'border-red-500')}
+                    />
+                    {card.cvv.length > 0 && card.cvv.length < 3 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCvv')}</span>}
+                  </div>
                 </motion.div>
               )}
 
