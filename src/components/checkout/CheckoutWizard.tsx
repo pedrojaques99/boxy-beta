@@ -553,8 +553,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           userData.state.length === 2
         )
       case 2:
-        // Enhanced validation for card details with proper error logging
-        const numberValid = card.number.replace(/\s/g, '').length === 16 && luhnCheck(card.number);
+        // Validação sem Luhn: apenas checar se tem 16 dígitos
+        const numberValid = card.number.replace(/\s/g, '').length === 16;
         const expiryValid = card.expiry.length === 5 && validateExpiryDate(card.expiry);
         const cvvValid = card.cvv.length >= 3;
         const cpfValid = card.cpf.replace(/\D/g, '').length === 11 && validateCPF(card.cpf);
