@@ -127,7 +127,7 @@ export default function SubscribersPage() {
     const rows = filteredSubscribers.map(sub => [
       sub.user.user_metadata?.name || 'N/A',
       sub.user.email,
-      getPlanById(sub.plan_id)?.name || sub.plan_id,
+      getPlanById(sub.plan_id as 'free' | 'monthly' | 'annual')?.name || sub.plan_id,
       sub.status,
       format(new Date(sub.created_at), 'dd/MM/yyyy'),
       format(new Date(sub.current_period_end), 'dd/MM/yyyy'),
@@ -212,7 +212,7 @@ export default function SubscribersPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {getPlanById(subscriber.plan_id)?.name || subscriber.plan_id}
+                        {getPlanById(subscriber.plan_id as 'free' | 'monthly' | 'annual')?.name || subscriber.plan_id}
                       </TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

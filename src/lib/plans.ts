@@ -16,7 +16,7 @@ export const PLANS = {
   },
   monthly: {
     id: 'monthly',
-    name: 'Mensal',
+    name: 'Plano Mensal',
     price: 37.90,
     interval: 'month',
     interval_count: 1,
@@ -27,11 +27,11 @@ export const PLANS = {
       'Constant updates',
       'Community access (coming soon)'
     ],
-    pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'plan_p4kmbJNu2uPbW31y'
+    pagarme_plan_id: process.env.PAGARME_PLAN_MONTHLY_ID || 'plan_o73KEzlH5HjglzyJ'
   },
   annual: {
     id: 'annual',
-    name: 'Anual',
+    name: 'Plano Anual',
     price: 379.00,
     interval: 'year',
     interval_count: 1,
@@ -43,7 +43,7 @@ export const PLANS = {
       'Community access (coming soon)',
       '20% discount'
     ],
-    pagarme_plan_id: process.env.PAGARME_PLAN_YEARLY_ID || 'plan_zYpEr7RIzIv9NKAV'
+    pagarme_plan_id: process.env.PAGARME_PLAN_YEARLY_ID || 'plan_Z3rw7jBsrsO7GMXA'
   }
 } as const;
 
@@ -65,4 +65,13 @@ export function getPlanInterval(interval: string, count: number) {
     return count === 1 ? 'month' : `${count} months`;
   }
   return count === 1 ? 'year' : `${count} years`;
+}
+
+// Função para buscar plano por id local ou pagarme_plan_id
+export function getPlanByAnyId(id: string) {
+  return (
+    Object.values(PLANS).find(
+      (plan) => plan.id === id || plan.pagarme_plan_id === id
+    ) || null
+  );
 } 
