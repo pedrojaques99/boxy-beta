@@ -378,9 +378,35 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   const handleNext = async () => {
+    // --- INÍCIO: Checagens e logs solicitados ---
+    if (authLoading || userLoading) {
+      console.log('Ainda carregando auth...');
+      return;
+    }
+    // Vamos buscar o sessionData para checar o token antes de seguir
+    let sessionData;
+    try {
+      const sessionResp = await authService.getSession();
+      sessionData = sessionResp?.data;
+      console.log('Session Data:', sessionData);
+      console.log('User:', user);
+      console.log('Token:', sessionData?.session?.access_token);
+    } catch (e) {
+      console.log('Erro ao buscar sessão:', e);
+      return;
+    }
+    if (!sessionData?.session?.access_token) {
+      console.log('Sem token!');
+      return;
+    }
+    if (!user?.id) {
+      console.log('Sem user ID!');
+      return;
+    }
+    // --- FIM: Checagens e logs solicitados ---
+
     if (step === STEPS.length - 1) {
       setLoading(true)
-      
       try {
         // Get session with a single call and proper error handling
         const { data: sessionData, error: sessionError } = await authService.getSession();
