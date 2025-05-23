@@ -31,6 +31,7 @@ interface UserData {
   city: string
   state: string
   country: string
+  phone?: string
 }
 
 interface CardData {
@@ -427,39 +428,78 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
         
-        // Format and validate card data before submission
-        const formattedCardData = {
-          holder_name: card.name.trim(),
-          number: card.number.replace(/\s/g, ''),
-          exp_month: parseInt(card.expiry.split('/')[0]),
-          exp_year: parseInt('20' + card.expiry.split('/')[1]),
-          cvv: card.cvv,
-          cpf: card.cpf.replace(/\D/g, '')
+        const v5Payload = {
+          customer: {
+            name: userData.name,
+            email: userData.email,
+            document: card.cpf,
+            document_type: 'cpf',
+            type: 'individual',
+            phones: {
+              mobile_phone: {
+                country_code: '55',
+                area_code: userData.phone?.substring(0, 2) || '11',
+                number: userData.phone?.substring(2) || '999999999'
+              }
+            }
+          },
+          card: {
+            holder_name: card.name,
+            number: card.number,
+            exp_month: card.expiry.split('/')[0],
+            exp_year: '20' + card.expiry.split('/')[1],
+            cvv: card.cvv,
+            billing_address: {
+              line_1: `${userData.street}, ${userData.number}`,
+              line_2: userData.complement,
+              zip_code: userData.zip_code,
+              city: userData.city,
+              state: userData.state,
+              country: userData.country
+            }
+          },
+          plan_id: planId,
+          payment_method: 'credit_card',
+          installments: 1,
+          discounts: [
+            { cycles: 3, value: 10, discount_type: 'percentage' }
+          ],
+          increments: [
+            { cycles: 2, value: 20, increment_type: 'percentage' }
+          ],
+          metadata: {
+            supabase_user_id: user.id,
+            plan_id: planId
+          }
         };
 
         // Final validation before API call
         if (
-          !formattedCardData.holder_name ||
-          !formattedCardData.number ||
-          isNaN(formattedCardData.exp_month) ||
-          isNaN(formattedCardData.exp_year) ||
-          !formattedCardData.cvv ||
-          !formattedCardData.cpf
+          !v5Payload.customer.name ||
+          !v5Payload.customer.email ||
+          !v5Payload.customer.document ||
+          !v5Payload.customer.document_type ||
+          !v5Payload.customer.type ||
+          !v5Payload.customer.phones ||
+          !v5Payload.customer.phones.mobile_phone ||
+          !v5Payload.customer.phones.mobile_phone.country_code ||
+          !v5Payload.customer.phones.mobile_phone.area_code ||
+          !v5Payload.customer.phones.mobile_phone.number ||
+          !v5Payload.card.holder_name ||
+          !v5Payload.card.number ||
+          !v5Payload.card.exp_month ||
+          !v5Payload.card.exp_year ||
+          !v5Payload.card.cvv ||
+          !v5Payload.plan_id ||
+          !v5Payload.payment_method ||
+          !v5Payload.installments ||
+          !v5Payload.discounts ||
+          !v5Payload.increments ||
+          !v5Payload.metadata.supabase_user_id ||
+          !v5Payload.metadata.plan_id
         ) {
-          throw new Error(safeT('checkout.error.invalidCardData'));
+          throw new Error(safeT('checkout.error.invalidPayload'));
         }
-
-        // Format billing address data
-        const formattedAddress = {
-          street: userData.street.trim(),
-          number: userData.number.trim(),
-          complement: userData.complement.trim(),
-          zip_code: userData.zip_code.replace(/\D/g, ''),
-          neighborhood: userData.neighborhood.trim(),
-          city: userData.city.trim(),
-          state: userData.state.trim().toUpperCase(),
-          country: userData.country
-        };
 
         // Enviar método de pagamento selecionado
         const res = await fetch('/api/pagarme/subscribe', {
@@ -468,15 +508,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            user_id: user.id,
-            email: user.email,
-            name: userData.name || user.email?.split('@')[0] || 'User',
-            plan_id: planId,
-            payment_method: paymentMethod,
-            card: paymentMethod === 'credit_card' ? formattedCardData : undefined,
-            billing_address: formattedAddress
-          }),
+          body: JSON.stringify(v5Payload),
           signal: controller.signal
         })
 

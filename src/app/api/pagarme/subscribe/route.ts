@@ -136,38 +136,67 @@ export async function POST(request: Request) {
     const subscriptionPayload: any = {
       plan_id: plan.pagarme_plan_id,
       payment_method,
+      installments: 1,
       customer: {
-        id: customer.id,
-        name: customer.name,
-        email: customer.email,
-        type: customer.type,
-        document: customer.document,
-        phones: customer.phones || undefined
+        name,
+        email,
+        type: 'individual',
+        document: cpf,
+        document_type: 'cpf',
+        phones: body.customer?.phones || {
+          mobile_phone: {
+            country_code: '55',
+            area_code: body.phone?.substring(0, 2) || '11',
+            number: body.phone?.substring(2) || '999999999'
+          }
+        }
       },
+      card: payment_method === 'credit_card' ? {
+        holder_name: card.holder_name,
+        number: card.number,
+        exp_month: card.exp_month,
+        exp_year: card.exp_year,
+        cvv: card.cvv,
+        billing_address: {
+          line_1: `${billing_address.street}, ${billing_address.number}`,
+          line_2: billing_address.complement,
+          zip_code: billing_address.zip_code,
+          city: billing_address.city,
+          state: billing_address.state,
+          country: billing_address.country
+        }
+      } : undefined,
       billing: {
-        address: billing_address
+        address: {
+          line_1: `${billing_address.street}, ${billing_address.number}`,
+          line_2: billing_address.complement,
+          zip_code: billing_address.zip_code,
+          city: billing_address.city,
+          state: billing_address.state,
+          country: billing_address.country
+        }
       },
+      discounts: body.discounts || [
+        { cycles: 3, value: 10, discount_type: 'percentage' }
+      ],
+      increments: body.increments || [
+        { cycles: 2, value: 20, increment_type: 'percentage' }
+      ],
       metadata: {
         supabase_user_id: user_id,
         plan_id: plan.id
       }
+      // boleto_due_days podem ser adicionados aqui se necessário
     };
-    if (payment_method === 'credit_card') {
-      subscriptionPayload.card = {
-        ...card,
-        holder_document: cpf
-      };
-    }
-
-    // Suporte a boleto e pix (sem card)
-    // (Se precisar de campos extras, adicionar aqui)
 
     const subscriptionResponse = await axios.post(
       'https://api.pagar.me/core/v5/subscriptions',
       subscriptionPayload,
       {
         headers: {
-          Authorization: `Basic ${Buffer.from(pagarmeApiKey + ':').toString('base64')}`
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${Buffer.from(pagarmeApiKey + ':').toString('base64')}`
         }
       }
     );
