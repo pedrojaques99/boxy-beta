@@ -401,7 +401,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const handleNext = async () => {
     // Log para debug do fluxo do checkout
     console.log('[Checkout] handleNext chamado. Step:', step);
-    if (step === STEPS.length - 1) {
+    if (step === 3) {
       setLoading(true)
       try {
         // Tente pegar o token
