@@ -399,6 +399,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   const handleNext = async () => {
+    // Log para debug do fluxo do checkout
+    console.log('[Checkout] handleNext chamado. Step:', step);
     if (step === STEPS.length - 1) {
       setLoading(true)
       try {
@@ -407,6 +409,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         if (!sessionData?.session?.access_token) {
           toast.error('Sua sessão expirou. Por favor, faça login novamente.');
           setResult({ success: false, message: 'Sua sessão expirou. Por favor, faça login novamente.' });
+          // Limpa localStorage ao dar erro de autenticação
+          localStorage.removeItem('checkout_progress');
+          localStorage.removeItem('subscription_success');
           setStep(step + 1);
           setLoading(false);
           return;
@@ -551,6 +556,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             message: safeT('checkout.error.timeout')
           });
           toast.error(safeT('checkout.error.timeout'));
+          // Limpa localStorage ao dar timeout
+          localStorage.removeItem('checkout_progress');
+          localStorage.removeItem('subscription_success');
           setStep(step + 1);
           setLoading(false);
           return;
@@ -566,6 +574,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         
         setResult({ success: false, message: errorMessage })
         toast.error(errorMessage)
+        // Limpa localStorage ao dar erro genérico
+        localStorage.removeItem('checkout_progress');
+        localStorage.removeItem('subscription_success');
         setStep(step + 1)
         
         if (showLoginButton) {
