@@ -516,26 +516,31 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
         clearTimeout(timeoutId)
 
         if (!res.ok) {
-          const errorData = await res.json()
-          
+          let errorData: any = {};
+          try {
+            errorData = await res.json();
+          } catch (e) {
+            // Se não for JSON, tenta pegar texto ou deixa mensagem padrão
+            const text = await res.text();
+            errorData = { message: text || safeT('checkout.error.paymentFailed') };
+          }
           if (errorData.code) {
             switch (errorData.code) {
               case 'card_declined':
-                throw new Error(safeT('checkout.error.cardDeclined'))
+                throw new Error(safeT('checkout.error.cardDeclined'));
               case 'insufficient_funds':
-                throw new Error(safeT('checkout.error.insufficientFunds'))
+                throw new Error(safeT('checkout.error.insufficientFunds'));
               case 'expired_card':
-                throw new Error(safeT('checkout.error.expiredCard'))
+                throw new Error(safeT('checkout.error.expiredCard'));
               case 'invalid_card':
-                throw new Error(safeT('checkout.error.invalidCard'))
+                throw new Error(safeT('checkout.error.invalidCard'));
               case 'processing_error':
-                throw new Error(safeT('checkout.error.processingError'))
+                throw new Error(safeT('checkout.error.processingError'));
               default:
-                throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
+                throw new Error(errorData.message || safeT('checkout.error.paymentFailed'));
             }
           }
-          
-          throw new Error(errorData.message || safeT('checkout.error.paymentFailed'))
+          throw new Error(errorData.message || safeT('checkout.error.paymentFailed'));
         }
 
         const responseData = await res.json()
