@@ -476,6 +476,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           }
         };
 
+        // Log detalhado do payload para debug
+        console.log('[Checkout] v5Payload:', v5Payload);
+
         // Validação final antes da chamada da API
         if (
           !v5Payload.user_id ||
