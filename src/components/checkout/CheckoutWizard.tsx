@@ -517,11 +517,19 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
         if (!res.ok) {
           let errorData: any = {};
+          let bodyRead = false;
           try {
             errorData = await res.json();
+            bodyRead = true;
           } catch (e) {
-            // Se não for JSON, tenta pegar texto ou deixa mensagem padrão
-            const text = await res.text();
+            // Se não for JSON, tenta pegar texto (só se não leu o body ainda)
+            let text = '';
+            try {
+              text = await res.text();
+              bodyRead = true;
+            } catch (e2) {
+              text = '';
+            }
             errorData = { message: text || safeT('checkout.error.paymentFailed') };
           }
           if (errorData.code) {
