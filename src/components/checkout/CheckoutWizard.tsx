@@ -1188,20 +1188,25 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 </Button>
               )}
               {step === 3 && (
-                <Button
-                  onClick={handleNext}
-                  disabled={loading}
-                  className="gap-2 bg-green-600 hover:bg-green-700 text-white font-medium shadow-lg shadow-green-500/20 w-full sm:w-auto"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      {safeT('checkout.confirm')}
-                      <Check className="h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+                (() => {
+                  console.log('[Checkout] Render botão confirmação - isStepValid:', isStepValid(), 'loading:', loading);
+                  return (
+                    <Button
+                      onClick={handleNext}
+                      disabled={loading}
+                      className="gap-2 bg-green-600 hover:bg-green-700 text-white font-medium shadow-lg shadow-green-500/20 w-full sm:w-auto"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <span>
+                          {safeT('checkout.confirm')}
+                          <Check className="h-4 w-4" />
+                        </span>
+                      )}
+                    </Button>
+                  );
+                })()
               )}
               {step === 4 && !result.success && (
                 <Button
