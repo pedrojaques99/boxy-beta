@@ -399,48 +399,21 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   }
 
   const handleNext = async () => {
-    // --- INÍCIO: Checagens e logs solicitados ---
-    if (authLoading || userLoading) {
-      console.log('Ainda carregando auth...');
-      return;
-    }
-    // Vamos buscar o sessionData para checar o token antes de seguir
-    let sessionData;
-    try {
-      const sessionResp = await authService.getSession();
-      sessionData = sessionResp?.data;
-      console.log('Session Data:', sessionData);
-      console.log('User:', user);
-      console.log('Token:', sessionData?.session?.access_token);
-    } catch (e) {
-      console.log('Erro ao buscar sessão:', e);
-      return;
-    }
-    if (!sessionData?.session?.access_token) {
-      console.log('Sem token!');
-      return;
-    }
-    if (!user?.id) {
-      console.log('Sem user ID!');
-      return;
-    }
-    // --- FIM: Checagens e logs solicitados ---
-
     if (step === STEPS.length - 1) {
       setLoading(true)
       try {
-        // Get session with a single call and proper error handling
+        // Tente pegar o token
         const { data: sessionData, error: sessionError } = await authService.getSession();
-        console.log('Session Data:', sessionData);
-        console.log('Session Error:', sessionError);
-        if (!sessionData?.session) {
+        if (!sessionData?.session?.access_token) {
           toast.error('Sua sessão expirou. Por favor, faça login novamente.');
+          setResult({ success: false, message: 'Sua sessão expirou. Por favor, faça login novamente.' });
+          setStep(step + 1);
+          setLoading(false);
           return;
         }
         const token = sessionData.session.access_token;
-        console.log('Token sent to API:', token);
 
-        // Continue with user validation
+        // Continue com a validação do usuário
         if (!user?.id || !user?.email) {
           throw new Error(safeT('checkout.error.incompleteUserData'));
         }
@@ -498,7 +471,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           }
         };
 
-        // Final validation before API call
+        // Validação final antes da chamada da API
         if (
           !v5Payload.user_id ||
           !v5Payload.email ||
