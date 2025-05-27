@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
 
     switch (type) {
       case WEBHOOK_EVENTS.subscription_updated:
-      case WEBHOOK_EVENTS.subscription_payment_succeeded:
         await supabase
           .from('subscriptions')
           .update({
@@ -69,6 +68,16 @@ export async function POST(req: NextRequest) {
           .eq('pagarme_subscription_id', data.id)
         break
 
+      case WEBHOOK_EVENTS.subscription_payment_succeeded:
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'active',
+            updated_at: new Date().toISOString()
+          })
+          .eq('pagarme_subscription_id', data.subscription.id)
+        break
+
       case WEBHOOK_EVENTS.subscription_canceled:
         await supabase
           .from('subscriptions')
@@ -77,14 +86,14 @@ export async function POST(req: NextRequest) {
             canceled_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          .eq('pagarme_subscription_id', data.subscription.id)
+          .eq('pagarme_subscription_id', data.id)
 
         // Set user profile to free after cancellation
         {
           const { data: sub } = await supabase
             .from('subscriptions')
             .select('user_id')
-            .eq('pagarme_subscription_id', data.subscription.id)
+            .eq('pagarme_subscription_id', data.id)
             .maybeSingle()
           if (sub && sub.user_id) {
             await supabase

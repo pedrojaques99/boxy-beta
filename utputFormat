@@ -1,0 +1,17 @@
+HTTP/1.1 401 Unauthorized
+Date: Tue, 27 May 2025 22:43:34 GMT
+Content-Type: application/json
+Content-Length: 61
+Connection: keep-alive
+Set-Cookie: AWSALBTG=Bg7LQlZbOeiwvCKHfH/2RVd0MNkPcML+kjVmFcl9yWw9bRnZSuyYQjpjJSE2YuLPSM6M0VXrwSTh3BenI66EGgj5cxy8jrgVQQYOLCBCw2kGaVNtTRQQdiwNXT42CDFKL5NulFCi916JGYFCbWV3GCniUxPlSVMs1ccq/np7khh3a/7sw6U=; Expires=Tue, 03 Jun 2025 22:43:34 GMT; Path=/
+x-payments-auth: Unauthorized
+x-kong-request-id: 0b07a4088bc06e3362f90435d01f8a56
+cf-cache-status: DYNAMIC
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Set-Cookie: AWSALBTGCORS=Bg7LQlZbOeiwvCKHfH/2RVd0MNkPcML+kjVmFcl9yWw9bRnZSuyYQjpjJSE2YuLPSM6M0VXrwSTh3BenI66EGgj5cxy8jrgVQQYOLCBCw2kGaVNtTRQQdiwNXT42CDFKL5NulFCi916JGYFCbWV3GCniUxPlSVMs1ccq/np7khh3a/7sw6U=; Expires=Tue, 03 Jun 2025 22:43:34 GMT; Path=/; SameSite=None; Secure
+Set-Cookie: __cf_bm=QiXm_coTsWx4VvbZj_s1ITBrJV5MhsS5XZ605wd7sIk-1748385814-1.0.1.1-9AxjR5gEfVMk.RYWO9gmJUSWjnceveYNQ7D.FS9Y5f35U0YJ_gsgDKwXm35fEVQM1osgLEV40sT5oZO5.CwFrMSdGsi6J9PyFrak8RHE.oY; path=/; expires=Tue, 27-May-25 23:13:34 GMT; domain=.pagar.me; HttpOnly; Secure; SameSite=None
+Set-Cookie: _cfuvid=0WqbXUHDVYsrcjwrylI3wu0qMw8axMdBbULiTVgeXNI-1748385814216-0.0.1.1-604800000; path=/; domain=.pagar.me; HttpOnly; Secure; SameSite=None
+Server: cloudflare
+CF-RAY: 9469082988555f30-GRU
+
+{"message":"Authorization has been denied for this request."}

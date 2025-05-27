@@ -895,7 +895,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                         onChange={async (e) => {
                           const value = e.target.value.replace(/\D/g, '');
                           setUserData({ ...userData, zip_code: value });
-                          
                           if (value.length === 8) {
                             try {
                               const address = await fetchAddressByCEP(value);
@@ -926,6 +925,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       value={userData.street}
                       onChange={e => setUserData({ ...userData, street: e.target.value })}
                       className={cn('text-foreground bg-background', userData.street.length === 0 && 'border-red-500')}
+                      disabled={userData.zip_code.length !== 8}
                     />
                     {userData.street.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.streetRequired')}</span>}
                   </div>
@@ -937,6 +937,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       value={userData.number}
                       onChange={e => setUserData({ ...userData, number: e.target.value })}
                       className={cn('text-foreground bg-background', userData.number.length === 0 && 'border-red-500')}
+                      disabled={userData.zip_code.length !== 8}
                     />
                     {userData.number.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.numberRequired')}</span>}
                   </div>
@@ -948,6 +949,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       value={userData.complement}
                       onChange={e => setUserData({ ...userData, complement: e.target.value })}
                       className="text-foreground bg-background"
+                      disabled={userData.zip_code.length !== 8}
                     />
                   </div>
                   <div className="space-y-2">
@@ -958,6 +960,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       value={userData.neighborhood}
                       onChange={e => setUserData({ ...userData, neighborhood: e.target.value })}
                       className={cn('text-foreground bg-background', userData.neighborhood.length === 0 && 'border-red-500')}
+                      disabled={userData.zip_code.length !== 8}
                     />
                     {userData.neighborhood.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.neighborhoodRequired')}</span>}
                   </div>
@@ -969,6 +972,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       value={userData.city}
                       onChange={e => setUserData({ ...userData, city: e.target.value })}
                       className={cn('text-foreground bg-background', userData.city.length === 0 && 'border-red-500')}
+                      disabled={userData.zip_code.length !== 8}
                     />
                     {userData.city.length === 0 && <span className="text-xs text-red-500">{safeT('checkout.error.cityRequired')}</span>}
                   </div>
@@ -981,6 +985,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       onChange={e => setUserData({ ...userData, state: e.target.value })}
                       maxLength={2}
                       className={cn('text-foreground bg-background', userData.state.length > 0 && userData.state.length < 2 && 'border-red-500')}
+                      disabled={userData.zip_code.length !== 8}
                     />
                     {userData.state.length > 0 && userData.state.length < 2 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidState')}</span>}
                   </div>
