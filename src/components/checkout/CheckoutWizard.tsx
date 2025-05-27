@@ -446,6 +446,7 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
             number: userData.number,
             complement: userData.complement,
             zip_code: userData.zip_code,
+            neighborhood: userData.neighborhood,
             city: userData.city,
             state: userData.state,
             country: userData.country
@@ -582,6 +583,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
 
         let errorMessage = err instanceof Error ? err.message : safeT('checkout.error.unknown')
         let showLoginButton = false
+        
+        // Se for erro retornado do backend com detalhes
+        if (err && typeof err === 'object' && 'details' in err && err.details) {
+          const details = (err as any).details;
+          if (typeof details === 'object') {
+            // Pega a primeira mensagem de erro detalhado
+            const firstDetail = Object.values(details).flat()[0];
+            if (firstDetail) errorMessage += `: ${firstDetail}`;
+          } else if (typeof details === 'string') {
+            errorMessage += `: ${details}`;
+          }
+        }
         
         if (errorMessage === 'SESSION_EXPIRED') {
           errorMessage = safeT('checkout.error.sessionExpired')

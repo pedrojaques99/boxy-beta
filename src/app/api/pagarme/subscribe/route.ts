@@ -119,7 +119,16 @@ export async function POST(request: Request) {
       code: user_id,
       document_type: 'cpf',
       document: cpf,
-      address: billing_address
+      address: {
+        street: billing_address.street,
+        number: billing_address.number,
+        complement: billing_address.complement,
+        zip_code: billing_address.zip_code,
+        city: billing_address.city,
+        state: billing_address.state,
+        country: billing_address.country,
+        neighborhood: billing_address.neighborhood
+      }
     };
     const customerResponse = await axios.post(
       'https://api.pagar.me/core/v5/customers',
@@ -163,7 +172,8 @@ export async function POST(request: Request) {
           zip_code: billing_address.zip_code,
           city: billing_address.city,
           state: billing_address.state,
-          country: billing_address.country
+          country: billing_address.country,
+          neighborhood: billing_address.neighborhood
         }
       } : undefined,
       billing: {
@@ -173,7 +183,8 @@ export async function POST(request: Request) {
           zip_code: billing_address.zip_code,
           city: billing_address.city,
           state: billing_address.state,
-          country: billing_address.country
+          country: billing_address.country,
+          neighborhood: billing_address.neighborhood
         }
       },
       discounts: body.discounts || [
