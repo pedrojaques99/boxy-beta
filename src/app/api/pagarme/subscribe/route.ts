@@ -222,7 +222,7 @@ export async function POST(request: Request) {
         status: subscription.status,
         pagarme_subscription_id: subscription.id,
         pagarme_customer_id: customer.id,
-        current_period_end: new Date(subscription.current_period.end_at * 1000).toISOString(),
+        current_period_end: subscription.current_period && subscription.current_period.end_at ? new Date(subscription.current_period.end_at * 1000).toISOString() : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

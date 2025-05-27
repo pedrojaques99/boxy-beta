@@ -1158,8 +1158,27 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                           <div><b>Status:</b> {result.subscription.status}</div>
                           <div><b>Método:</b> {result.subscription.payment_method}</div>
                           <div><b>Plano:</b> {result.subscription.plan_id}</div>
-                          <div><b>Início:</b> {result.subscription.current_period?.start_at && new Date(result.subscription.current_period.start_at * 1000).toLocaleString()}</div>
-                          <div><b>Fim:</b> {result.subscription.current_period?.end_at && new Date(result.subscription.current_period.end_at * 1000).toLocaleString()}</div>
+                          {result.subscription.current_period ? (
+                            <>
+                              <div>
+                                <b>Início:</b>{' '}
+                                {result.subscription.current_period.start_at
+                                  ? new Date(result.subscription.current_period.start_at * 1000).toLocaleString()
+                                  : '-'}
+                              </div>
+                              <div>
+                                <b>Fim:</b>{' '}
+                                {result.subscription.current_period.end_at
+                                  ? new Date(result.subscription.current_period.end_at * 1000).toLocaleString()
+                                  : '-'}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div><b>Início:</b> -</div>
+                              <div><b>Fim:</b> -</div>
+                            </>
+                          )}
                         </div>
                       )}
                     </>

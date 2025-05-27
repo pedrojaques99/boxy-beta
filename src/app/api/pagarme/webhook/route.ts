@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
           .from('subscriptions')
           .update({
             status: data.subscription.status,
-            current_period_end: new Date(data.subscription.current_period.end_at * 1000).toISOString(),
+            current_period_end: data.subscription.current_period && data.subscription.current_period.end_at ? new Date(data.subscription.current_period.end_at * 1000).toISOString() : null,
             updated_at: new Date().toISOString()
           })
           .eq('pagarme_subscription_id', data.subscription.id)
