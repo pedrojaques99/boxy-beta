@@ -15,9 +15,9 @@ import { PlanId, PLANS } from '@/lib/plans'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { useAuth } from '@/hooks/use-auth'
-import visaIcon from '@/assets/cards/visa.svg';
-import mastercardIcon from '@/assets/cards/mastercard.svg';
-import defaultCardIcon from '@/assets/cards/card.svg';
+import VisaIcon from '@/assets/cards/visa.svg';
+import MastercardIcon from '@/assets/cards/mastercard.svg';
+import DefaultCardIcon from '@/assets/cards/card.svg';
 
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
@@ -1045,9 +1045,9 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                         placeholder="1234 5678 9012 3456"
                       />
                       <span className="absolute right-2">
-                        {cardBrand === 'visa' && <img src={visaIcon} alt="Visa" className="h-6 w-8" />}
-                        {cardBrand === 'mastercard' && <img src={mastercardIcon} alt="Mastercard" className="h-6 w-8" />}
-                        {cardBrand === 'default' && <img src={defaultCardIcon} alt="Card" className="h-6 w-8" />}
+                        {cardBrand === 'visa' && <VisaIcon className="h-6 w-8" />}
+                        {cardBrand === 'mastercard' && <MastercardIcon className="h-6 w-8" />}
+                        {cardBrand === 'default' && <DefaultCardIcon className="h-6 w-8" />}
                       </span>
                     </div>
                     {card.number.length > 0 && card.number.replace(/\D/g, '').length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
