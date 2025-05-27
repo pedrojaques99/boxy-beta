@@ -359,7 +359,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           neighborhood: userData.neighborhood,
           city: userData.city,
           state: userData.state,
-          country: userData.country
+          country: userData.country,
+          phone: userData.phone
         },
         planId,
         timestamp: Date.now()
@@ -374,23 +375,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
       }
     }
   }, [step, userData, planId])
-
-  // Restore progress on mount
-  useEffect(() => {
-    const savedProgress = localStorage.getItem('checkout_progress')
-    if (savedProgress) {
-      const { step: savedStep, userData: savedUserData, planId: savedPlanId, timestamp } = JSON.parse(savedProgress)
-      
-      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-        setStep(savedStep)
-        setUserData(savedUserData)
-        setPlanId(savedPlanId)
-        toast.info(safeT('checkout.progressRestored'))
-      } else {
-        localStorage.removeItem('checkout_progress')
-      }
-    }
-  }, [safeT])
 
   const handleBack = () => {
     if (step > 0) {
@@ -474,7 +458,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                 number: userData.phone?.substring(2) || '999999999'
               }
             }
-          }
+          },
+          phone: userData.phone
         };
 
         // Log detalhado do payload para debug
@@ -641,7 +626,8 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
           userData.zip_code.length === 8 &&
           userData.neighborhood.length > 0 &&
           userData.city.length > 0 &&
-          userData.state.length === 2
+          userData.state.length === 2 &&
+          userData.phone && userData.phone.length >= 10
         )
       case 2:
         // Validação sem Luhn: apenas checar se tem 16 dígitos
@@ -997,6 +983,18 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                       className={cn('text-foreground bg-background', userData.state.length > 0 && userData.state.length < 2 && 'border-red-500')}
                     />
                     {userData.state.length > 0 && userData.state.length < 2 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidState')}</span>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-phone">{safeT('checkout.phone')}</Label>
+                    <Input
+                      id="user-phone"
+                      placeholder={safeT('checkout.phonePlaceholder')}
+                      value={userData.phone || ''}
+                      onChange={e => setUserData({ ...userData, phone: e.target.value.replace(/\D/g, '') })}
+                      maxLength={13}
+                      className={cn('text-foreground bg-background', (!userData.phone || userData.phone.length < 10) && 'border-red-500')}
+                    />
+                    {(!userData.phone || userData.phone.length < 10) && <span className="text-xs text-red-500">{safeT('checkout.error.phoneRequired')}</span>}
                   </div>
                 </motion.div>
               )}

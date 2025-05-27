@@ -100,6 +100,12 @@ export async function POST(request: Request) {
       }
     }
 
+    // Validar telefone do usuário
+    const userPhone = body.phone && typeof body.phone === 'string' && body.phone.length >= 10 ? body.phone : null;
+    if (!userPhone) {
+      return NextResponse.json({ error: 'Telefone obrigatório e inválido' }, { status: 400 });
+    }
+
     // Prevent duplicate active subscriptions
     const { data: existingSubscription } = await supabase
       .from('subscriptions')
@@ -152,13 +158,14 @@ export async function POST(request: Request) {
         type: 'individual',
         document: cpf,
         document_type: 'cpf',
-        phones: body.customer?.phones || {
+        phones: {
           mobile_phone: {
             country_code: '55',
-            area_code: body.phone?.substring(0, 2) || '11',
-            number: body.phone?.substring(2) || '999999999'
+            area_code: userPhone.substring(0, 2),
+            number: userPhone.substring(2)
           }
-        }
+        },
+        ...body.customer // mantém compatibilidade se vier mais dados
       },
       card: payment_method === 'credit_card' ? {
         holder_name: card.holder_name,

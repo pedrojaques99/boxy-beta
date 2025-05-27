@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
 import { handleError } from '@/lib/error-handler'
+import { Resend } from 'resend'
 
 // Get environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -14,6 +15,8 @@ const WEBHOOK_EVENTS = {
   subscription_payment_failed: 'subscription_payment_failed',
   subscription_payment_succeeded: 'subscription_payment_succeeded'
 } as const
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {
