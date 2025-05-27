@@ -10,10 +10,10 @@ const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE
 const pagarmeApiKey = process.env.PAGARME_API_KEY
 
 const WEBHOOK_EVENTS = {
-  subscription_updated: 'subscription_updated',
-  subscription_canceled: 'subscription_canceled',
-  subscription_payment_failed: 'subscription_payment_failed',
-  subscription_payment_succeeded: 'subscription_payment_succeeded'
+  subscription_updated: 'subscription.updated',
+  subscription_canceled: 'subscription.canceled',
+  subscription_payment_failed: 'invoice.payment_failed',
+  subscription_payment_succeeded: 'invoice.paid'
 } as const
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -50,17 +50,23 @@ export async function POST(req: NextRequest) {
     const event = JSON.parse(rawBody)
     const { type, data } = event
 
+    // Extrair início/fim do ciclo atual se existir
+    const currentCycle = data.current_cycle || {}
+    const periodStart = currentCycle.start_at ? new Date(currentCycle.start_at).toISOString() : null
+    const periodEnd = currentCycle.end_at ? new Date(currentCycle.end_at).toISOString() : null
+
     switch (type) {
       case WEBHOOK_EVENTS.subscription_updated:
       case WEBHOOK_EVENTS.subscription_payment_succeeded:
         await supabase
           .from('subscriptions')
           .update({
-            status: data.subscription.status,
-            current_period_end: data.subscription.current_period && data.subscription.current_period.end_at ? new Date(data.subscription.current_period.end_at * 1000).toISOString() : null,
+            status: data.status || 'active',
+            current_period_start: periodStart,
+            current_period_end: periodEnd,
             updated_at: new Date().toISOString()
           })
-          .eq('pagarme_subscription_id', data.subscription.id)
+          .eq('pagarme_subscription_id', data.id)
         break
 
       case WEBHOOK_EVENTS.subscription_canceled:
@@ -72,18 +78,19 @@ export async function POST(req: NextRequest) {
             updated_at: new Date().toISOString()
           })
           .eq('pagarme_subscription_id', data.subscription.id)
+
         // Set user profile to free after cancellation
         {
           const { data: sub } = await supabase
             .from('subscriptions')
             .select('user_id')
             .eq('pagarme_subscription_id', data.subscription.id)
-            .maybeSingle();
+            .maybeSingle()
           if (sub && sub.user_id) {
             await supabase
               .from('profiles')
               .update({ subscription_type: 'free' })
-              .eq('id', sub.user_id);
+              .eq('id', sub.user_id)
           }
         }
         break
@@ -93,7 +100,7 @@ export async function POST(req: NextRequest) {
           .from('subscriptions')
           .update({
             status: 'payment_failed',
-            last_payment_error: data.payment.error_message,
+            last_payment_error: data.payment?.error_message || 'Unknown error',
             updated_at: new Date().toISOString()
           })
           .eq('pagarme_subscription_id', data.subscription.id)
@@ -105,8 +112,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (err) {
-    const { error: errorMessage } = handleError(err, 'Error processing webhook');
-    console.error('Webhook processing error:', errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    const { error: errorMessage } = handleError(err, 'Error processing webhook')
+    console.error('Webhook processing error:', errorMessage)
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
