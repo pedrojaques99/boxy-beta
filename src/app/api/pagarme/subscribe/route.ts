@@ -241,9 +241,35 @@ export async function POST(request: Request) {
       }
     })
   } catch (err) {
-    const { error: errorMessage } = handleError(err, 'Error creating subscription');
-    console.error('Subscription creation error:', errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    // Log completo do erro
+    console.error('Subscription creation error:', err);
+    let errorMessage = 'Erro desconhecido no backend';
+    let errorStack = undefined;
+    let pagarmeDetails = undefined;
+    let pagarmeRequest = undefined;
+
+    // Se for erro do axios (Pagar.me)
+    const axiosErr = err as any;
+    if (axiosErr && typeof axiosErr === 'object' && 'response' in axiosErr && axiosErr.response && axiosErr.response.data) {
+      errorMessage = axiosErr.response.data.message || 'Erro do Pagar.me';
+      pagarmeDetails = axiosErr.response.data.errors || axiosErr.response.data;
+      pagarmeRequest = axiosErr.response.data.request || undefined;
+    } else if (err instanceof Error) {
+      errorMessage = err.message;
+      errorStack = err.stack;
+    } else if (typeof err === 'string') {
+      errorMessage = err;
+    } else if (err && typeof err === 'object' && 'message' in err) {
+      errorMessage = (err as any).message;
+    }
+
+    const isDev = process.env.NODE_ENV !== 'production';
+    return NextResponse.json({
+      error: errorMessage,
+      details: pagarmeDetails,
+      request: pagarmeRequest,
+      ...(isDev && errorStack ? { stack: errorStack } : {})
+    }, { status: 500 });
   }
 }
 
