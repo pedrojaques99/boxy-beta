@@ -15,9 +15,9 @@ import { PlanId, PLANS } from '@/lib/plans'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { useAuth } from '@/hooks/use-auth'
-import VisaIcon from '@/assets/cards/visa.svg';
-import MastercardIcon from '@/assets/cards/mastercard.svg';
-import DefaultCardIcon from '@/assets/cards/card.svg';
+import VisaIcon from '@/assets/cards/visa.svg?react';
+import MastercardIcon from '@/assets/cards/mastercard.svg?react';
+import DefaultCardIcon from '@/assets/cards/card.svg?react';
 
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
