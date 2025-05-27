@@ -38,9 +38,29 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text()
     const signature = req.headers.get('x-hub-signature') || ''
 
-    const hmac = crypto.createHmac('sha256', pagarmeApiKey)
-    hmac.update(rawBody)
-    const digest = `sha256=${hmac.digest('hex')}`
+    // Log para debug do algoritmo de assinatura
+    console.log('Signature header recebido:', signature)
+
+    // Testa ambos algoritmos para facilitar debug
+    const hmacSha1 = crypto.createHmac('sha1', pagarmeApiKey)
+    hmacSha1.update(rawBody)
+    const digestSha1 = `sha1=${hmacSha1.digest('hex')}`
+    console.log('Digest calculado (sha1):', digestSha1)
+
+    const hmacSha256 = crypto.createHmac('sha256', pagarmeApiKey)
+    hmacSha256.update(rawBody)
+    const digestSha256 = `sha256=${hmacSha256.digest('hex')}`
+    console.log('Digest calculado (sha256):', digestSha256)
+
+    // Use o algoritmo que bater com o header
+    let digest = ''
+    if (signature.startsWith('sha1=')) {
+      digest = digestSha1
+    } else if (signature.startsWith('sha256=')) {
+      digest = digestSha256
+    } else {
+      digest = digestSha1 // fallback para sha1
+    }
 
     if (signature !== digest) {
       console.error('Invalid webhook signature')
