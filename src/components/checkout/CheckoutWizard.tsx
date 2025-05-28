@@ -15,9 +15,6 @@ import { PlanId, PLANS } from '@/lib/plans'
 import { Progress } from '@/components/ui/progress'
 import { getAuthService } from '@/lib/auth/auth-service'
 import { useAuth } from '@/hooks/use-auth'
-import VisaIcon from '@/assets/cards/visa.svg?react';
-import MastercardIcon from '@/assets/cards/mastercard.svg?react';
-import DefaultCardIcon from '@/assets/cards/card.svg?react';
 
 
 const STEPS = ['plan', 'user', 'payment', 'confirm', 'result'] as const
@@ -194,14 +191,6 @@ function formatCardNumber(value: string) {
     .trim();
 }
 
-// Função para detectar bandeira do cartão
-function getCardBrand(number: string) {
-  const n = number.replace(/\D/g, '');
-  if (/^4/.test(n)) return 'visa';
-  if (/^5[1-5]/.test(n)) return 'mastercard';
-  return 'default';
-}
-
 export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps) {
   const router = useRouter()
   const { t, locale } = useTranslations()
@@ -232,7 +221,6 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
   const authService = getAuthService()
   const { user, loading: userLoading } = useAuth()
   const [paymentMethod, setPaymentMethod] = useState<'credit_card'>('credit_card')
-  const [cardBrand, setCardBrand] = useState<'visa' | 'mastercard' | 'default'>('default');
 
   // Memoize safeT function
   const safeT = useMemo(() => {
@@ -1039,16 +1027,10 @@ export function CheckoutWizard({ defaultPlanId, onSuccess }: CheckoutWizardProps
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const formatted = formatCardNumber(e.target.value);
                           setCard({ ...card, number: formatted });
-                          setCardBrand(getCardBrand(formatted));
                         }}
                         className={cn('text-foreground bg-background pr-10', card.number.length > 0 && card.number.length < 19 && 'border-red-500')}
                         placeholder="1234 5678 9012 3456"
                       />
-                      <span className="absolute right-2">
-                        {cardBrand === 'visa' && <VisaIcon className="h-6 w-8" />}
-                        {cardBrand === 'mastercard' && <MastercardIcon className="h-6 w-8" />}
-                        {cardBrand === 'default' && <DefaultCardIcon className="h-6 w-8" />}
-                      </span>
                     </div>
                     {card.number.length > 0 && card.number.replace(/\D/g, '').length < 16 && <span className="text-xs text-red-500">{safeT('checkout.error.invalidCardNumber')}</span>}
                   </div>

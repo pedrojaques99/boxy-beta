@@ -4,24 +4,16 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from '@/hooks/use-translations';
 import { Input } from '@/components/ui/input';
-import { useRouter } from 'next/navigation';
+import Hero3D from '@/components/3d/hero3d';
+import { useState } from 'react';
 
 export function HeroSection() {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const { t } = useTranslations();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(error => {
-        console.error('Error playing video:', error);
-      });
-    }
-  }, []);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -39,31 +31,19 @@ export function HeroSection() {
 
   return (
     <section className="relative h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Video Background */}
-      <div className="absolute inset-0 w-full h-full flex items-center justify-center">
-        <div className="w-[80%] h-[80%] relative">
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            onError={(e) => console.error('Video error:', e)}
-          >
-            <source src="/images/boxy_mp4.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <div className="absolute inset-0 bg-black/90" />
+      {/* 3D Background substituindo o vídeo */}
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center px-6 md:px-16 lg:px-32">
+        <div className="w-full h-full relative">
+          <Hero3D />
         </div>
       </div>
 
-      <div className="container relative z-10 mx-auto px-4 text-center">
+      <div className="container relative z-10 px-4 md:mx-16 lg:max-w-3xl lg:mx-32 mx-auto text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-3xl mx-auto space-y-8"
+          className="max-w-2xl mx-auto space-y-8"
         >
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
             {t.home.hero.title}
@@ -74,7 +54,7 @@ export function HeroSection() {
           
           {/* Search Bar and Buttons */}
           <div className="flex items-center justify-center gap-4">
-            <div className="relative flex-1 max-w-xl">
+            <div className="relative flex-1 max-w-x2">
               <Input
                 type="text"
                 placeholder={t.shop.search.placeholder}

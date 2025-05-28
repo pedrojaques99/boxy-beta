@@ -9,11 +9,11 @@ export function SupabaseSessionListener() {
   const supabase = createClient()
 
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
+    const { subscription } = supabase.auth.onAuthStateChange(() => {
       router.refresh()
     })
 
-    return () => subscription?.unsubscribe()
+    return () => subscription?.unsubscribe?.()
   }, [router])
 
   return null
