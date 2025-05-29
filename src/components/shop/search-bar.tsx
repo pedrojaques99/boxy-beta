@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Search, Loader2, X } from 'lucide-react'
 import { useEffect, useState, useRef, KeyboardEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useDebounce } from '@/hooks/use-debounce'
 import { Dictionary } from '@/i18n/types'
 
 export interface SearchBarProps {
@@ -21,7 +20,6 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
   const [isInternalLoading, setIsInternalLoading] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
-  const debouncedSearchQuery = useDebounce(query, 300)
 
   const isLoading = externalLoading || isInternalLoading
 
@@ -37,42 +35,29 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
     }
   }, [context])
 
-  useEffect(() => {
-    const performSearch = async () => {
-      if (!debouncedSearchQuery.trim()) {
-        onSearch('')
-        return
+  const handleSearch = () => {
+    const trimmedQuery = query.trim();
+    setIsInternalLoading(true);
+    try {
+      onSearch(trimmedQuery);
+      if (trimmedQuery && !recentSearches.includes(trimmedQuery)) {
+        const updated = [trimmedQuery, ...recentSearches].slice(0, 5);
+        setRecentSearches(updated);
+        localStorage.setItem(`recent-${context}-searches`, JSON.stringify(updated));
       }
-
-      setIsInternalLoading(true)
-      try {
-        onSearch(debouncedSearchQuery.trim())
-        
-        const trimmedQuery = debouncedSearchQuery.trim()
-        if (trimmedQuery && !recentSearches.includes(trimmedQuery)) {
-          const updated = [trimmedQuery, ...recentSearches].slice(0, 5)
-          setRecentSearches(updated)
-          localStorage.setItem(`recent-${context}-searches`, JSON.stringify(updated))
-        }
-      } catch (error) {
-        console.error('Search error:', error)
-      } finally {
-        setIsInternalLoading(false)
-      }
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsInternalLoading(false);
     }
-
-    performSearch()
-  }, [debouncedSearchQuery, onSearch, context, recentSearches])
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       setQuery('')
       inputRef.current?.blur()
     } else if (e.key === 'Enter') {
-      const trimmedQuery = query.trim()
-      if (trimmedQuery) {
-        onSearch(trimmedQuery)
-      }
+      handleSearch();
     }
   }
 
@@ -158,6 +143,14 @@ export function SearchBar({ onSearch, t, context, isLoading: externalLoading }: 
             )}
           </AnimatePresence>
         </div>
+        <Button
+          onClick={handleSearch}
+          size="icon"
+          className="h-11 w-11 rounded-full ml-2"
+          disabled={isLoading}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
       </div>
 
       <AnimatePresence>
