@@ -50,12 +50,12 @@
     "logout": "Sair"
   },
   "shop": {
-    "title": "Galeria de Produtos 📦",
-    "description": "Explore nossa coleção de recursos e ferramentas de alta qualidade para seus projetos criativos",
+    "title": "Produtos 📦",
+    "description": "Explore nossos produtos de alta qualidade para seus projetos criativos",
     "viewDetails": "Abrir a caixa",
     "noProducts": "Nenhum produto disponível",
     "search": {
-      "placeholder": "Buscar produtos...",
+      "placeholder": "Encontre na caixa...",
       "noResults": "Nenhum produto encontrado",
       "recentSearches": "Buscas recentes"
     },
@@ -388,7 +388,7 @@
   },
   "labs": {
     "title": "Labs 🧪",
-    "description": "Descubra e experimente aplicações incríveis criadas por nossa comunidade",
+    "description": "Ferramentas e apps criados por nós ou compartilhados pela comunidade",
     "noLabs": "Nenhum experimento encontrado",
     "tryIt": "Experimentar →",
     "explore": "Começar a Explorar"

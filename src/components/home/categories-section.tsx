@@ -65,7 +65,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.4 }}
           className="text-center mb-12"
         >
           <h2 className="text-3xl font-bold mb-4">{t.home.categories.title}</h2>
@@ -90,10 +90,10 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                 className="group"
               >
                 <Link href={`/shop?category=${categoryForUrl}`}>
-                  <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02]">
+                  <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.01]">
                     <div className="relative h-48 overflow-hidden">
                       <div 
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500"
                         style={{ 
                           backgroundImage: `url(${imageUrl})`,
                           backgroundSize: 'cover',

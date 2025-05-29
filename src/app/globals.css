@@ -151,3 +151,25 @@
     border: 1px solid hsl(var(--accent) / 0.5);
   }
 }
+
+.card-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+  border: 2px solid transparent;
+  background: radial-gradient(
+    200px circle at var(--xPos, 50%) var(--yPos, 50%),
+    theme('colors.accent.DEFAULT', '#00bcd4') 0%,
+    transparent 80%
+  );
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}

@@ -126,7 +126,7 @@ export default function HomePage() {
                   key={key}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.2 }}
                 >
                   <Card className="p-6">
                     <div className="flex items-center gap-4">

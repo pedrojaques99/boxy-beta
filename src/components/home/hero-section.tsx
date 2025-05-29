@@ -9,6 +9,7 @@ import { useTranslations } from '@/hooks/use-translations';
 import { Input } from '@/components/ui/input';
 import Hero3D from '@/components/3d/hero3d';
 import { useState } from 'react';
+import Logo3D from '../3d/logo3d';
 
 export function HeroSection() {
   const { t } = useTranslations();
@@ -34,7 +35,7 @@ export function HeroSection() {
       {/* 3D Background substituindo o vídeo */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center px-6 md:px-16 lg:px-32">
         <div className="w-full h-full relative">
-          <Hero3D />
+          <Logo3D isMobile={false} />
         </div>
       </div>
 
@@ -61,11 +62,8 @@ export function HeroSection() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full pl-11 h-11 bg-background/50 backdrop-blur-sm border-border/50 hover:border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200 rounded-full"
+                className="w-full pl-6 h-11 bg-background/50 backdrop-blur-sm border-border/50 hover:border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200 rounded-full"
               />
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <Search className="h-4 w-4" />
-              </div>
             </div>
             
             <Button onClick={handleSearch} size="icon" className="h-11 w-11 rounded-full">

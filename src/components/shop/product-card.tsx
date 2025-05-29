@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { Eye } from 'lucide-react'
 import Image from 'next/image'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 interface ProductCardProps {
   product: Product
@@ -39,6 +39,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  const [origin, setOrigin] = useState('center center');
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!isHovering) return;
@@ -49,20 +51,21 @@ export function ProductCard({
     });
   }, [isHovering]);
 
+  const handleMouseLeave = () => setOrigin('center center');
+
   return (
     <Card 
       className={cn(
-        "overflow-hidden group h-full relative transition-all duration-300",
-        "before:absolute before:inset-0 before:p-[1px] before:rounded-lg before:content-[''] before:pointer-events-none",
-        isHovering && "before:bg-[radial-gradient(800px_circle_at_var(--xPos)_var(--yPos),rgba(var(--primary),0.15),transparent_40%)]"
+        "rounded-lg border bg-card text-card-foreground shadow-sm backdrop-blur-sm",
+        "transition-all duration-300",
+        "hover:shadow-md hover:border-accent/20",
+        "before:absolute before:inset-0 before:rounded-lg before:pointer-events-none",
+        "before:opacity-100 before:transition-opacity before:duration-300",
+        "overflow-hidden group h-full relative transition-transform duration-500 ease-in-out hover:scale-[1.01]"
       )}
       style={{
-        '--xPos': `${position.x}px`,
-        '--yPos': `${position.y}px`
-      } as React.CSSProperties}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
+        position: 'relative'
+      }}
     >
       <div className="absolute top-4 right-4 z-10">
         <LikeButton type="product" id={product.id} userId={userId} />
@@ -72,9 +75,15 @@ export function ProductCard({
         <div className="relative w-full overflow-hidden bg-muted">
           <Link href={`/shop/${product.id}`} className="block">
             <img
+              ref={imgRef}
               src={product.thumb}
               alt={product.name}
-              className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              style={{
+                transformOrigin: origin,
+              }}
+              className="w-full h-auto object-cover transition-all duration-300"
             />
           </Link>
           <div className="absolute top-2 left-2 flex items-center gap-2">
@@ -82,8 +91,9 @@ export function ProductCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
                     onClick={() => onFilterClick('software', product.software!)}
                     className={cn(
                       "p-1.5 rounded-full transition-all",
@@ -113,8 +123,8 @@ export function ProductCard({
             )}
             {product.type && onFilterClick && (
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onFilterClick('type', product.type!)}
                 className={cn(
                   "px-2.5 py-1 rounded-full text-xs transition-all",

@@ -90,7 +90,7 @@ export function LikeButton({ type, id, userId }: LikeButtonProps) {
         <motion.span
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute -bottom-1 -right-1 text-xs font-medium text-muted-foreground"
+          className="absolute -right-1 text-xs font-light text-muted-foreground"
         >
           {count}
         </motion.span>

@@ -54,9 +54,11 @@ export function ResourceCard({ resource, priority = false }: ResourceCardProps) 
     <Link href={`/mindy/${resource.id}`} className="block">
       <Card 
         className={cn(
-          "overflow-hidden group h-full relative transition-all duration-300",
-          "before:absolute before:inset-0 before:p-[1px] before:rounded-lg before:content-[''] before:pointer-events-none",
-          isHovering && "before:bg-[radial-gradient(800px_circle_at_var(--xPos)_var(--yPos),rgba(var(--primary),0.15),transparent_40%)]"
+          "rounded-lg bg-card text-card-foreground shadow-sm backdrop-blur-sm",
+          "transition-all duration-300",
+          "hover:shadow-md",
+          "before:absolute before:inset-0 before:rounded-lg before:pointer-events-none",
+          "overflow-hidden group h-full relative transition-transform duration-500 ease-in-out hover:scale-[1.01]"
         )}
         style={{
           '--xPos': `${position.x}px`,
@@ -75,7 +77,7 @@ export function ResourceCard({ resource, priority = false }: ResourceCardProps) 
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority={priority}
               quality={80}
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-cover transition-transform duration-300"
               onError={handleImageError}
               loading={priority ? 'eager' : 'lazy'}
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qLjgyPjA+OjU8PkM5QklCR1JTUzE1PkNhaUpKWlL/2wBDAR"
