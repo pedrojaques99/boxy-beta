@@ -56,16 +56,18 @@ export function ProductCard({
   return (
     <Card 
       className={cn(
-        "rounded-lg border bg-card text-card-foreground shadow-sm backdrop-blur-sm",
-        "transition-all duration-300",
-        "hover:shadow-md hover:border-accent/20",
-        "before:absolute before:inset-0 before:rounded-lg before:pointer-events-none",
-        "before:opacity-100 before:transition-opacity before:duration-300",
-        "overflow-hidden group h-full relative transition-transform duration-500 ease-in-out hover:scale-[1.01]"
+        "overflow-hidden group h-full relative transition-all duration-300",
+        "before:absolute before:inset-0 before:p-[1px] before:rounded-lg before:content-[''] before:pointer-events-none",
+        isHovering && "before:bg-[radial-gradient(800px_circle_at_var(--xPos)_var(--yPos),rgba(var(--primary),0.15),transparent_40%)]"
       )}
       style={{
-        position: 'relative'
-      }}
+        '--xPos': `${position.x}px`,
+        '--yPos': `${position.y}px`
+      } as React.CSSProperties}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={handleMouseLeave}
+      onHoverScale={isHovering ? 1.05 : 1}
     >
       <div className="absolute top-4 right-4 z-10">
         <LikeButton type="product" id={product.id} userId={userId} />
